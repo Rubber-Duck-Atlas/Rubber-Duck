@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Hyperparameter Tuning</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-hyperparameter-tuning">Lesson: Hyperparameter Tuning</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Imagine training a detective to solve a mystery. The detective needs the right tools: a magnifying glass of the perfect size, a steady pace to scan clues, a notebook to summarize findings, and a knack for learning from mistakes. In Convolutional Neural Networks (CNNs), <strong>hyperparameters</strong> are these tools—they shape how the CNN &quot;investigates&quot; images to detect patterns like edges, textures, or entire objects. Building on your understanding of CNNs as hierarchical feature extractors, this lesson explores tuning hyperparameters like layer count, kernel size, stride, padding, pooling, batch size, and learning rate to balance efficiency and accuracy. Just as a detective fine-tunes their approach to crack a case, hyperparameter tuning ensures CNNs learn effectively without wasting time or resources.</p>
+<hr>
+</section><section><h2 id="learning-objectives">Learning Objectives</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li>Compare the effects of <strong>layer count</strong>, <strong>kernel size</strong>, <strong>stride</strong>, <strong>padding</strong>, and <strong>pooling</strong> on CNN efficiency and feature extraction.</li>
+<li>Discuss <strong>batch size</strong> and <strong>learning rate</strong> tuning and their impact on model convergence, accuracy, and generalization.</li>
+<li>Apply systematic hyperparameter tuning strategies to optimize CNN performance.</li>
+</ol>
+<hr>
+</section><section><h2 id="introduction-to-hyperparameters-in-cnns">Introduction to Hyperparameters in CNNs</h2>
+<p>In convolutional neural networks, hyperparameters are the settings that define how the network learns and processes data. Unlike model parameters learned during training, hyperparameters must be set beforehand. Their values directly affect the network’s ability to extract features, generalize to new data, and the computational resources required. Tuning these hyperparameters carefully is essential for building models that are both accurate and efficient. Before diving into specific convolutional hyperparameters like kernel size and stride, it is important to understand how the overall depth of the network, defined by the number of layers, influences the model's learning capacity and complexity.</p>
+<h3 id="number-of-layers-the-detectives-depth-of-investigation"><strong>Number of Layers: The Detective’s Depth of Investigation</strong></h3>
+<p>The <strong>number of layers</strong> in a CNN determines how deeply the network processes and analyzes input data. A shallow network with fewer layers acts like a quick sweep of a crime scene, capturing basic clues such as edges or simple shapes. In contrast, a deeper network can investigate more complex patterns, like recognizing faces or intricate textures. However, increasing depth also introduces risks of overfitting and longer training times.</p>
+<ul>
+<li><strong>Fewer layers</strong> tend to be computationally efficient and work well for simpler tasks, such as digit recognition on the MNIST dataset.</li>
+<li><strong>More layers</strong> enable the network to learn complex features but require more computation and are prone to overfitting, especially with limited data.</li>
+<li>Advanced architectures such as <strong>ResNet</strong> use residual connections to mitigate training challenges in very deep networks.</li>
+</ul>
+<p>The following figure illustrates the difference between a traditional 1980s-era neural network with a single hidden layer and a modern deep learning neural network with multiple hidden layers. Notice how deeper networks progressively extract hierarchical features, from detecting edges to recognizing complex combinations, allowing the model to form rich representations of the input.</p>
+<p><img src="../_assets/shallow-vs-deep.jpg" alt="multi"></p>
+<p>*<em>Caption: Shallow networks catch basic clues; deep networks uncover intricate patterns, with residual connections enabling deeper architectures.</em></p>
+<p>In addiiton , a simple comparison of shallow versus deep CNN models implemented in TensorFlow in given as follows.</p>
+<pre><code class="language-python">from tensorflow.keras import Sequential, layers  
+
+# Shallow CNN for simple patterns  
+model_shallow = Sequential([  
+    layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),  
+    layers.MaxPooling2D((2, 2)),  
+    layers.Conv2D(64, (3, 3), activation='relu'),  
+])  
+
+# Deep CNN for complex patterns  
+model_deep = Sequential([  
+    layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),  
+    layers.MaxPooling2D((2, 2)),  
+    layers.Conv2D(64, (3, 3), activation='relu'),  
+    layers.Conv2D(128, (3, 3), activation='relu'),  
+])  
+</code></pre>
+<p>The shallow model has approximately 51,200 parameters, while the deeper model has about 132,000 parameters. This increase in complexity can improve accuracy but may require regularization techniques like dropout or L2 regularization to prevent overfitting. Having set the foundation with network depth, we now focus on finer-grained hyperparameters that affect how features are extracted within each layer.</p>
+<p>Understanding the overall depth of a convolutional neural network is essential, but equally important is what happens inside each layer. Specifically, the way each convolutional layer processes the input depends on the size of its kernels, which act as the network’s window into the image. Let’s explore how the kernel size influences the features the network detects.</p>
+<hr>
+<h3 id="kernel-size-the-detectives-magnifying-glass">Kernel Size: The Detective’s Magnifying Glass</h3>
+<p>Convolutional kernels, often called filters, act as feature detectors sliding across the input image. The kernel size determines the spatial area the filter observes at each step, which is also known as the receptive field. To better understand this, imagine the kernel as a detective’s magnifying glass examining a scene. Smaller kernels, such as 3×3, focus on capturing fine, localized details, much like a magnifying glass zooming in on the delicate strands of a dog’s fur or the edges of an object. Larger kernels, such as 5×5, cover a broader area, similar to seeing the outline of a car or the shape of a face from a wider perspective.</p>
+<p>Choosing the right kernel size involves important trade-offs. Smaller kernels require fewer parameters, which helps reduce computational cost and lowers the risk of overfitting. When multiple small kernels are stacked in successive layers, they can approximate the effect of a larger kernel while introducing additional nonlinearities that enhance the model’s ability to represent complex patterns. On the other hand, larger kernels capture more global context in a single step but come with increased computational demands and more parameters, which can slow training and potentially lead to overfitting, especially when data is limited. Below is a simple code example comparing CNN layers with small and large kernels</p>
+<ul>
+<li><strong>code example</strong></li>
+</ul>
+<pre><code class="language-python"># Small kernel for detailed edges  
+model_small = Sequential([  
+    layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),  
+])  
+
+# Large kernel for broader shapes  
+model_large = Sequential([  
+    layers.Conv2D(32, (5, 5), activation='relu', input_shape=(28, 28, 1)),  
+])  
+</code></pre>
+<p>A 3×3 kernel uses 9 weights per filter (3 × 3 × 1), while a 5×5 kernel uses 25 weights (5 × 5 × 1). For 32 filters, this corresponds to 288 parameters for the smaller kernel versus 800 for the larger one, impacting both memory and computational cost. By understanding these trade-offs, practitioners can select kernel sizes that balance the need for detailed feature extraction with computational efficiency.</p>
+<p>To better understand how kernel size influences feature detection, consider the following example. The original grayscale image, in figure below, on the left is processed with two different convolutional kernels. The middle image shows the output after applying a 3x3 kernel, which focuses on fine, localized edges. This results in detecting sharper and more detailed edge features. The right image shows the output of a 5x5 kernel, which covers a larger area and thus captures broader edge patterns but may smooth over finer details. This visualization emphasizes the trade-off discussed earlier: smaller kernels are better for capturing fine-grained features, while larger kernels capture more global structure in fewer steps but with less detail. Selecting the appropriate kernel size depends on the task requirements and computational constraints.</p>
+<p><img src="../_assets/kernel-sizes-example.png" alt="download"></p>
+<p><em>Figure: Comparison of edge detection outputs using 3x3 and 5x5 convolutional kernels. The smaller 3x3 kernel captures finer details, while the larger 5x5 kernel highlights broader edge structures.</em></p>
+<p>Next, we will explore how stride, the step size at which the kernel moves across the input, further influences the size of feature maps and the computational load of the network.</p>
+<hr>
+<h3 id="stride-the-detectives-walking-pace">Stride – The Detective’s Walking Pace</h3>
+<p>Having explored how kernel size determines the level of detail the network focuses on, the next crucial hyperparameter is stride, which controls how the convolutional kernel moves across the input image. Stride specifies the number of pixels the kernel shifts after each application. To visualize this, imagine the detective scanning a room:</p>
+<ul>
+<li><strong>Stride = 1</strong>: The detective examines every inch carefully, ensuring no clue is missed. This corresponds to the kernel moving one pixel at a time, producing detailed and densely sampled feature maps that retain spatial information. Such precision is important for tasks like medical imaging or detailed object recognition.</li>
+<li><strong>Stride = 2</strong>: The detective moves more quickly, skipping every other step to save time but risking some clues being overlooked. This means the kernel moves two pixels at a time, downsampling the input and resulting in smaller feature maps. This approach reduces computational load and speeds up processing, which is beneficial in real-time applications such as autonomous driving or video analysis.</li>
+</ul>
+<h3 id="effects-of-stride-on-cnn-performance">Effects of Stride on CNN Performance</h3>
+<ul>
+<li>Small strides preserve spatial details and are suited to tasks demanding high resolution.</li>
+<li>Larger strides reduce computation, making them ideal for applications requiring faster inference.</li>
+<li>Advanced architectures sometimes replace pooling layers with strided convolutions, which combine downsampling with learnable parameters, potentially improving model flexibility and performance.</li>
+</ul>
+<p>To better understand the practical implications of stride selection, the following code example illustrates how different stride values affect convolutional layers in a neural network.</p>
+<ul>
+<li><strong>Code Example</strong></li>
+</ul>
+<pre><code class="language-python">from tensorflow.keras import layers
+
+# Stride=1 for precision (e.g., tumor detection)  
+layers.Conv2D(32, (3, 3), strides=1, activation='relu')  
+
+# Stride=2 for speed (e.g., traffic sign recognition)  
+layers.Conv2D(32, (3, 3), strides=2, activation='relu')  
+</code></pre>
+<p><strong>Output Size Consideration:</strong></p>
+<p>With a 28×28 input image and a 3×3 kernel using valid padding, a stride of 1 produces a 26×26 output, while a stride of 2 produces a 13×13 output. This difference means the latter configuration requires roughly 75% fewer computations, demonstrating a significant efficiency gain. In summary, selecting the appropriate stride is a balance between preserving spatial resolution and improving computational efficiency. The choice depends on the specific needs and constraints of the application.</p>
+<p>The following diagrams illustrate the effect of stride on how the convolutional kernel moves across the input and the size of the resulting feature map.</p>
+<p><img src="../_assets/stride1.gif" alt="stride1">
+<em>Figure: With stride 1, the convolutional kernel (highlighted in green) moves one pixel at a time over the input (blue), resulting in a detailed, larger feature map (red).</em> <img src="../_assets/stride2.gif" alt="stride2">
+<em>Figure: With stride 2, the kernel moves two pixels at a time, skipping positions and producing a smaller feature map. This reduces the output’s spatial resolution but also computational complexity.</em></p>
+<p>As shown, a stride of 1 results in dense scanning where the kernel examines every possible position, maintaining high spatial resolution in the feature maps. In contrast, a stride of 2 causes the kernel to “jump” every other pixel, reducing the spatial dimensions of the feature maps by approximately half in both width and height. This reduction in size translates directly into lower computational cost and faster processing but may result in some loss of fine spatial detail. Selecting an appropriate stride is therefore a trade-off between preserving information and improving efficiency, depending on the requirements of the application.</p>
+<p>Building on how stride controls the step size of the convolutional kernel and influences feature map size, the next section will focus on padding, a technique that manages how convolutional layers handle image borders to preserve spatial information.</p>
+<hr>
+<h3 id="padding-the-detectives-field-of-view">Padding – The Detective’s Field of View</h3>
+<p>Building on our understanding of how stride controls the kernel’s movement across the image, the concept of <strong>padding</strong> plays a vital role in determining how the convolutional operation interacts with image borders.</p>
+<p>Padding involves adding extra pixels around the edges of the input image, usually zeros, which effectively expands the input's spatial dimensions before convolution. This can be likened to giving the detective a wider field of view, enabling them to carefully inspect the edges of the crime scene and avoid missing critical clues that lie near the boundaries.</p>
+<ul>
+<li><strong>No padding (&quot;valid&quot;)</strong> means the convolutional kernel only processes positions where it completely overlaps with the input image. This approach reduces the spatial size of the output feature map, as the kernel cannot be centered on pixels at the very edge. Consequently, valuable information near the borders might be lost.</li>
+<li><strong>Padding (&quot;same&quot;)</strong> adds a border of zeros around the input so that the output feature map maintains the same spatial dimensions as the original input. This ensures that edge information is preserved and the convolution can be applied at every pixel location.</li>
+</ul>
+<h4 id="impact-of-padding-on-cnns">Impact of Padding on CNNs</h4>
+<ul>
+<li>Applying padding preserves spatial dimensions throughout the network, which is particularly important for tasks like object detection or semantic segmentation where edge features are crucial.</li>
+<li>Using no padding reduces the output size, lowering computational cost but potentially losing information at the image periphery.</li>
+<li>Advanced padding techniques, such as reflection or replication padding, replace zeros with mirrored or repeated border values. These methods often yield better edge preservation in applications like image synthesis and style transfer.</li>
+</ul>
+<p>To better understand the practical implications of padding choices, the following code examples illustrate how different padding strategies affect convolutional layers.</p>
+<ul>
+<li><strong>Code Example</strong></li>
+</ul>
+<pre><code class="language-python">from tensorflow.keras import layers
+
+# Padding='same' preserves input dimensions by zero-padding edges
+layers.Conv2D(32, (3, 3), padding='same', activation='relu')
+
+# Padding='valid' applies convolution only to valid positions, reducing output size
+layers.Conv2D(32, (3, 3), padding='valid', activation='relu')
+</code></pre>
+<p><strong>Output Size Consideration:</strong></p>
+<p>For a 28×28 input image convolved with a 3×3 kernel and stride of 1:</p>
+<ul>
+<li><strong>Same padding</strong> produces an output of 28×28 by adding a one-pixel border around the input.</li>
+<li><strong>Valid padding</strong> results in an output size of 26×26, as the convolution is only applied where the kernel fits entirely within the input.</li>
+</ul>
+<p>Selecting the appropriate padding strategy influences the spatial resolution and quality of the extracted features, which can significantly affect model performance depending on the task. The following diagram illustrates how different padding strategies affect the size of the output feature map during convolution.</p>
+<p><img src="../_assets/valid-vs-same.png" alt="CNN-valid-vs-same-1">
+<em>Figure: The effect of padding on feature map size. With valid padding (top), the convolution is applied only where the filter fully overlaps the input, reducing output dimensions. With same padding (bottom), zero-padding is added around the input to maintain output dimensions equal to the input size.</em></p>
+<p>In the <strong>valid padding</strong> scenario, the convolutional filter moves only within the bounds of the input, resulting in a smaller output feature map. This approach discards border information but reduces computation. In contrast, <strong>same padding</strong> adds zeros around the edges of the input, allowing the filter to slide over the entire input including edges. This preserves the spatial dimensions of the input in the output, maintaining important boundary information.</p>
+<p>Understanding the difference between these padding methods is crucial for designing CNN architectures that maintain spatial resolution when necessary or reduce feature map sizes for efficiency. Having established the role of padding in preserving spatial structure, we next turn to pooling layers. Pooling provides another essential mechanism for controlling feature map dimensions and improving network robustness.</p>
+<hr>
+<h3 id="pooling-summarizing-the-clues">Pooling – Summarizing the Clues</h3>
+<p>After padding has helped preserve spatial dimensions and edge information in convolutional layers, pooling layers provide an essential mechanism to reduce the spatial size of feature maps while emphasizing the most important features. Pooling can be viewed as the detective’s notebook , a tool to condense numerous clues into a focused summary that highlights the key evidence. Two widely used types of pooling are:</p>
+<ul>
+<li><strong>Max pooling</strong>, which selects the maximum activation within each pooling window. This operation preserves the strongest and most salient features in a local region, such as distinct edges or bright spots. For example, max pooling is effective in facial recognition tasks by maintaining critical details like the eyes or mouth, which are essential for identification.</li>
+<li><strong>Average pooling</strong>, which calculates the average activation within the pooling window. This approach smooths out noisy activations and can help generalize over small variations in the input. It is particularly useful in contexts like satellite imagery, where reducing noise is crucial for accurate interpretation.</li>
+</ul>
+<p>An advanced form of pooling, global average pooling, reduces each entire feature map to a single average value. This technique is employed in state-of-the-art architectures such as ResNet, allowing the network to reduce parameters significantly and enabling fully convolutional designs for classification tasks. To illustrate the practical usage of different pooling methods, the following code example demonstrates how max pooling and average pooling are implemented in convolutional neural networks.</p>
+<ul>
+<li><strong>Code Example</strong></li>
+</ul>
+<pre><code class="language-python">from tensorflow.keras import layers
+
+# Max pooling to retain critical features  
+layers.MaxPooling2D((2, 2))  
+
+# Average pooling to smooth out noise  
+layers.AveragePooling2D((2, 2))  
+</code></pre>
+<p>Applying a 2×2 pooling window to a 28×28 feature map reduces its dimensions to 14×14, effectively decreasing the spatial size by 75%. Max pooling helps maintain the integrity of vital features within this reduced representation, while average pooling offers noise reduction by smoothing the activations.</p>
+<p>By balancing spatial dimensionality reduction and feature preservation, pooling layers contribute significantly to the efficiency and robustness of convolutional neural networks.</p>
+<p>The following images illustrate the difference between max pooling and average pooling applied to a noisy image of a banana.</p>
+<p><img src="../_assets/pooling-example.png" alt="download"></p>
+<p><em>Figure: The original noisy image (left) compared with the effects of max pooling (center) and average pooling (right). Max pooling preserves prominent features such as edges and sharp contrasts, while average pooling smooths out noise by averaging pixel values.</em></p>
+<p>As shown, <strong>max pooling</strong> maintains the most salient features in each region by selecting the highest pixel values, which helps preserve edges and important details. Conversely, <strong>average pooling</strong> computes the mean of pixel values, which smooths out noise but may blur fine details. This visualization highlights the practical implications of choosing between max and average pooling depending on whether the application prioritizes feature sharpness or noise reduction.</p>
+<p>With a clear understanding of pooling’s role in feature summarization, the next section will explore learning rate, the hyperparameter that governs how quickly the network adjusts during training and ultimately impacts model convergence.</p>
+<hr>
+<h3 id="learning-rate-the-detectives-learning-speed">Learning Rate – The Detective’s Learning Speed</h3>
+<p>After understanding how pooling layers distill important features, the next key hyperparameter is the <strong>learning rate</strong>, which governs how rapidly the model adjusts its parameters in response to new data. This parameter is analogous to the detective’s speed in updating their understanding as fresh clues emerge.</p>
+<ul>
+<li>A <strong>high learning rate</strong> (e.g., 0.1) can cause the model to take overly large steps during training, potentially overshooting optimal solutions and resulting in unstable training or divergence.</li>
+<li>Conversely, a <strong>low learning rate</strong> (e.g., 0.0001) leads to very small parameter updates, which slows down learning and may cause the model to get stuck in local minima or plateau before reaching an optimal state.</li>
+</ul>
+<p>Selecting an appropriate learning rate is critical to ensure efficient and stable convergence. Values around 0.001 are commonly effective starting points for many deep learning tasks.</p>
+<p>To enhance training dynamics, advanced learning rate schedules can be employed. For instance, <strong>cosine annealing</strong> gradually reduces the learning rate following a cosine curve, allowing larger steps early on and finer adjustments later. Similarly, <strong>cyclical learning rates</strong> oscillate the learning rate within a specified range, helping the model escape local minima and improving generalization.</p>
+<ul>
+<li><strong>Code Example</strong></li>
+</ul>
+<pre><code class="language-python">from tensorflow.keras.optimizers import Adam  
+
+# Standard learning rate for stable training  
+optimizer = Adam(learning_rate=0.001)  
+
+# Cosine decay schedule for gradual learning rate reduction  
+from tensorflow.keras.optimizers.schedules import CosineDecay  
+optimizer = Adam(learning_rate=CosineDecay(initial_learning_rate=0.01, decay_steps=1000))  
+</code></pre>
+<p>In this code snippet, the Adam optimizer is initialized with a fixed learning rate of 0.001, which balances speed and stability during training. The second example employs a cosine decay schedule that starts with a higher learning rate (0.01) and smoothly decreases it over 1000 steps, enhancing convergence behavior on complex datasets. Effective learning rate selection and tuning significantly impact training efficiency and model accuracy, making it a crucial focus in the development of deep learning systems.</p>
+<p>The following diagram illustrates how the choice of learning rate influences the model’s path toward the minimum of the loss function during training</p>
+<p><img src="../_assets/learning-rate.png" alt="rate"></p>
+<p><em>Figure: Optimization trajectories with different learning rates. A learning rate that is too low leads to slow convergence (left), an optimal learning rate reaches the minimum efficiently (center), and a too-high learning rate causes unstable, divergent behavior (right).</em></p>
+<p>As shown, a small learning rate results in many small, incremental updates, causing the model to take longer to converge. An optimal learning rate allows the model to reach the minimum efficiently with stable updates. Conversely, a large learning rate causes the model to overshoot the minimum, leading to erratic updates that can prevent convergence or cause divergence. This visualization underscores the critical importance of selecting an appropriate learning rate to ensure effective and stable training. Next, we will explore the impact of batch size, the detective’s case load, and how it influences training dynamics and model performance.</p>
+<hr>
+<h3 id="batch-size-the-detectives-case-load">Batch Size – The Detective’s Case Load</h3>
+<p>Building upon the role of learning rate in determining how quickly the model learns, <strong>batch size</strong> controls how many clues—the data samples—the detective examines before updating their hypothesis. It defines the number of training examples processed in one forward and backward pass during model training.</p>
+<ul>
+<li>A <strong>large batch size</strong> (e.g., 128) is like reviewing a stack of case files at once, producing smoother and more stable gradient updates. However, larger batches require more memory and computational resources and may lead to slower convergence or poorer generalization.</li>
+<li>A <strong>small batch size</strong> (e.g., 32) corresponds to tackling one clue at a time, leading to noisier but more frequent updates. This noise can help the model escape local minima and often results in better generalization, especially in complex tasks.</li>
+</ul>
+<p>To fully grasp the influence of batch size on model training, it is important to examine how different batch sizes affect gradient stability, learning speed, and generalization performance.</p>
+<h3 id="effects-of-batch-size-on-training">Effects of Batch Size on Training</h3>
+<ul>
+<li>Large batches provide stable gradient estimates and are effective for simpler datasets like MNIST digit classification.</li>
+<li>Small batches introduce stochasticity into the training process, which can accelerate learning and improve generalization for more complex datasets such as object detection or ImageNet.</li>
+<li>Techniques such as <strong>batch normalization</strong> help stabilize training across different batch sizes, enabling the use of larger batches without compromising model performance.</li>
+</ul>
+<p>The following code demonstrates how varying batch sizes can be specified during model training to balance stability and speed.</p>
+<ul>
+<li><strong>Code Example</strong></li>
+</ul>
+<pre><code class="language-python">from tensorflow.keras import Sequential  
+
+# Large batch size for stable training (e.g., CIFAR-10: 128-256)  
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])  
+model.fit(X_train, y_train, batch_size=128, epochs=10)  
+
+# Small batch size for faster updates and improved generalization (e.g., ImageNet: 32-64)  
+model.fit(X_train, y_train, batch_size=32, epochs=10)  
+</code></pre>
+<p>In this example, a batch size of 128 processes 128 images per update, offering more stable gradient estimates but requiring approximately four times more memory than a batch size of 32. Conversely, a batch size of 32 leads to faster, more frequent updates that introduce beneficial noise into the learning process. Selecting an appropriate batch size involves balancing computational efficiency, memory constraints, and the stochastic nature of training to optimize both speed and model accuracy.</p>
+<p>The following plots demonstrate the effect of varying batch sizes on training progress, measured by accuracy over 200 epochs. Each subplot shows the training dynamics for a different batch size, ranging from very small (4) to very large (450).</p>
+<p><img src="../_assets/batch-size.png" alt="Line-Plots-of-Classification-Accuracy-on-Train-and-Test-Datasets-With-Different-Batch-Sizes"></p>
+<p><em>Figure: Training accuracy curves for different batch sizes. Smaller batch sizes introduce more noise, resulting in more fluctuations early in training but often better generalization. Larger batch sizes produce smoother, more stable training curves but may require careful tuning to avoid overfitting.</em></p>
+<p>As seen, <strong>small batch sizes</strong> tend to produce noisier training curves due to the stochastic nature of gradient updates, which can help the model escape local minima and improve generalization. In contrast, <strong>large batch sizes</strong> yield smoother, more stable training but may converge to sharp minima, sometimes reducing generalization performance. This visualization highlights the importance of selecting an appropriate batch size to balance training stability, speed, and model accuracy.</p>
+<p>Having examined each key hyperparameter individually—understanding their distinct roles, trade-offs, and effects on model training, it is essential to consider how these parameters interact and compare in practice. The next section provides a comprehensive comparison, highlighting their relative impacts on model performance, computational efficiency, and practical considerations in real-world deep learning workflows.</p>
+<hr>
+</section><section><h2 id="comparison-of-key-hyperparameters-balancing-detail-efficiency-and-learning-dynamics">Comparison of Key Hyperparameters: Balancing Detail, Efficiency, and Learning Dynamics</h2>
+<p>In the previous sections, we explored several fundamental hyperparameters that govern convolutional neural network (CNN) behavior. Understanding their individual functions is critical; however, practical success often depends on balancing these parameters together to achieve optimal performance and efficiency.</p>
+<table>
+<thead>
+<tr>
+<th><strong>Hyperparameter</strong></th>
+<th><strong>Primary Role</strong></th>
+<th><strong>Impact on Model</strong></th>
+<th><strong>Computational Cost</strong></th>
+<th><strong>Typical Trade-offs</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Kernel Size</strong></td>
+<td>Determines the spatial extent of local feature detection within each layer.</td>
+<td>Larger kernels capture broader patterns but may lose fine details; smaller kernels capture finer details but require deeper networks to see larger context.</td>
+<td>Larger kernels increase parameter count and computation; smaller kernels are more efficient but may need more layers.</td>
+<td>Balance between feature granularity and model complexity.</td>
+</tr>
+<tr>
+<td><strong>Stride</strong></td>
+<td>Controls the step size of the convolutional kernel as it moves across input.</td>
+<td>Larger stride downsamples feature maps, reducing spatial resolution and potentially losing detail.</td>
+<td>Larger strides reduce computation and memory but risk discarding important spatial information.</td>
+<td>Trade-off between spatial detail and computational efficiency.</td>
+</tr>
+<tr>
+<td><strong>Padding</strong></td>
+<td>Determines how borders are handled, preserving spatial dimensions.</td>
+<td>Same padding preserves input size and edge information; valid padding reduces size and may lose border data.</td>
+<td>Padding slightly increases computation due to added input size but helps retain important spatial context.</td>
+<td>Choice depends on whether maintaining spatial dimensions is crucial.</td>
+</tr>
+<tr>
+<td><strong>Pooling</strong></td>
+<td>Downsamples feature maps to summarize and emphasize important features.</td>
+<td>Max pooling preserves strongest activations; average pooling smooths activations to reduce noise.</td>
+<td>Reduces spatial dimensions and computation significantly.</td>
+<td>Choosing pooling type affects noise sensitivity and feature retention.</td>
+</tr>
+<tr>
+<td><strong>Learning Rate</strong></td>
+<td>Governs step size for updating model parameters during training.</td>
+<td>High learning rates speed up training but risk instability; low rates ensure stability but slow convergence.</td>
+<td>Indirect effect via convergence speed and stability.</td>
+<td>Balance between rapid learning and avoiding divergence.</td>
+</tr>
+<tr>
+<td><strong>Batch Size</strong></td>
+<td>Number of training samples processed before updating model weights.</td>
+<td>Large batches provide stable gradient estimates but may reduce generalization; small batches introduce noise improving generalization but with noisier updates.</td>
+<td>Larger batches require more memory but can exploit parallelism.</td>
+<td>Trade-off between training speed, stability, and generalization quality.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="interactions-and-practical-considerations">Interactions and Practical Considerations</h3>
+<p>Hyperparameters in convolutional neural networks do not operate in isolation. Their interactions significantly influence model performance, training dynamics, and computational efficiency. Key relationships include:</p>
+<ul>
+<li><strong>Kernel Size and Stride:</strong> Larger kernels combined with larger strides reduce feature map size quickly, risking loss of spatial resolution. Balancing these is essential to maintain an effective receptive field without overly shrinking the representation.</li>
+<li><strong>Padding and Kernel Size:</strong> Padding is chosen to complement kernel size. Larger kernels often require same padding to preserve output dimensions and avoid early spatial shrinkage.</li>
+<li><strong>Pooling vs. Stride:</strong> While pooling layers traditionally perform downsampling, strided convolutions offer a learnable alternative that integrates downsampling with feature extraction.</li>
+<li><strong>Learning Rate and Batch Size:</strong> These hyperparameters jointly affect training stability and speed. Larger batch sizes typically allow higher learning rates, but the optimal balance is task-dependent and often requires empirical tuning and scheduling strategies.</li>
+<li><strong>Generalization and Efficiency:</strong> Small batch sizes combined with moderate learning rates promote better generalization but may slow training. Conversely, large batches and aggressive downsampling improve computational efficiency but risk reducing model robustness if not carefully managed.</li>
+</ul>
+<h3 id="key-insights">Key Insights</h3>
+<p>Understanding the individual contributions and trade-offs of each hyperparameter supports effective CNN design and training:</p>
+<ul>
+<li><strong>Kernel Size</strong> determines the spatial scope of feature detection, with smaller kernels capturing fine details and larger kernels detecting broader patterns.</li>
+<li><strong>Stride</strong> directly influences spatial downsampling within convolutional layers, balancing detail retention and computational cost.</li>
+<li><strong>Padding</strong> preserves spatial dimensions and edge information, crucial for tasks requiring precise localization.</li>
+<li><strong>Pooling</strong> reduces feature map size and noise, with max pooling emphasizing prominent features and average pooling smoothing activations.</li>
+<li><strong>Learning Rate</strong> governs training speed and stability, requiring careful selection to ensure convergence without instability or slow progress.</li>
+<li><strong>Batch Size</strong> affects the trade-off between training stability and generalization, where smaller batches introduce beneficial noise and larger batches increase computational efficiency.</li>
+<li><strong>Overall</strong>, these hyperparameters interact in complex ways. Holistic tuning, considering dataset characteristics, task demands, and hardware constraints, is essential for optimal CNN performance.</li>
+</ul>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>Hyperparameter tuning transforms CNNs from novice detectives into master sleuths. By adjusting the depth of investigation (layer count), magnifying glass (kernel size), walking pace (stride), field of view (padding), clue summarization (pooling), case load (batch size), and learning speed (learning rate), you optimize CNNs for tasks like spotting tumors in X-rays or recognizing pedestrians in autonomous vehicles. <strong>Tuning Strategy</strong>: Use grid search for small models (e.g., testing kernel sizes [3x3, 5x5] and learning rates [0.001, 0.01]) or random search/Bayesian optimization (e.g., Keras Tuner) for larger models to efficiently explore combinations. Experiment, validate, and keep the detective’s goals in mind!</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

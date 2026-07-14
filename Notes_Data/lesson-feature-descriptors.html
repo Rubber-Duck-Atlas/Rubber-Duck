@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Feature Descriptors</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-feature-descriptors">Lesson: Feature Descriptors</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In the fascinating field of computer vision, where machines learn to interpret images by identifying key elements like edges, corners, or textures, feature descriptors play a vital role in making sense of visual data. Think of them as a skilled mapmaker, pinpointing and describing distinctive landmarks in an image—landmarks that stay recognizable even if the image is rotated, scaled, or bathed in different light. To be effective, feature descriptors must exhibit <strong>distinctiveness</strong> (standing out uniquely), <strong>robustness</strong> (holding steady across changes), <strong>locality</strong> (focusing on specific spots), <strong>quantity</strong> (offering enough points to work with), and <strong>efficiency</strong> (balancing speed and performance). This lesson dives into three key players—<strong>SIFT (Scale-Invariant Feature Transform)</strong>, <strong>SURF (Speeded-Up Robust Features)</strong>, and <strong>ORB (Oriented FAST and Rotated BRIEF)</strong>—exploring how they extract these critical features and handle variations like scale, rotation, and illumination. We’ll also look at descriptor matching techniques and their real-world applications, such as object recognition and anomaly detection, complete with code examples to bring the concepts to life.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Explain</strong> the role of SIFT, SURF, and ORB in extracting key features from images and how they tackle variations like scale, rotation, and illumination.</li>
+<li><strong>Compare</strong> descriptor matching techniques and their applications in object recognition and anomaly detection, highlighting their strengths and use cases.</li>
+</ol>
+<hr>
+</section><section><h2 id="overview-of-feature-descriptors">Overview of Feature Descriptors</h2>
+<p>Feature descriptors are a cornerstone of computer vision, designed to identify <strong>keypoints</strong> unique, stable points in an image that remain detectable despite transformations such as scaling, rotation, or changes in lighting and viewpoint. These keypoints are paired with <strong>descriptors</strong>, which are numerical representations (typically vectors) that encode the local image structure around each keypoint. This pairing allows for robust matching between images, making feature descriptors indispensable for a variety of applications:</p>
+<ul>
+<li><strong>Object Recognition</strong>: Identifying specific objects across different images or scenes, even under varying conditions.</li>
+<li><strong>Image Stitching</strong>: Seamlessly combining multiple images into a single panorama, such as in photo editing software or mapping tools.</li>
+<li><strong>3D Reconstruction</strong>: Building three-dimensional models from a series of two-dimensional images, critical in fields like robotics and archaeology.</li>
+<li><strong>Visual SLAM (Simultaneous Localization and Mapping)</strong>: Enabling autonomous systems (e.g., drones or robots) to map and navigate unknown environments in real time.</li>
+<li><strong>Motion Tracking</strong>: Following objects or camera movement across video frames, used in augmented reality and video stabilization.</li>
+</ul>
+<hr>
+<h3 id="importance-in-computer-vision">Importance in Computer Vision</h3>
+<p>Raw pixel data alone is often unreliable for tasks like object recognition due to variations in scale, orientation, illumination, or noise. Feature descriptors address this by abstracting an image into a set of stable, distinctive points that can be consistently matched across different views or conditions. This abstraction mimics aspects of human visual perception, allowing machines to &quot;recognize&quot; and &quot;interpret&quot; visual data in a robust and repeatable manner. Their ability to handle geometric and photometric transformations makes them a foundational tool in bridging the gap between raw image input and high-level understanding.</p>
+<hr>
+<h3 id="overview-of-sift-surf-and-orb">Overview of SIFT, SURF, and ORB</h3>
+<p>This lesson focuses on three widely used feature descriptor algorithms, each with distinct characteristics:</p>
+<ul>
+<li><strong>SIFT</strong>: Known for its robustness to scale, rotation, and illumination changes, making it ideal for complex matching tasks, though it is computationally intensive.</li>
+<li><strong>SURF</strong>: A faster alternative to SIFT, balancing speed and accuracy by leveraging efficient approximations, suitable for real-time applications.</li>
+<li><strong>ORB</strong>: Optimized for speed and efficiency, offering a lightweight, patent-free solution for resource-constrained environments like mobile devices.</li>
+</ul>
+<p>By understanding these algorithms, you’ll gain insight into their strengths, trade-offs, and practical applications, setting the stage for deeper exploration in computer vision.</p>
+<hr>
+</section><section><h2 id="sift-scale-invariant-feature-transform">SIFT (Scale-Invariant Feature Transform)</h2>
+<p>The <strong>Scale-Invariant Feature Transform (SIFT)</strong>, introduced by David Lowe in 2004, is a key algorithm in computer vision that finds and describes special points in an image, called <strong>keypoints</strong>: unique spots, like corners or edges, that stand out and can be recognized even if the image is zoomed, rotated, or lit differently. Think of SIFT as a guide spotting landmarks in a city—say, a unique building corner—that you can identify from any angle or distance. These <strong>keypoints</strong> are described in a way that lets you match them across different views, building on edge detection and image transformations. SIFT ensures these points are robust, much like how noise reduction keeps images clear, with descriptor normalization to handle illumination changes effectively. Note that SIFT is a patented method, meaning its use in commercial products may require a license, restricting deployment outside educational or research settings. SIFT works through four main steps:</p>
+<p><img src="../_assets/sift_steps.png" alt="C5BBC774-8499-4561-BDF6-D8D2499773F3-1024x323"></p>
+<ol>
+<li><strong>Scale-Space Extrema Detection</strong>: Finds <strong>keypoints</strong> by looking for standout features across different zoom levels, like spotting edges at various sizes.</li>
+<li><strong>Keypoint Localization</strong>: Sharpens these <strong>keypoints</strong> to make them precise and reliable, similar to filtering weak edges in Canny.</li>
+<li><strong>Orientation Assignment</strong>: Gives each <strong>keypoint</strong> a direction, so it can be matched even if the image is rotated, like aligning augmented images.</li>
+<li><strong>Descriptor Generation</strong>: Creates a unique <strong>descriptor</strong>: a numerical “fingerprint” for each keypoint, allowing matches across images, like a label for a landmark.</li>
+</ol>
+<p>These steps use ideas like blurring from noise reduction and edge detection, making SIFT a natural next step. Below, each step is explained simply, with its purpose, process, and a Python/OpenCV visualization using a test image.</p>
+<h3 id="step-1-scale-space-extrema-detection">Step 1: Scale-Space Extrema Detection</h3>
+<p>This step finds <strong>keypoints</strong> that stay recognizable no matter how zoomed in or out the image is, like identifying a building’s corner in both close-up and faraway photos. It’s similar to finding edges that stand out at different scales.</p>
+<p>SIFT creates a <strong>scale-space pyramid</strong>: a set of images blurred at different levels, like applying noise reduction to make features appear at various sizes. It then compares these blurred images to spot areas where the image changes a lot, similar to how edge detection finds sharp changes.</p>
+<p><img src="../_assets/scale.png" alt="Diagram-of-SIFT-keypoint-detection-algorithm-showing-one-octave-with-6-Gaussian-image"></p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Blurring</td>
+<td>SIFT begins by applying <strong>Gaussian blurring</strong> to reduce image detail, simulating different zoom levels.</td>
+</tr>
+<tr>
+<td>Difference of Gaussians (DoG)</td>
+<td>Subtracts neighboring blurred images to generate <strong>DoG images</strong>, which emphasize rapid intensity changes—ideal for detecting blobs, corners, and distinct structures.</td>
+</tr>
+<tr>
+<td>Finding Keypoints</td>
+<td>Identifies candidate keypoints in DoG images by comparing each pixel to its neighbors in space and scale, looking for local intensity maxima or minima.</td>
+</tr>
+<tr>
+<td>Expected Outcome</td>
+<td>Produces keypoints at <strong>scale-space extrema</strong>—locations of strong contrast invariant to scale. These serve as the foundation for reliable feature matching across conditions.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="step-2-keypoint-localization"><strong>Step 2: Keypoint Localization</strong></h3>
+<p>This step refines the <strong>candidate keypoints</strong> identified in the previous stage to ensure they are both <strong>precise and reliable</strong>. Just as edge detection algorithms like Canny remove weak or elongated edges, SIFT filters out unstable keypoints that are likely caused by noise, low contrast, or poorly defined edges. The goal is to retain only those keypoints that are distinctive and repeatable.</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Precise Positioning</td>
+<td>Refines keypoint locations using <strong>sub-pixel interpolation</strong> to improve accuracy. This ensures keypoints align precisely with meaningful image structures, similar to sharpening edge detection in high-resolution images.</td>
+</tr>
+<tr>
+<td>Low-Contrast Removal</td>
+<td>Discards keypoints with minimal intensity change, which tend to be unstable and unreliable for matching. This step retains only strong, localized changes in brightness for better feature consistency.</td>
+</tr>
+<tr>
+<td>Edge Response Elimination</td>
+<td>Uses the <strong>Hessian matrix</strong> to filter out keypoints along edges, which may show strong gradients but are poorly localized. Retains only corner-like or blob-like regions, which offer more distinctive, stable features for matching.</td>
+</tr>
+<tr>
+<td>Expected Outcome</td>
+<td>Results in a refined set of keypoints that are accurate, high-contrast, and resilient to edge ambiguity. These points are robust to changes in viewpoint and lighting, making them well-suited for real-world image matching tasks.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="step-3-orientation-assignment"><strong>Step 3: Orientation Assignment</strong></h3>
+<p>This step assigns one or more <strong>orientations</strong> to each keypoint, making them <strong>rotation-invariant</strong>. Much like in data augmentation where rotated versions of an image help models learn angle-invariant features, SIFT ensures that a keypoint can still be matched even if the image has been rotated. This step is essential for building descriptors that remain consistent across different viewing angles.</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gradient Analysis</td>
+<td>Computes <strong>gradient magnitude and direction</strong> around each keypoint, similar to edge detection. This reveals how brightness changes and identifies the strongest directions of intensity variation in the neighborhood.</td>
+</tr>
+<tr>
+<td>Direction Histogram</td>
+<td>Groups gradient directions into a <strong>36-bin histogram</strong>, with each bin covering 10 degrees. Gradients contribute based on both direction and strength, helping capture the dominant orientation around the keypoint.</td>
+</tr>
+<tr>
+<td>Choosing Directions</td>
+<td>The <strong>highest peak</strong> defines the keypoint's <strong>primary orientation</strong>. If other peaks are within <strong>80%</strong> of the max, additional keypoints are created with those orientations—preserving all significant directional features.</td>
+</tr>
+<tr>
+<td>Expected Outcome</td>
+<td>Each keypoint now has one or more orientations. This allows keypoints to remain matchable even when the image is rotated, making SIFT robust for tasks like object recognition, tracking, and alignment across rotated views.</td>
+</tr>
+</tbody>
+</table>
+<p><img src="../_assets/orientation.png" alt="1_LYpnMuXsYxxBu9apbpsC6g"></p>
+<hr>
+<h3 id="step-4-descriptor-generation"><strong>Step 4: Descriptor Generation</strong></h3>
+<p>This step generates a distinctive descriptor for each keypoint—a numerical “fingerprint” that captures the appearance of its local neighborhood. These descriptors enable reliable matching between keypoints in different images, even when those images vary in scale, rotation, or illumination. While earlier steps focused on identifying where the keypoints are and in what direction they point, this step encodes what they look like.</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Region Selection</td>
+<td>Selects a <strong>16×16 pixel region</strong> around each keypoint, aligned to its orientation. This alignment ensures descriptor consistency even when the image is rotated.</td>
+</tr>
+<tr>
+<td>Subdivision</td>
+<td>Divides the 16×16 region into <strong>16 smaller 4×4 blocks</strong>. This grid layout preserves spatial relationships while summarizing local intensity changes.</td>
+</tr>
+<tr>
+<td>Direction Summaries</td>
+<td>Computes an <strong>8-bin gradient direction histogram</strong> in each 4×4 block, weighted by gradient magnitude and distance from center. This captures how intensity varies in each small region.</td>
+</tr>
+<tr>
+<td>Combining Summaries</td>
+<td>Concatenates all 16 histograms into a <strong>128-dimensional vector</strong>. The descriptor is <strong>normalized</strong> to reduce sensitivity to lighting and contrast—similar to histogram equalization—resulting in robust, distinctive features for matching across different images.</td>
+</tr>
+<tr>
+<td>Expected Outcome</td>
+<td>Produces a <strong>128-dimensional descriptor</strong> per keypoint, encoding both spatial and directional gradient information. These descriptors are invariant to changes in scale, orientation, and lighting—enabling accurate matching across varied images.</td>
+</tr>
+</tbody>
+</table>
+<p><img src="../_assets/descriptor.png" alt="unnamed"></p>
+<hr>
+<h3 id="code-example">Code Example</h3>
+<pre><code class="language-python">import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load test image (grayscale)
+img = cv2.imread('test_image.jpg', cv2.IMREAD_GRAYSCALE)
+if img is None:
+    raise ValueError(&quot;Image not found. Please provide a valid test_image.jpg&quot;)
+
+# Parameters for scale-space
+sigma = 1.6
+k = np.sqrt(2)
+num_levels = 4
+
+# Create scale-space pyramid (first octave)
+scale_space = []
+for i in range(num_levels):
+    gaussian = cv2.GaussianBlur(img, (0, 0), sigma * (k ** i))
+    scale_space.append(gaussian)
+
+# Compute DoG
+dog = []
+for i in range(num_levels - 1):
+    diff = cv2.subtract(scale_space[i + 1], scale_space[i])
+    dog.append(diff)
+
+# Visualize one level of scale-space and DoG
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 2, 1)
+plt.imshow(scale_space[1], cmap='gray')
+plt.title('Blurred Image (Scale-Space Level)')
+plt.axis('off')
+
+plt.subplot(1, 2, 2)
+plt.imshow(dog[0], cmap='gray')
+plt.title('Difference of Gaussians')
+plt.axis('off')
+
+plt.tight_layout()
+plt.savefig('sift_scale_space_dog.jpg')
+plt.show()
+
+# Initialize SIFT
+sift = cv2.SIFT_create()
+
+# Detect keypoints (includes localization)
+keypoints = sift.detect(img, None)
+
+# Step 2: Visualize keypoints after localization (positions only, no orientation)
+img_keypoints = cv2.drawKeypoints(
+    img,
+    keypoints,
+    None,
+    color=(0, 255, 0),
+    flags=0  # Default flag draws simple circles, no orientation
+)
+plt.figure(figsize=(8, 6))
+plt.imshow(img_keypoints, cmap='gray')
+plt.title('SIFT Keypoints After Localization')
+plt.axis('off')
+plt.savefig('sift_keypoints_localized.jpg')
+plt.show()
+# Draw keypoints with orientation
+img_orient = cv2.drawKeypoints(img, keypoints, None, color=(0, 255, 0), flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+
+# Visualize
+plt.figure(figsize=(8, 6))
+plt.imshow(img_orient, cmap='gray')
+plt.title('SIFT Keypoints with Orientations')
+plt.axis('off')
+plt.savefig('sift_keypoints_orientations.jpg')
+plt.show()
+
+# Detect keypoints and compute descriptors
+keypoints, descriptors = sift.detectAndCompute(img, None)
+
+# Draw keypoints
+img_desc = cv2.drawKeypoints(img, keypoints, None, color=(0, 255, 0), flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+
+# Print descriptor shape to confirm
+print(f&quot;Number of keypoints: {len(keypoints)}&quot;)
+print(f&quot;Descriptor shape: {descriptors.shape if descriptors is not None else 'None'}&quot;)
+</code></pre>
+<p><img src="../_assets/siftcode1.png" alt="download">
+<img src="../_assets/siftcode2.png" alt="download">
+<img src="../_assets/siftcode3.png" alt="download"></p>
+<pre><code class="language-text">Number of keypoints: 682
+Descriptor shape: (682, 128)
+</code></pre>
+<hr>
+</section><section><h2 id="surf-speeded-up-robust-features">SURF (Speeded-Up Robust Features)</h2>
+<p>The <strong>Speeded-Up Robust Features (SURF)</strong>, developed by Herbert Bay and colleagues in 2006, is a fast and effective algorithm in computer vision that identifies and describes <strong>keypoints</strong>. Think of SURF as a swift guide spotting landmarks in a city say, a statue’s unique edge that you can identify from different angles or distances, but doing so quicker than SIFT. SURF builds on edge detection and image transformations, offering speed for real-time tasks like augmented reality, while using ideas like noise reduction to handle variations, with Haar wavelet adjustments to ensure robustness to illumination changes. Note that SURF is a patented method, meaning its use in commercial products may require a license, restricting deployment outside educational or research settings.</p>
+<p>SURF operates through four main steps:</p>
+<ol>
+<li><strong>Interest Point Detection</strong>: Finds <strong>keypoints</strong> by looking for standout features across zoom levels, like spotting edges at different sizes, but faster than SIFT.</li>
+<li><strong>Interest Point Localization</strong>: Refines these <strong>keypoints</strong> for precision, similar to filtering weak edges in Canny.</li>
+<li><strong>Orientation Assignment</strong>: Gives each <strong>keypoint</strong> a direction, ensuring matches despite rotation, like aligning augmented images.</li>
+<li><strong>Descriptor Extraction</strong>: Creates a <strong>descriptor</strong> for each keypoint, enabling matches across images.</li>
+</ol>
+<p>These steps use efficient techniques, making SURF faster than SIFT. Each step below is explained simply, with its purpose, process, and a Python/OpenCV visualization using a test image.</p>
+<hr>
+<h3 id="step-1-interest-point-detection">Step 1: Interest Point Detection</h3>
+<p>This step finds <strong>keypoints</strong> that stay detectable across different zoom levels, like identifying a building’s corner in both close-up and faraway views, but with speed for real-time use.</p>
+<p>SURF uses a <strong>scale-space pyramid</strong>. It looks for areas with strong intensity changes, like edges, using a fast method.</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Integral Image</td>
+<td>SURF precomputes a special image that stores the sum of pixel intensities, allowing fast calculations—like a shortcut for edge detection and region analysis.</td>
+</tr>
+<tr>
+<td>Box Filters</td>
+<td>Uses simple <strong>square filters</strong> (box filters) instead of complex convolutions to approximate intensity changes across scales, helping detect blob-like structures.</td>
+</tr>
+<tr>
+<td>Hessian Detection</td>
+<td>Applies the <strong>Hessian matrix</strong> to identify areas with strong brightness variation, such as corners. Keypoints are selected where these variations are strongest.</td>
+</tr>
+</tbody>
+</table>
+<p>In SIFT, Lowe approximated Laplacian of Gaussian with Difference of Gaussian for finding scale-space. SURF goes a little further and approximates LoG with Box Filter. Below image shows a demonstration of such an approximation. One big advantage of this approximation is that convolution with box filter can be easily calculated with the help of integral images. And it can be done in parallel for different scales. Also, SURF relies on the determinant of Hessian matrix for both scale and location.</p>
+<p><img src="../_assets/surf_boxfilter.jpg" alt="surf_boxfilter"></p>
+<p>We expect to identify <strong>keypoints</strong> located at distinct, high-contrast regions, such as corners, blobs, or textured areas, that remain stable across different <strong>scales</strong>. These points form the basis for reliable matching and are optimized for both <strong>repeatability</strong> and <strong>computational efficiency</strong>, making them suitable for fast and accurate recognition across zoom levels.</p>
+<hr>
+<h3 id="step-2-interest-point-localization">Step 2: Interest Point Localization</h3>
+<p>This step refines <strong>keypoints</strong> to ensure they’re precise and reliable, like removing faint edges in Canny detection, keeping only strong points.</p>
+<p>SURF fine-tunes <strong>keypoints</strong> and filters out weak ones:</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Precise Positioning</td>
+<td>Refines <strong>keypoint</strong> locations for greater accuracy—similar to sharpening the exact position of an edge.</td>
+</tr>
+<tr>
+<td>Weak Point Removal</td>
+<td>Filters out <strong>keypoints</strong> with low intensity change, retaining only those that represent strong, reliable features.</td>
+</tr>
+<tr>
+<td>Edge Removal</td>
+<td>Uses the <strong>Hessian matrix</strong> to eliminate <strong>keypoints</strong> that lie on long edges, which are less distinctive, and favors more unique corner-like points.</td>
+</tr>
+<tr>
+<td>Expected Outcome</td>
+<td>Produces a <strong>smaller, high-quality set of keypoints</strong> that are well-localized, high-contrast, and not edge-dominated—ideal for stable and distinctive matching across different image conditions.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="step-3-orientation-assignment-1">Step 3: Orientation Assignment</h3>
+<p>This step assigns a direction to each <strong>keypoint</strong>, ensuring matches even if the image is rotated, like recognizing a rotated object in augmentation.</p>
+<p>SURF finds the main direction of brightness changes around each <strong>keypoint</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wavelet Analysis</td>
+<td>Uses <strong>Haar wavelets</strong> to detect how brightness shifts in different directions—similar to edge detection, but focused on orientation patterns.</td>
+</tr>
+<tr>
+<td>Direction Selection</td>
+<td>Slides a 60-degree window over a circular region to sum brightness shifts and identify the strongest direction. This becomes the <strong>keypoint</strong> orientation.</td>
+</tr>
+</tbody>
+</table>
+<p><img src="../_assets/orient.jpg" alt="images"></p>
+<p>Each <strong>keypoint</strong> is assigned one or more dominant <strong>orientations</strong>, enabling it to remain consistent across rotated versions of the same image. This ensures that keypoint matching is robust even when objects appear at different angles—such as recognizing a tilted logo or rotated scene element.</p>
+<h3 id="step-4-descriptor-extraction">Step 4: Descriptor Extraction</h3>
+<p>This step creates a <strong>descriptor</strong> for each <strong>keypoint</strong>, describing its local appearance. This enables matches across images and extends edge detection with detailed descriptions.</p>
+<p>SURF creates a 64-number <strong>descriptor</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Region Selection</td>
+<td>Extracts a <strong>20×20 pixel region</strong> around the keypoint, rotated to match its orientation.</td>
+</tr>
+<tr>
+<td>Subdivision</td>
+<td>Divides the region into <strong>16 smaller 5×5 squares</strong> to preserve spatial information.</td>
+</tr>
+<tr>
+<td>Wavelet Summaries</td>
+<td>Uses <strong>Haar wavelets</strong> to summarize brightness changes in each square, capturing directional patterns.</td>
+</tr>
+<tr>
+<td>Combining Summaries</td>
+<td>Merges these summaries into a <strong>64-value descriptor</strong>, normalized to account for lighting variations—similar to histogram equalization.</td>
+</tr>
+<tr>
+<td>Expected Outcome</td>
+<td>Produces a compact, distinctive <strong>descriptor</strong> for each keypoint that captures local gradient structure, enabling <strong>reliable matching</strong> across images with different <strong>scales</strong>, <strong>rotations</strong>, or <strong>lighting</strong>.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="code-example-1">Code Example</h3>
+<p>Note that The Speeded-Up Robust Features (SURF) algorithm, covered in this lesson, is a patented method, meaning its use in commercial products or applications may require a license from the patent holders. This restriction applies to deploying SURF in real-world projects outside of educational or research settings.</p>
+<pre><code class="language-python">import cv2
+import matplotlib.pyplot as plt
+
+# Load test image (grayscale)
+img = cv2.imread('test_image.jpg', cv2.IMREAD_GRAYSCALE)
+if img is None:
+    raise ValueError(&quot;Image not found. Please provide a valid test_image.jpg&quot;)
+
+# Initialize SURF
+surf = cv2.xfeatures2d.SURF_create(hessianThreshold=400)
+
+# Detect keypoints (interest point detection)
+keypoints = surf.detect(img, None)
+
+# Draw keypoints as simple markers
+img_keypoints = cv2.drawKeypoints(
+    img,
+    keypoints,
+    None,
+    color=(0, 255, 0),
+    flags=0  # Simple circles, no orientation
+)
+
+# Visualize
+plt.figure(figsize=(8, 6))
+plt.imshow(img_keypoints, cmap='gray')
+plt.title('SURF Interest Points Detected')
+plt.axis('off')
+plt.savefig('surf_interest_points.jpg')
+plt.show()
+
+# Detect keypoints and compute descriptors
+keypoints, descriptors = surf.detectAndCompute(img, None)
+
+# Draw keypoints with larger circles to show refined positions
+img_localized = cv2.drawKeypoints(
+    img,
+    keypoints,
+    None,
+    color=(0, 255, 0),
+    flags=cv2.DRAW_MATCHES_FLAGS_DEFAULT  # Larger circles, no orientation
+)
+
+# Visualize
+plt.figure(figsize=(8, 6))
+plt.imshow(img_localized, cmap='gray')
+plt.title('SURF Keypoints After Localization')
+plt.axis('off')
+plt.savefig('surf_keypoints_localized.jpg')
+plt.show()
+
+# Draw keypoints with orientation
+img_orient = cv2.drawKeypoints(
+    img,
+    keypoints,
+    None,
+    color=(0, 255, 0),
+    flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS  # Shows orientation arrows
+)
+
+# Visualize
+plt.figure(figsize=(8, 6))
+plt.imshow(img_orient, cmap='gray')
+plt.title('SURF Keypoints with Orientations')
+plt.axis('off')
+plt.savefig('surf_keypoints_orientations.jpg')
+plt.show()
+
+# Print descriptor shape
+print(f&quot;Number of keypoints: {len(keypoints)}&quot;)
+print(f&quot;Descriptor shape: {descriptors.shape if descriptors is not None else 'None'}&quot;)
+</code></pre>
+<p><img src="../_assets/surf_kp1.jpg" alt="surf_kp1"></p>
+<hr>
+</section><section><h2 id="orb-oriented-fast-and-rotated-brief">ORB (Oriented FAST and Rotated BRIEF)</h2>
+<p>The <strong>Oriented FAST and Rotated BRIEF (ORB)</strong>, introduced by Ethan Rublee and colleagues in 2011, is a fast, lightweight algorithm in computer vision that finds and describes <strong>keypoints</strong>: unique spots, like corners, that remain detectable despite zoom, rotation, or lighting changes. Picture ORB as a quick scout spotting landmarks in a city—like a distinct sign—that you can recognize from any angle, optimized for speed on devices like phones. ORB extends edge detection and transformations, using noise reduction ideas for efficiency in tasks like real-time object detection**, with binary descriptors robust to illumination variations due to BRIEF comparisons**.</p>
+<p>ORB works through three main steps:</p>
+<ol>
+<li><strong>Keypoint Detection</strong>: Finds <strong>keypoints</strong> by spotting corners across zoom levels, like fast edge detection.</li>
+<li><strong>Orientation Assignment</strong>: Assigns directions to <strong>keypoints</strong>, ensuring matches despite rotation, like augmentation.</li>
+<li><strong>Descriptor Extraction</strong>: Creates a <strong>descriptor</strong>.</li>
+</ol>
+<p>These steps prioritize speed, making ORB ideal for mobile apps. Each step is explained below with purpose, process, and Python/OpenCV visualizations.</p>
+<h3 id="step-1-keypoint-detection">Step 1: Keypoint Detection</h3>
+<p>This step finds <strong>keypoints</strong> at corners that stay detectable across scales, like spotting a sign’s edge in different views, optimized for speed.</p>
+<p>ORB uses a fast corner detector across a <strong>scale-space pyramid</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FAST Detector</td>
+<td>Compares a pixel’s brightness to surrounding pixels in a circular ring. If enough are significantly brighter or darker, it's marked as a <strong>keypoint</strong>—a fast way to detect corners.</td>
+</tr>
+<tr>
+<td>Scale Pyramid</td>
+<td>Applies FAST at multiple zoom levels (scales) to detect <strong>keypoints</strong> of varying sizes, improving robustness across image resolutions.</td>
+</tr>
+<tr>
+<td>Harris Scoring</td>
+<td>Uses the <strong>Harris corner measure</strong> to rank detected keypoints, keeping the strongest ones (e.g., top 500) for reliable corner detection.</td>
+</tr>
+</tbody>
+</table>
+<p><img src="../_assets/orb.png" alt="Detected-key-points-at-different-pyramid-levels-of-the-ORB-feature-detection-green"></p>
+<p><img src="../_assets/harris.jpg" alt="0_PPJxP5y_k4GCWLBM"></p>
+<p>We expect to detect <strong>keypoints</strong> located at strong, well-defined corners or blobs that are <strong>robust across scales</strong> and optimized for <strong>efficient computation</strong>. These points serve as reliable anchors for feature matching in images with varying zoom levels.</p>
+<h3 id="step-2-orientation-assignment">Step 2: Orientation Assignment</h3>
+<p>This step assigns a direction to each <strong>keypoint</strong>, ensuring matches across rotated images, like recognizing a rotated sign.</p>
+<p>ORB finds the main direction around each <strong>keypoint</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Centroid Calculation</td>
+<td>Calculates the “center of brightness” in a circular area around the <strong>keypoint</strong>, similar to analyzing local edge direction.</td>
+</tr>
+<tr>
+<td>Direction Assignment</td>
+<td>Sets the <strong>keypoint</strong>’s orientation based on the angle to the centroid, making the descriptor <strong>rotation invariant</strong>.</td>
+</tr>
+</tbody>
+</table>
+<p><img src="../_assets/central.jpg" alt=""></p>
+<p>Each <strong>keypoint</strong> is assigned a consistent <strong>orientation</strong>, enabling accurate matching even when the image is <strong>rotated</strong>. This ensures rotational invariance in downstream tasks such as object recognition and image alignment.---</p>
+<h3 id="step-3-descriptor-extraction">Step 3: Descriptor Extraction</h3>
+<p>This step creates a <strong>descriptor</strong> for each <strong>keypoint</strong>, like a binary “fingerprint” for quick matching, extending edge detection with compact descriptions.</p>
+<p>ORB creates a 256-bit <strong>descriptor</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BRIEF Comparison</td>
+<td>Compares brightness of <strong>256 pixel pairs</strong> in a 31×31 patch around the keypoint. If one pixel is brighter, it’s a 1; otherwise, a 0—creating a binary pattern.</td>
+</tr>
+<tr>
+<td>Rotation Adjustment</td>
+<td>Rotates the pixel pairs to align with the <strong>keypoint</strong>’s orientation, making the descriptor <strong>rotation invariant</strong>.</td>
+</tr>
+<tr>
+<td>Binary Descriptor</td>
+<td>Combines the 256 binary results into a compact <strong>descriptor</strong> that is fast to compute, easy to compare, and robust to lighting variations.</td>
+</tr>
+</tbody>
+</table>
+<p>BRIEF or Binary Robust Independent Elementary Features is used as the key-point descriptor. As BRIEF performs poorly with rotation, the computed orientation of the key-points are used to steer the orientation of the key-point patch before extracting the descriptor. Once this is done, a series of binary tests are computed comparing a pattern of pixels in the patch. The outputs of the binary tests are concatenated and used as the feature descriptor.</p>
+<p>Each <strong>keypoint</strong> is paired with a compact, distinctive <strong>descriptor</strong> that enables <strong>fast and reliable matching</strong> across common image transformations—including changes in <strong>scale</strong>, <strong>rotation</strong>, and <strong>illumination</strong>.</p>
+<hr>
+<h3 id="code-example-2">Code Example</h3>
+<pre><code class="language-python">import cv2
+import matplotlib.pyplot as plt
+
+# Load test image
+img = cv2.imread('building.jpg', cv2.IMREAD_GRAYSCALE)
+if img is None:
+    raise ValueError(&quot;Image not found. Please provide a valid test_image.jpg&quot;)
+
+# Initialize ORB
+orb = cv2.ORB_create(nfeatures=500)
+
+# Detect keypoints and compute descriptors
+keypoints, descriptors = orb.detectAndCompute(img, None)
+
+# Draw keypoints as small dots
+img_keypoints = cv2.drawKeypoints(
+    img,
+    keypoints,
+    None,
+    color=(0, 255, 0),
+    flags=0  # Simple circles
+)
+
+# Visualize
+plt.figure(figsize=(8, 6))
+plt.imshow(img_keypoints, cmap='gray')
+plt.title('ORB Keypoints Detected')
+plt.axis('off')
+plt.savefig('orb_keypoints_detected.jpg')
+plt.show()
+
+# Draw keypoints with orientation
+img_orient = cv2.drawKeypoints(
+    img,
+    keypoints,
+    None,
+    color=(0, 255, 0),
+    flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS  # Shows arrows
+)
+
+# Visualize
+plt.figure(figsize=(8, 6))
+plt.imshow(img_orient, cmap='gray')
+plt.title('ORB Keypoints with Orientations')
+plt.axis('off')
+plt.savefig('orb_keypoints_orientations.jpg')
+plt.show()
+
+# Draw keypoints
+img_desc = cv2.drawKeypoints(
+    img,
+    keypoints,
+    None,
+    color=(0, 255, 0),
+    flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS
+)
+
+# Print descriptor shape
+print(f&quot;Number of keypoints: {len(keypoints)}&quot;)
+print(f&quot;Descriptor shape: {descriptors.shape if descriptors is not None else 'None'}&quot;)
+</code></pre>
+<p><img src="../_assets/orbcode1.png" alt="download">
+<img src="../_assets/orbcode2.png" alt="download"></p>
+<pre><code class="language-text">Number of keypoints: 409
+Descriptor shape: (409, 32)
+</code></pre>
+<hr>
+</section><section><h2 id="comparison-of-sift-surf-and-orb">Comparison of SIFT, SURF, and ORB</h2>
+<p>In feature-based computer vision, algorithms like <strong>SIFT</strong>, <strong>SURF</strong>, and <strong>ORB</strong> are widely used for detecting and describing local features in images. Each method offers a different trade-off between <strong>accuracy</strong>, <strong>speed</strong>, and <strong>robustness</strong>, making them suitable for distinct application scenarios. The table below provides a side-by-side comparison of these algorithms covering their keypoint detection strategies, descriptor formats, computational performance, and typical use cases to help determine the most appropriate choice based on project needs.</p>
+<table>
+<thead>
+<tr>
+<th><strong>Feature</strong></th>
+<th><strong>SIFT</strong></th>
+<th><strong>SURF</strong></th>
+<th><strong>ORB</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Keypoint Detection</strong></td>
+<td>Uses <strong>Difference of Gaussians (DoG)</strong>: compares blurred images to find standout features across scales.</td>
+<td>Uses <strong>Hessian matrix</strong> with box filters for faster detection of blob-like features.</td>
+<td>Uses <strong>FAST detector</strong> with <strong>Harris corner measure</strong> for quick corner detection across scales.</td>
+</tr>
+<tr>
+<td><strong>Descriptor Type</strong></td>
+<td>128-number vector, capturing detailed brightness changes.</td>
+<td>64-number vector, using Haar wavelets for compact descriptions.</td>
+<td>256-bit binary vector, using BRIEF comparisons for speed.</td>
+</tr>
+<tr>
+<td><strong>Steps</strong></td>
+<td>4 (Scale-Space Extrema, Localization, Orientation, Descriptor)</td>
+<td>4 (Interest Point Detection, Localization, Orientation, Descriptor)</td>
+<td>3 (Keypoint Detection, Orientation, Descriptor)</td>
+</tr>
+<tr>
+<td><strong>Speed</strong></td>
+<td>Slowest, due to complex Gaussian computations.</td>
+<td>Faster than SIFT, using integral images and box filters.</td>
+<td>Fastest, optimized for real-time with simple corner detection and binary descriptors.</td>
+</tr>
+<tr>
+<td><strong>Robustness</strong></td>
+<td>Highly robust to scale, rotation, and <strong>illumination</strong> changes <strong>via normalized descriptors</strong>.</td>
+<td>Robust, slightly less than SIFT but faster, with <strong>illumination robustness via Haar wavelet adjustments</strong>.</td>
+<td>Moderately robust, less effective for large scale changes but good for rotation and <strong>illumination via binary comparisons</strong>.</td>
+</tr>
+<tr>
+<td><strong>Patent Status</strong></td>
+<td>Patented; commercial use may require a license.</td>
+<td>Patented; commercial use may require a license.</td>
+<td>Patent-free; fully open-source for all uses.</td>
+</tr>
+<tr>
+<td><strong>Typical Use Cases</strong></td>
+<td>High-accuracy tasks (e.g., 3D reconstruction, image stitching).</td>
+<td>Real-time tasks (e.g., augmented reality, object tracking).</td>
+<td>Mobile or real-time applications (e.g., SLAM, object detection).</td>
+</tr>
+</tbody>
+</table>
+<p>Each algorithm, SIFT, SURF, and ORB, excels at finding <strong>keypoints</strong> and creating <strong>descriptors</strong>: numerical or binary “fingerprints” for matching across images, like identifying a city landmark from different views. However, they balance speed, robustness, and accessibility differently:</p>
+<ul>
+<li><strong>SIFT</strong> is the most robust, like a meticulous guide who carefully maps every detail of a landmark (e.g., a building’s corner). Its 128-number <strong>descriptor</strong> captures intricate brightness changes, <strong>normalized to mitigate illumination variations</strong>, making it ideal for tasks requiring high accuracy, like stitching panoramas or 3D modeling. However, its complex <strong>Difference of Gaussians (DoG)</strong> computations (similar to blurring in Week 1) make it the slowest, and its patent restricts commercial use without licensing, limiting it to educational or research settings.</li>
+<li><strong>SURF</strong> is a faster alternative, like a swift guide using shortcuts to spot landmarks. It employs <strong>Hessian matrix</strong> calculations with box filters and integral images, approximating intensity changes more efficiently than SIFT’s Gaussian blurring. Its 64-number <strong>descriptor</strong>, based on Haar wavelets, is compact yet robust, <strong>adjusting for illumination changes</strong>, suiting real-time applications like augmented reality. Like SIFT, SURF is patented, so commercial use may require a license, but it’s valuable for learning keypoint concepts.</li>
+<li><strong>ORB</strong> is the fastest, like a quick scout spotting landmarks on the go. It uses a <strong>FAST detector</strong> for rapid corner detection and a <strong>Harris corner measure</strong> to rank them, paired with a 256-bit binary <strong>descriptor</strong> (BRIEF comparisons) that’s lightweight for mobile devices**, robust to illumination due to binary intensity tests**. ORB sacrifices some robustness to scale changes compared to SIFT or SURF but excels in rotation invariance and real-time tasks like SLAM (Simultaneous Localization and Mapping). Being patent-free, ORB is ideal for both educational and commercial projects without restrictions.</li>
+</ul>
+<p><strong>Choosing Between Them</strong>:</p>
+<p>Think of these algorithms as tools in a toolbox. Use SIFT for precision in non-commercial research, SURF for faster processing in educational real-time tasks (noting its patent), and ORB for speed and flexibility in any project, especially on resource-constrained devices like phones. All build on Week 2’s edge detection (e.g., finding corners) and Week 1’s noise reduction (e.g., handling lighting variations), making them accessible with your current knowledge.</p>
+<hr>
+</section><section><h2 id="descriptor-matching-techniques-and-their-role-in-object-recognition"><strong>Descriptor Matching Techniques and Their Role in Object Recognition</strong></h2>
+<p>In feature-based object recognition, detecting keypoints is only the first step—<strong>matching descriptors</strong> across images is what enables systems to recognize objects under varying conditions. Descriptors capture the local appearance around keypoints, and matching them effectively determines whether two keypoints (and by extension, two objects or regions) correspond. Several techniques exist for comparing descriptors, each suited to different descriptor types (e.g., floating-point vs. binary) and application needs (e.g., real-time vs. high-accuracy).</p>
+<h3 id="overview-of-common-matching-techniques"><strong>Overview of Common Matching Techniques</strong></h3>
+<p>Before comparing them directly, here’s a brief overview of the most widely used descriptor matching methods:</p>
+<ul>
+<li><strong>Brute-Force Matching (BF):</strong> Compares every descriptor in one image to every descriptor in another using a chosen distance metric (e.g., Euclidean or Hamming). It is simple and exhaustive, but computationally expensive.</li>
+<li><strong>K-Nearest Neighbors (KNN):</strong> For each descriptor, this finds the <em>k</em> most similar matches instead of just one. Often used with <strong>Lowe’s ratio test</strong> to filter ambiguous matches, it improves robustness at the cost of some speed.</li>
+<li><strong>FLANN (Fast Library for Approximate Nearest Neighbors):</strong> Uses tree-based or hashing algorithms to approximate nearest neighbors more efficiently than brute-force, especially on large datasets or high-dimensional descriptors.</li>
+<li><strong>Hamming Distance Matching:</strong> Specifically used with <strong>binary descriptors</strong> (like ORB or BRIEF), this technique compares binary strings bit-by-bit for fast, low-memory matching.</li>
+<li><strong>Cross-Check Matching (Mutual Matching):</strong> Ensures that a match is <strong>reciprocal</strong>, a descriptor A must match to B, and B must also match to A. This improves match reliability but may reduce recall.</li>
+</ul>
+<h3 id="common-descriptor-matching-techniques"><strong>Common Descriptor Matching Techniques</strong></h3>
+<p>Different descriptor matching techniques vary in how they measure similarity, their computational cost, and their compatibility with descriptor types. Some are designed for accuracy and thoroughness, while others prioritize speed for real-time applications. The table below provides a side-by-side comparison of the most common matching methods highlighting their strengths, limitations, distance metrics, and typical use cases to help guide the selection of the right technique for a given object recognition task. This diagram illustrates <strong>descriptor matching</strong> between the original image and its transformed version (e.g., rotated, scaled, or illuminated differently). Keypoints are detected in both images, and descriptors are used to establish <strong>correspondences</strong>, enabling reliable object recognition despite visual changes.</p>
+<p><img src="../_assets/original-vs-transformed.png" alt="comp"></p>
+<table>
+<thead>
+<tr>
+<th><strong>Matching Method</strong></th>
+<th><strong>Best For</strong></th>
+<th><strong>Distance Metric</strong></th>
+<th><strong>Descriptor Type</strong></th>
+<th><strong>Strengths</strong></th>
+<th><strong>Limitations</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Brute-Force (BF)</strong></td>
+<td>General-purpose, small datasets</td>
+<td>L2 norm (float) / Hamming (binary)</td>
+<td>SIFT, SURF, ORB</td>
+<td>Simple to implement, accurate</td>
+<td>Slow on large datasets</td>
+</tr>
+<tr>
+<td><strong>K-Nearest Neighbors (KNN)</strong></td>
+<td>Robust matching with multiple candidates</td>
+<td>L2 / Hamming</td>
+<td>SIFT, SURF, ORB</td>
+<td>Allows ratio test (Lowe’s), tolerant to noise</td>
+<td>Requires tuning, may return false positives</td>
+</tr>
+<tr>
+<td><strong>FLANN (Fast Library for Approximate Nearest Neighbors)</strong></td>
+<td>Large datasets, real-time apps</td>
+<td>Approximate L2 / KD-Tree</td>
+<td>SIFT, SURF (float descriptors)</td>
+<td>Much faster than brute-force on large datasets</td>
+<td>Slightly less accurate due to approximation</td>
+</tr>
+<tr>
+<td><strong>Hamming Distance Matching</strong></td>
+<td>Binary descriptors (e.g., ORB, BRIEF)</td>
+<td>Hamming distance</td>
+<td>ORB, BRIEF</td>
+<td>Very fast for real-time or embedded use</td>
+<td>Limited to binary descriptor formats</td>
+</tr>
+<tr>
+<td><strong>Cross-Check Matching</strong></td>
+<td>Precision-focused applications</td>
+<td>Any</td>
+<td>All</td>
+<td>Ensures mutual match validity (A ↔ B)</td>
+<td>May reduce recall (misses some valid matches)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="application-in-object-recognition"><strong>Application in Object Recognition</strong></h3>
+<p>Descriptor matching enables robust object recognition by comparing features from a query image to those in a reference image or database. Here's how matching techniques fit into real-world tasks:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Use Case</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SIFT + Brute-Force</td>
+<td>High-accuracy tasks like <strong>image stitching</strong>, <strong>3D reconstruction</strong>, or <strong>logo detection</strong></td>
+<td>Uses floating-point descriptors and L2 distance for precise matching, even with clutter or occlusion.</td>
+</tr>
+<tr>
+<td>ORB + Hamming Matching</td>
+<td>Real-time <strong>mobile vision</strong>, <strong>robotics</strong>, or <strong>AR tracking</strong></td>
+<td>Fast binary descriptors and bitwise comparisons enable low-latency performance with good robustness.</td>
+</tr>
+<tr>
+<td>SURF + FLANN</td>
+<td>Large-scale <strong>image retrieval</strong> or <strong>video frame matching</strong></td>
+<td>Faster than SIFT; FLANN handles high-dimensional data efficiently with low memory use.</td>
+</tr>
+<tr>
+<td>KNN + Ratio Test</td>
+<td>Reliable <strong>object detection</strong> under noise or transformation</td>
+<td>Applies Lowe’s ratio test to filter out ambiguous matches by comparing best and second-best descriptor matches.</td>
+</tr>
+</tbody>
+</table>
+<p>Choosing the right descriptor matching technique is critical for balancing speed, accuracy, and resource constraints in object recognition systems. Brute-force provides the highest fidelity, FLANN offers scalable speed, and binary matching (Hamming) powers real-time systems. In practice, these techniques are often combined with geometric verification methods like RANSAC to further improve robustness and filter out false matches.</p>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>SIFT, SURF, and ORB are three widely used algorithms for robust feature extraction, each offering distinct advantages depending on the application. <strong>SIFT</strong> provides high accuracy through Difference of Gaussians and 128-dimensional descriptors, making it well-suited for tasks like 3D reconstruction, though it remains patented. <strong>SURF</strong> accelerates computation using box filters and 64-dimensional descriptors, offering a balance between speed and robustness that is ideal for augmented reality, also under patent. <strong>ORB</strong>, in contrast, combines the FAST detector with efficient binary descriptors, delivering the fastest performance for real-time applications like mobile SLAM, and is freely available without patent restrictions. Together, these methods provide flexible options for scale-, rotation-, and illumination-invariant feature detection across a wide range of computer vision tasks.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

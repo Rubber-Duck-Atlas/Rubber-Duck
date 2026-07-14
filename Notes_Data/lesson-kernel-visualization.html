@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Kernel Visualization</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-kernel-visualization">Lesson: Kernel Visualization</h1></header>
+<p>Have you ever wondered how machines can “see” like humans? Whether it's your phone unlocking with your face or a car recognizing traffic signs, it all starts with one thing: understanding the patterns in an image. So, how do we go from raw pixels to recognizing a smile or detecting a stop sign?</p>
+<p>The answer lies in something called kernels, small learnable filters that help Convolutional Neural Networks (CNNs) &quot;learn to see.&quot; By the end of today’s lesson, you’ll be able to peek inside the brain of a CNN and discover how it learns to detect edges, textures, and full objects, layer by layer.</p>
+<p>Let’s open the black box and explore how machines learn to see.</p>
+<section><h2 id="learning-objective">Learning Objective:</h2>
+<p><strong>By the end of this lesson, you will be able to:</strong></p>
+<ol>
+<li>Show how CNN filters evolve across layers and learn edges, textures, and objects.</li>
+<li>Explain how to interpret feature maps and activation heatmaps.</li>
+</ol>
+<hr>
+</section><section><h2 id="intorduction-to-convolutional-kernels">Intorduction to Convolutional Kernels</h2>
+<p>Convolutional Neural Networks (CNNs) are a core architecture in modern computer vision, designed to extract structured patterns from image data. At the heart of every CNN lies the convolutional kernel (filter), a small trainable matrix that scans across the input’s spatial dimensions to detect localized features. Rather than analyzing the image as a whole, kernels operate over receptive fields, which are small overlapping regions of the input. At each position, the kernel performs an element-wise multiplication with the input patch and sums the results to produce a single value.</p>
+<p>This operation, repeated across the image using a defined stride, produces a feature map. The feature map indicates where a particular pattern exists within the input. A single convolutional layer typically contains multiple kernels. Each one learns to detect a different feature, and the resulting feature maps are stacked to form a richer, multi-channel representation of the input. The following example demonstrates this process:. In this figure the left grid shows an input image padded with zeros along the borders to preserve size. The center matrix is a 2×2 kernel with fixed weights. The right grid is the resulting feature map, which highlights the spatial locations where the kernel’s pattern appears.</p>
+<p>This localized feature extraction allows CNNs to identify basic visual structures such as edges and corners in early layers. As we move deeper into the network, the output of earlier layers is processed again to detect more complex patterns such as textures or object parts. Eventually, the network builds a high-level understanding of the image by combining increasingly abstract representations across layers.</p>
+<p><img src="../_assets/kernal.webp" alt="kernal"></p>
+<p>Understanding the mechanics of how kernels operate provides a foundation, but it is equally important to consider how these kernels learn and evolve during training. In the next section, we explore how CNN filters develop specialized roles and how their behavior reflects the internal learning dynamics of the network.</p>
+<hr>
+</section><section><h2 id="specialization-and-learning-of-cnn-filters">Specialization and Learning of CNN Filters</h2>
+<p>Once we understand the role of kernels in detecting local features, the next step is to examine how these kernels are learned and how they specialize across different layers. Each kernel begins with random weights and is updated during training through optimization. This process allows each kernel to become sensitive to patterns that are useful for the specific learning task. This learning behavior is not random but driven by the network’s exposure to image data and its objective to reduce error during training. As a result, kernels begin to take on functional roles, responding to specific types of visual information and contributing differently to the network's decisions. To understand this in more detail, we now explore how filters learn, how they adapt to the task, and what kinds of features they typically capture.</p>
+<h3 id="filter-learning-and-adaptation">Filter Learning and Adaptation</h3>
+<p>Kernels are learned by adjusting their weights to minimize a loss function. In the early stages of training, kernels in the first layer often converge to simple patterns, such as edges at specific orientations. These filters respond to common structural elements that appear across a wide variety of images. As training progresses and the network deepens, filters begin to specialize in more abstract and task-specific patterns. Some may detect textures like foliage or fabric. Others may activate in response to parts of objects such as eyes, wheels, or animal fur. These patterns are no longer easily described in simple geometric terms, but they are essential for recognizing high-level concepts.</p>
+<ul>
+<li><strong>Example: Learning a Vertical Edge Filter</strong>Consider a CNN being trained to classify handwritten digits from the MNIST dataset. One filter in the first convolutional layer starts with random weights. Over time, it updates those weights in response to gradient signals during training. Eventually, it converges to a pattern that behaves like a vertical edge detector, with strong positive weights on one side and strong negative weights on the other. This filter activates strongly for digits such as &quot;1&quot;, &quot;4&quot;, or &quot;7&quot;, which contain clear vertical strokes. The network uses this activation as part of its internal representation to distinguish between digit classes. This example demonstrates how filters adapt from randomness into specialized, task-relevant detectors.</li>
+</ul>
+<h3 id="filter-diversity-and-functional-roles">Filter Diversity and Functional Roles</h3>
+<p>CNNs include many filters per layer, often 32, 64, or more. Each filter is encouraged to learn a distinct feature so that the network captures a broad and informative set of patterns. This diversity is critical to the model’s ability to generalize and perform well on new data. Not all filters contribute equally. Some filters may become inactive or redundant, especially in overparameterized models. Others are highly discriminative and play an important role in classification or detection. Analyzing the activity of filters during training can help identify which ones are informative and which ones could potentially be pruned to reduce model complexity. Understanding the specialization of filters across layers provides insight into how CNNs construct a layered interpretation of visual data, from raw pixel information to high-level semantic features.</p>
+<h3 id="key-characteristics-of-cnn-kernals">Key Characteristics of CNN Kernals</h3>
+<p>CNN kernals (filters) share several essential properties that define how they function. Filters are typically small, such as 3×3 or 5×5, which helps capture localized features while maintaining computational efficiency. They are fully learnable, with weights updated through backpropagation. Filters in early layers extract low-level visual features, while deeper filters combine these into increasingly abstract representations. Each convolutional layer contains multiple filters, with each one producing a separate feature map that contributes to the network’s understanding of the input.</p>
+<p>Now that we have seen how filters evolve and take on distinct roles within a trained network, the next logical step is to examine how we can observe these learned filters in practice. The following section focuses on visualization techniques that reveal the internal structure of filters and provide insights into what the network has prioritized during learning.</p>
+<hr>
+<h3 id="visualizing-learned-kernels">Visualizing Learned Kernels</h3>
+<p>As we have seen, each filter in a CNN gradually evolves during training to specialize in detecting certain visual features. While these filters operate as numerical matrices, we can gain deeper understanding by visualizing what they have learned. Visualization helps translate these abstract weight patterns into interpretable forms that reveal which structures a network finds important. This process is particularly informative in the early layers of the network. At that stage, the learned filters often correspond to patterns that humans can easily recognize, such as edges, gradients, or simple textures. By examining the visual form of these filters, we not only make the learning process more transparent but also gain tools to debug and interpret model behavior.</p>
+<p>To visualize what these learned filters have captured, we must consider the format of the input data. The appearance of a kernel differs depending on whether the input image is grayscale or colored. This distinction affects both how we interpret the filters and how we visualize them effectively.</p>
+<h4 id="visualization-in-grayscale-and-color-inputs">Visualization in Grayscale and Color Inputs</h4>
+<p>For grayscale images, each kernel is a two-dimensional array of weights. These can be visualized as images using color maps that assign different shades to positive and negative values. For example, a filter that detects vertical edges may show positive weights on one side and negative weights on the other. For color images, kernels extend across multiple channels, such as red, green, and blue. Each kernel becomes a three-dimensional tensor. Visualization may involve displaying each channel separately or collapsing the channels into a composite image. These visualizations can reveal whether a filter is sensitive to color contrasts, brightness changes, or combined structures across channels. In the first layer of a trained network, common visual patterns include horizontal, vertical, or diagonal edge detectors. These patterns also include gradient filters that respond to intensity changes and spot detectors that capture textures or small localized patterns These low-level features serve as inputs to deeper layers that combine them into more complex and abstract representations</p>
+<ul>
+<li><strong>Examples of Edge and Texture Detectors</strong>In the first convolutional layer of a trained CNN, many filters converge to patterns that resemble classic edge or texture detectors. These filters respond to sharp changes in intensity or repeating visual patterns, which are common in natural images and highly informative for early-stage feature extraction.<ul><li><strong>Edge Detectors</strong>Edge detectors identify locations in the image where pixel values change rapidly. These filters often resemble familiar image processing kernels, such as Sobel or Prewitt operators. A vertical edge detector may have strong positive weights on one side and strong negative weights on the other, highlighting vertical transitions. A horizontal edge detector has a similar structure but aligned horizontally. Diagonal edge filters are also common and detect sloped or angled transitions. These filters typically activate at object boundaries, line segments, or contrasting edges, helping the network detect shape and orientation.</li><li><strong>Texture Detectors</strong>Texture detectors respond to fine-grained, repeating patterns or small variations in local intensity. Some filters resemble Gabor-like patterns, capturing frequency and orientation information. Others focus on spots, blobs, or crosshatch patterns, which are common in materials like fur, fabric, grass, or foliage. Texture-sensitive filters are particularly important for distinguishing categories where surface appearance plays a key role, such as identifying animals, clothing, or terrain.</li></ul></li>
+</ul>
+<h4 id="interpretation-of-deeper-layers">Interpretation of Deeper Layers</h4>
+<p>While early filters are often interpretable through direct visualization, filters in deeper layers tend to become abstract. Instead of detecting single low-level features, these filters activate in response to compositions of features that align with semantically meaningful patterns.</p>
+<p>For example, a mid-level filter may respond only when a curve intersects with a texture, while a deeper filter might fire when an input region contains the outline of a car wheel or the triangular contour of an animal’s ear. These activations do not arise from single shapes, but from combinations of previously extracted cues, organized in meaningful spatial relationships.</p>
+<p>Interpreting such filters directly can be challenging, but several techniques help uncover what they are capturing. Activation maximization constructs synthetic inputs that strongly excite a particular filter, revealing what the filter &quot;looks for.&quot; Deconvolutional methods trace filter responses back to input regions that caused high activation, giving spatial context. Feature inversion attempts to reconstruct an approximate input image from the activations in a particular layer, helping us understand how information is encoded. These methods highlight how deep CNNs move from generic low-level features to highly specific abstractions, supporting tasks such as object recognition, segmentation, or scene understanding. While interpretability decreases with depth, the underlying structure becomes richer and more semantically aligned with human perception.</p>
+<hr>
+</section><section><h2 id="interpretability-and-model-diagnostics"><strong>Interpretability and Model Diagnostics</strong></h2>
+<p>Beyond aiding conceptual understanding, visualization plays a critical role in model diagnostics. It allows practitioners to assess whether the network's filters are learning diverse and meaningful features or converging toward redundancy. Filters that remain inactive or produce similar patterns across the layer may indicate inefficient learning, over-regularization, or unnecessary parameter capacity.</p>
+<p>Early in training, visual inspection of filters can reveal poor initialization, such as uniform or unstable patterns that fail to evolve. As training progresses, recurring filter redundancy or indistinct patterns may signal overfitting, especially if the model memorizes data without generalizing well. Visualization helps surface these issues before they impact performance metrics.</p>
+<p>More broadly, visualizing kernels links the abstract numerical process of convolution with the intuitive, spatial reasoning used in visual understanding. It transforms filter behavior into observable evidence and supports informed decisions during model development, architecture tuning, and training diagnostics. For both researchers and practitioners, this interpretability serves as a bridge between theoretical design and practical evaluation.</p>
+<hr>
+</section><section><h2 id="feature-maps">Feature Maps</h2>
+<p>As convolutional filters are applied to an input image or to a preceding layer’s output, they generate a set of outputs known as feature maps, also referred to as activation maps. These maps show the spatial locations where a filter has detected its target pattern in the input. In the context of CNN interpretation, the term <em>activation heatmap</em> is sometimes used more broadly: in early layers, it describes these feature maps, while in later stages, it can also refer to techniques like Grad-CAM, which visualize the input regions that most influenced the network's final decision. Although both types of heatmaps rely on internal activations, they serve different interpretive purposes, layer-by-layer understanding versus class-specific explanation.</p>
+<p>Each feature map corresponds to a specific filter and retains the spatial structure of the input, highlighting where and how strongly a feature is activated. In early layers, feature maps tend to reflect basic patterns such as edges or gradients, while deeper layers capture more abstract components such as object parts or semantic regions. In a typical feature map:</p>
+<ul>
+<li><strong>Bright regions</strong> indicate strong filter activation, where the learned pattern is strongly present such as a vertical edge or a texture patch.</li>
+<li><strong>Dark regions</strong> reflect low or no activation, meaning the pattern is not significantly detected in those areas.</li>
+</ul>
+<p>These maps offer practical interpretability benefits. By examining which parts of an image activate specific filters, we gain valuable insight into what the network is &quot;looking at.&quot; For instance, a feature map in an early layer might highlight edges and boundaries, while one in a deeper layer might focus on the outline of a face or the wheels of a car. This evolving focus across layers reveals how the network constructs meaning from raw pixels.</p>
+<p>To explore feature maps in practice, we can pass an input image through a pre-trained model like VGG16 and visualize the output of specific layers, as shown in the code below.</p>
+<h3 id="visualizing-cnn-filters-and-grad-cam-heatmaps">Visualizing CNN Filters and Grad-CAM Heatmaps</h3>
+<p>We will go through the sequence of visualizing the CNN Filters and the Grad-CAM using the same example image.</p>
+<ol>
+<li><strong>Load a Pre-trained CNN Model and Sample Image</strong>The first step is to load the pre-trained model and prepare an image for analysis.</li>
+</ol>
+<pre><code class="language-python">import tensorflow as tf
+from tensorflow. keras.applications import VGG16
+from tensorflow.keras.applications.vgg16 import preprocess_input, decode_predictions
+from tensorflow. keras.preprocessing import image
+import numpy as np
+import matplotlib.pyplot as plt
+import cv2
+
+# Load VGG16 model
+model = VGG16(weights='imagenet')
+
+# Load and preprocess the local image &quot;elp.jpg&quot;
+img_path = 'elp.jpg'  # Make sure this image is in the same directory as your script
+img = image.load_img(img_path, target_size=(224, 224))
+img_array = image.img_to_array(img)
+img_batch = np.expand_dims(img_array, axis=0)
+img_preprocessed = preprocess_input(img_batch)
+
+# Show the input image
+plt.imshow(img)
+plt.axis('off')
+plt.title(&quot;Input Image&quot;)
+plt.show()
+</code></pre>
+<p>This sets up the environment and prepares the image in the format required by VGG16. The next steps will include extracting feature maps from specific layers and generating Grad-CAM heatmaps. The ouptut of this code is the image given below.</p>
+<img title="" src="../_assets/elp.jpg" alt="image" data-align="center" width="506">
+<ol start="2">
+<li><strong>Visualize Filters from the First Convolutional Layer</strong>Convolutional layers in CNNs consist of multiple filters, each responsible for detecting a specific type of feature in the input. We can extract the learned weights of these filters from a trained model and visualize them to better understand the kind of patterns the network is sensitive to. In this step, we access the first convolutional layer (<code>block1_conv1</code>) in the VGG16 model and plot a few of its filters. These filters operate directly on the input image and typically learn low-level features such as edges, gradients, or blobs.</li>
+</ol>
+<pre><code class="language-python"># Get filters from the first convolutional layer
+layer = model.get_layer('block1_conv1')
+filters, biases = layer.get_weights()
+
+# Normalize filter values for visualization
+f_min, f_max = filters.min(), filters.max()
+filters = (filters - f_min) / (f_max - f_min)
+
+# Plot first 6 filters
+n_filters = 6
+fig, axs = plt.subplots(1, n_filters, figsize=(15, 5))
+
+for i in range(n_filters):
+    f = filters[:, :, :, i]
+    axs[i].imshow(f[:, :, 0], cmap='viridis')
+    axs[i].axis('off')
+    axs[i].set_title(f'Filter {i+1}')
+plt.suptitle('Filters from First Convolution Layer')
+plt.show()
+</code></pre>
+<p><img src="../_assets/filters.png" alt="filter"></p>
+<p>These visualizations represent the raw filter weights, not their activations. Each pattern reflects what kind of low-level structure the filter is designed to respond to such as vertical lines, horizontal transitions, or intensity changes across color channels.</p>
+<ol start="3">
+<li><strong>Visualize Decision Focus Using Grad-CAM Heatmaps</strong>While feature maps show how a network transforms an input image across layers, Grad-CAM (Gradient-weighted Class Activation Mapping) highlights which regions in the input image most influenced the model’s decision. This technique combines the output of the final convolutional layer with the gradients of the predicted class to produce a heatmap over the image. Grad-CAM is particularly useful when you want to interpret or validate the network’s reasoning especially in high-stakes applications such as medical imaging, fraud detection, or autonomous driving, where explainability is essential. The code below demonstrates how to generate a Grad-CAM heatmap for a specific input using the pre-trained VGG16 model.</li>
+</ol>
+<pre><code class="language-python"># Grad-CAM function
+
+def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None):
+    grad_model = tf.keras.models.Model(
+        [model.inputs], 
+        [model.get_layer(last_conv_layer_name).output, model.output]
+    )
+
+    with tf.GradientTape() as tape:
+        conv_outputs, predictions = grad_model(img_array)
+        If pred_index is None:
+            pred_index = tf.argmax(predictions[0])
+        class_channel = predictions[:, pred_index]
+
+    grads = tape.gradient(class_channel, conv_outputs)
+    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+    conv_outputs = conv_outputs[0]
+    heatmap = conv_outputs @ pooled_grads[..., tf.newaxis]
+    heatmap = tf.squeeze(heatmap)
+    heatmap = tf.maximum(heatmap, 0) / tf.math.reduce_max(heatmap)
+    return heatmap.numpy()
+
+# Generate heatmap
+
+last_conv_layer = &quot;block5_conv3&quot;
+heatmap = make_gradcam_heatmap(img_preprocessed, model, last_conv_layer)
+
+# Superimpose on image
+img = cv2.imread(img_path)
+img = cv2.resize(img, (224, 224))
+heatmap = cv2.resize(heatmap, (img.shape[1], img.shape[0]))
+heatmap_color = cv2.applyColorMap(np.uint8(255 * heatmap), cv2.COLORMAP_JET)
+superimposed_img = heatmap_color * 0.4 + img
+superimposed_img = np.uint8(superimposed_img)
+
+# Display result
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+plt.title(&quot;Original Image&quot;)
+plt.axis('off')
+
+plt.subplot(1, 2, 2)
+plt.imshow(cv2.cvtColor(superimposed_img, cv2.COLOR_BGR2RGB))
+plt.title(&quot;Grad-CAM Heatmap&quot;)
+plt.axis('off')
+plt.show()
+</code></pre>
+<p><img src="../_assets/grad.png" alt="results"></p>
+<p>In this case, the bright red and yellow areas on the trunk, head, and tusks suggest these features were critical for the network to recognize the image as an elephant.</p>
+<hr>
+</section><section><h2 id="interpreting-feature-maps-and-activation-heatmaps"><strong>Interpreting Feature Maps and Activation Heatmaps</strong></h2>
+<p>Understanding what a convolutional neural network has learned requires more than monitoring loss curves or accuracy metrics. Tools like feature maps and Grad-CAM heatmaps offer visual and intuitive ways to interpret how a CNN processes and prioritizes input data.To interpret a feature map, one observes how specific filters respond spatially to an image. Regions with high activation (bright areas) indicate where the filter has detected its target pattern such as an edge, texture, or localized shape. In early layers, this often reflects low-level features like gradients and contours. In deeper layers, feature maps highlight more abstract components, such as the presence of a facial structure, a curved edge, or an object region.</p>
+<p>In contrast, a Grad-CAM heatmap provides a broader, decision-level view. It reveals which spatial areas in the original image had the greatest influence on the model's predicted class. By combining the feature maps from the final convolutional layer with the gradients of the prediction, Grad-CAM generates a color-coded overlay. Warm colors (red, orange) indicate strong influence on the prediction, while cool colors (blue, dark) show regions with minimal contribution. Together, these visual tools offer a two-layered interpretability strategy:</p>
+<ul>
+<li><strong>Feature maps</strong> help us track how information evolves through the network.</li>
+<li><strong>Activation heatmaps</strong> explain what the model ultimately attends to when producing its output.</li>
+</ul>
+<p>These insights are not only important for debugging and refining models, but also for increasing trust in CNN predictions, especially in critical domains such as healthcare, finance, or autonomous systems.</p>
+<hr>
+<h1 id="conclusion">Conclusion</h1>
+<p>This lesson discussed how CNNs “see” by visualizing learned kernels, feature maps, and Grad-CAM heatmaps. Starting with basic edge detectors and ending with high-level feature activations, we used the VGG16 model to peek into each layer's role in image understanding. These visual tools not only reveal what the network learns but also help us interpret and trust its decisions.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

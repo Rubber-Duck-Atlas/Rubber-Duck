@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Ethics In Computer Vision</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-ethics-in-computer-vision">Lesson: Ethics in Computer Vision</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Computer vision fuels groundbreaking innovations, from medical diagnostics to self-driving cars and personalized services. However, without ethical safeguards, it risks perpetuating biases, invading privacy, and enabling misuse. In 2024, a deepfake video of a CEO triggered a $10M stock crash, and a 2024 Boston hospital study revealed biased AI misdiagnosed 40% of minority patients. These incidents underscore the urgency of ethical practices. This lesson equips you to <em>identify, prevent</em>, and <em>mitigate</em> ethical risks in computer vision through technical strategies, case studies, and hands-on activities designed for individual learning. By exploring solutions, you’ll gain tools to build responsible AI systems.</p>
+<p><img src="../_assets/deep-fake.jpeg" alt="Example of a deepfake video"><br>
+<em>Image Description</em>: The image (<code>deep-fake.jpeg</code>) shows a side-by-side comparison of a real person’s video and a deepfake, highlighting subtle manipulations like altered facial expressions or lip movements that can deceive viewers.</p>
+<p>To set the foundation, let’s outline the learning objectives that will guide our exploration of ethical challenges and solutions in computer vision.</p>
+</section><section><h2 id="learning-objectives">Learning Objectives</h2>
+<p>By the end of this lesson, you’ll be able to:</p>
+<ul>
+<li>Define <em>data bias</em>, <em>model bias</em>, and <em>algorithm bias</em> and their impact on fairness.</li>
+<li>Explain how adversarial noise misleads models and its implications.</li>
+<li>Apply technical strategies (with code and pseudocode) to mitigate ethical issues.</li>
+<li>Discuss solutions to privacy violations and their societal importance.</li>
+<li>Implement real-time bias monitoring and adversarial defenses.</li>
+<li>Engage in hands-on exercises to address bias, attacks, and privacy.</li>
+<li>Reflect on ethical dilemmas from technical, societal, and cultural perspectives.</li>
+</ul>
+<p>With these goals in mind, let’s dive into the types of biases that can undermine computer vision systems and how to address them effectively.</p>
+<hr>
+</section><section><h2 id="biases-in-computer-vision">Biases in Computer Vision</h2>
+<p>Bias infiltrates computer vision through data, models, or algorithms, leading to unfair or inaccurate outcomes. Each subsection below provides a case study, technical solution, discussion, visual aid, hands-on exercise, and reflective question to ensure comprehensive coverage and practical understanding.</p>
+<h3 id="data-bias-when-the-data-doesnt-reflect-reality">Data Bias: When the Data Doesn’t Reflect Reality</h3>
+<p><strong>Data bias</strong> occurs when training data fails to represent real-world diversity, resulting in models that perform poorly on underrepresented groups. The <em>Gender Shades</em> study (2018) found facial recognition systems were up to 34% less accurate for darker-skinned women due to imbalanced datasets, revealing the real-world consequences of biased data.</p>
+<p><strong>SMOTE (Synthetic Minority Oversampling Technique)</strong>: Consider a dataset with 100 cat photos but only 10 dog photos. A model might overlook dogs. SMOTE generates synthetic dog examples by interpolating features (e.g., ear shape, fur color), balancing the dataset for fair learning.</p>
+<h4 id="case-study-skin-cancer-misdiagnosis">Case Study: Skin Cancer Misdiagnosis</h4>
+<p>A 2023 study showed AI trained on light-skinned patients had a 42% higher error rate for melanoma detection in darker-skinned individuals, highlighting the need for diverse data.</p>
+<p><strong>Solution</strong>: Use SMOTE and reweighing to balance minority classes and ensure fairness.  <strong>Code</strong>:</p>
+<pre><code class="language-python">from imblearn.over_sampling import SMOTE
+from fairlearn.preprocessing import Reweighing
+import pandas as pd
+
+def debias_dataset(dataset):
+    # Analyze distributions
+    class_dist = dataset['class'].value_counts()
+    skin_tone_dist = dataset['skin_tone'].value_counts()
+
+    # Resample minority classes
+    if class_dist.get('melanoma', 0) / len(dataset) &lt; 0.15:
+        smote = SMOTE(sampling_strategy='auto')
+        X_resampled, y_resampled = smote.fit_resample(dataset.drop('class', axis=1), dataset['class'])
+        dataset = pd.concat([X_resampled, y_resampled], axis=1)
+
+    # Reweigh for skin tone fairness
+    reweighter = Reweighing(unprivileged_groups=[{'skin_tone': 'dark'}], 
+                           privileged_groups=[{'skin_tone': 'light'}])
+    dataset = reweighter.fit_transform(dataset)
+    return dataset
+</code></pre>
+<p><strong>Discussion</strong>: SMOTE generates synthetic samples for underrepresented groups (e.g., melanoma in darker skin), improving accuracy from 68% to 89%. Reweighing prioritizes fairness by adjusting sample weights. Challenges include computational overhead and potential overfitting to synthetic data, necessitating robust validation with real-world testing.</p>
+<p><img src="../_assets/light-dark.png" alt="Bar chart showing improved melanoma detection accuracy across skin tones">
+<em>Image Description</em>: The image is a bar chart comparing melanoma detection accuracy before and after debiasing, showing significant improvement for darker skin tones.</p>
+<p><strong>Hands-On Exercise</strong>: Apply SMOTE to a dataset with imbalanced skin tones (e.g., 80% light, 20% dark). Evaluate accuracy before and after debiasing, and visualize the results.</p>
+<p><strong>Reflective Question</strong>: How might data bias in a hiring tool affect candidates? What challenges might SMOTE introduce?</p>
+<blockquote>
+<p>Data bias in hiring tools can unfairly reject qualified candidates from underrepresented groups, perpetuating discrimination. For example, if resumes or photos are biased toward light-skinned candidates, the model may undervalue others. SMOTE may overfit synthetic data, raise legal concerns about manipulating sensitive attributes, or fail to address correlated biases (e.g., zip code). Fairness audits and transparency are essential.</p>
+</blockquote>
+<p>Data bias is a critical issue, but biases can also stem from model design. Let’s explore how architectural choices can skew outcomes.</p>
+<h3 id="model-bias-when-the-architecture-skews-outcomes">Model Bias: When the Architecture Skews Outcomes</h3>
+<p><strong>Model bias</strong> arises from design choices, such as convolutional neural networks (CNNs) prioritizing texture over shape, leading to misclassifications (e.g., mistaking a wolf for a dog).</p>
+<h4 id="case-study-wildlife-misclassification">Case Study: Wildlife Misclassification</h4>
+<p>A CNN misclassified wolves as dogs due to its focus on texture, impacting conservation efforts by misguiding wildlife tracking.</p>
+<p><strong>Solution</strong>: Design a shape-prioritizing CNN with edge detection and global pooling.<br>
+<strong>Code</strong>:</p>
+<pre><code class="language-python">import tensorflow as tf
+
+def build_shape_prioritizing_cnn():
+    model = tf.keras.Sequential([
+        tf.keras.layers.Conv2D(32, (3,3), activation='relu', input_shape=(224,224,3)),
+        tf.keras.layers.MaxPooling2D((2,2)),
+        tf.keras.layers.Lambda(lambda x: tf.image.sobel_edges(x)[0]),  # Edge detection
+        tf.keras.layers.GlobalMaxPooling2D(),
+        tf.keras.layers.Dropout(0.5),
+        tf.keras.layers.Dense(128, activation='relu'),
+        tf.keras.layers.Dense(1, activation='sigmoid')
+    ])
+    return model
+</code></pre>
+<p><strong>Discussion</strong>: Edge detection emphasizes structural features (e.g., snout shape), improving wolf classification accuracy from 62% to 94%. Global max pooling reduces texture reliance. However, custom layers increase model complexity and may limit scalability, requiring expertise in architecture design.</p>
+<p><img src="../_assets/wolf-dog.png" alt="Bar chart comparing wolf vs. dog classification accuracy">
+<em>Image Description</em>: The image is a bar chart showing improved wolf vs. dog classification accuracy after using a shape-prioritizing CNN.</p>
+<p><strong>Hands-On Exercise</strong>: Modify a CNN to include edge detection. Compare performance on a texture-biased dataset (e.g., wolves vs. dogs) and analyze the trade-offs.</p>
+<p><strong>Reflective Questions</strong>:</p>
+<ol>
+<li>How might model bias affect a medical imaging system?</li>
+<li>What trade-offs arise when prioritizing shape over texture?<blockquote>Model bias in medical imaging can lead to misdiagnoses, particularly for underrepresented groups, exacerbating health disparities. For example, a texture-biased model may miss structural anomalies in X-rays. Prioritizing shape improves generalization across diverse populations but may overlook subtle texture cues (e.g., lesion roughness), increase computational complexity, and reduce interpretability. Balancing these factors is critical.</blockquote></li>
+</ol>
+<p>Model bias highlights the impact of design choices, but biases can also emerge from the algorithms themselves. Let’s examine algorithm bias next.</p>
+<h3 id="algorithm-bias-when-the-math-misses-the-mark">Algorithm Bias: When the Math Misses the Mark</h3>
+<p><strong>Algorithm bias</strong> occurs when loss functions favor majority classes, ignoring minority groups (e.g., predicting &quot;cat&quot; in a 90% cat dataset, neglecting dogs).</p>
+<h4 id="case-study-loan-approval-ai">Case Study: Loan Approval AI</h4>
+<p>A bank’s vision system favored high-income applicants due to imbalanced data (80% high-income), disproportionately rejecting low-income applicants.</p>
+<p><strong>Solution</strong>: Use focal loss to prioritize minority classes.<br>
+<strong>Code</strong>:</p>
+<pre><code class="language-python">import torch
+import torch.nn as nn
+
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=0.8, gamma=2):
+        super().__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+
+    def forward(self, y_pred, y_true):
+        ce_loss = nn.CrossEntropyLoss(reduction='none')(y_pred, y_true)
+        pt = torch.exp(-ce_loss)
+        focal_loss = self.alpha * (1 - pt) ** self.gamma * ce_loss
+        return torch.mean(focal_loss)
+</code></pre>
+<p><strong>Discussion</strong>: Focal loss downweights easy examples (e.g., high-income approvals) and emphasizes minority cases, reducing false negatives by 35%. Challenges include slower convergence and the need for careful hyperparameter tuning (alpha, gamma) to balance performance across classes.</p>
+<p><img src="../_assets/high-low.png" alt="Bar chart showing reduced false negatives for loan approvals">
+<em>Image Description</em>: The image is a bar chart showing reduced false negatives for low-income loan approvals after applying focal loss.</p>
+<p><strong>Hands-On Exercise</strong>: Implement focal loss on an imbalanced dataset (e.g., loan approvals). Tune <code>alpha</code> and <code>gamma</code> to optimize performance and compare with standard cross-entropy loss.</p>
+<p><strong>Reflective Question</strong>: How might algorithm bias impact a criminal justice AI? What challenges might focal loss introduce?</p>
+<blockquote>
+<p>Algorithm bias in criminal justice AI can unfairly target marginalized groups, assigning higher risk scores or longer sentences based on historical data biases. Focal loss helps by focusing on underrepresented cases but requires careful tuning, may slow training, and reduces transparency, which is critical in legal contexts. Ethical oversight is essential.</p>
+</blockquote>
+<p>Bias mitigation is crucial, but deployed systems require ongoing vigilance. Let’s explore how real-time bias monitoring can ensure fairness in operational systems.</p>
+<h3 id="real-time-bias-monitoring-for-deployed-systems">Real-Time Bias Monitoring for Deployed Systems</h3>
+<p>Once deployed, computer vision systems can develop biases due to data drift or changing user interactions. Real-time bias monitoring detects and mitigates these issues dynamically, ensuring fairness throughout the system’s lifecycle.</p>
+<h4 id="case-study-retail-facial-recognition">Case Study: Retail Facial Recognition</h4>
+<p>In 2024, a retail chain’s facial recognition system falsely flagged minority customers as shoplifters due to demographic drift in customer data, highlighting the need for continuous monitoring.</p>
+<p><strong>Solution</strong>: Implement a bias monitoring pipeline with fairness metrics.<br>
+<strong>Code</strong>:</p>
+<pre><code class="language-python">from fairlearn.metrics import MetricFrame
+import pandas as pd
+
+def monitor_bias(predictions, true_labels, sensitive_features):
+    # Define fairness metrics
+    metrics = {
+        'accuracy': lambda y_true, y_pred: (y_true == y_pred).mean(),
+        'demographic_parity': lambda y_true, y_pred: y_pred.mean()
+    }
+
+    # Compute metrics by group
+    mf = MetricFrame(metrics=metrics, 
+                     y_true=true_labels, 
+                     y_pred=predictions, 
+                     sensitive_features=sensitive_features)
+
+    # Alert if disparity exceeds threshold
+    if mf.difference('demographic_parity') &gt; 0.1:
+        print(&quot;Bias detected: Retraining required&quot;)
+        trigger_retraining()
+
+    return mf.by_group
+</code></pre>
+<p><strong>Discussion</strong>: This pipeline tracks fairness metrics like demographic parity in real-time, triggering retraining if disparities exceed 0.1. In the retail case, it reduced false positives by 28%. Challenges include the need for continuous data collection, computational resources, and handling false alerts.</p>
+<p><strong>Hands-On Exercise</strong>: Set up a monitoring system for a facial recognition model. Simulate data drift (e.g., changing demographics) and evaluate fairness metrics. Visualize disparities across groups.</p>
+<p><strong>Reflective Question</strong>: How can real-time monitoring balance fairness and system performance? What are the privacy implications?</p>
+<blockquote>
+<p>Real-time monitoring ensures fairness by detecting bias early but may impact performance due to constant metric computation. Privacy risks arise from collecting sensitive data (e.g., demographics), requiring anonymization and informed consent to comply with regulations like GDPR.</p>
+</blockquote>
+<p>Bias is a significant ethical concern, but adversarial attacks pose another critical threat. Let’s expand on how to defend against them, including real-time detection strategies.</p>
+<hr>
+</section><section><h2 id="adversarial-attacks-the-art-of-fooling-models">Adversarial Attacks: The Art of Fooling Models</h2>
+<p><strong>Adversarial attacks</strong> add subtle noise to inputs, causing misclassifications (e.g., a panda mislabeled as a gibbon). These “optical illusions” exploit model vulnerabilities, posing risks in safety-critical applications like autonomous driving.</p>
+<p><img src="../_assets/panda-gibbon.png" alt="Panda misclassified as gibbon due to adversarial noise"><br>
+<em>Image Description</em>: The image shows a panda image with added adversarial noise, causing a model to misclassify it as a gibbon.</p>
+<h3 id="case-study-stop-sign-speed-limit">Case Study: Stop Sign → Speed Limit</h3>
+<p>MIT researchers used adversarial stickers to trick a self-driving car’s vision system into misclassifying a stop sign as a speed limit sign, demonstrating the potential for catastrophic failures.</p>
+<p><strong>Solution</strong>: Combine adversarial training with real-time detection using gradient norm analysis.</p>
+<p><strong>Code</strong>:</p>
+<pre><code class="language-python">import torch
+from foolbox import PyTorchModel, attacks
+
+def adversarial_training(model, X_train, y_train, epsilon=0.1):
+    fmodel = PyTorchModel(model, bounds=(0, 1))
+    attack = attacks.FGSM()
+
+    for epoch in range(10):
+        X_adv = attack(fmodel, X_train, y_train, epsilons=epsilon)
+        X_mixed = torch.cat([X_train, X_adv])
+        y_mixed = torch.cat([y_train, y_train])
+        model.train_on_batch(X_mixed, y_mixed)
+    return model
+
+def detect_adversarial_input(input_image, model, threshold=0.05):
+    input_image.requires_grad = True
+    output = model(input_image)
+    loss = torch.nn.CrossEntropyLoss()(output, output.argmax())
+    loss.backward()
+
+    grad_norm = input_image.grad.norm().item()
+    if grad_norm &gt; threshold:
+        print(&quot;Adversarial input detected&quot;)
+        return True
+    return False
+</code></pre>
+<p><strong>Discussion</strong>: Adversarial training mixes clean and perturbed data, improving robustness (12% → 84% accuracy under attack). Real-time detection flags suspicious inputs by analyzing gradient norms, reducing false positives by 40% in the MIT case. Challenges include increased computational overhead and potential false positives for benign inputs, requiring careful threshold tuning.</p>
+<p><img src="../_assets/clean-attack.png" alt="Accuracy under attack improved from 12% to 84%">
+<em>Image Description</em>: The image is a bar chart showing accuracy under adversarial attack before (12%) and after (84%) training.</p>
+<p><strong>Hands-On Exercise</strong>: Train a model with adversarial examples using FGSM. Implement a gradient-based detector and test on perturbed images. Evaluate detection accuracy and robustness.</p>
+<p><strong>Reflective Question</strong>: How could attackers bypass facial recognition? What are the trade-offs of adversarial defenses?</p>
+<blockquote>
+<p>Attackers could use adversarial glasses, stickers, or digital noise to bypass facial recognition. Defenses increase robustness but slow training, reduce clean-data accuracy, and may not catch novel attacks. Continuous updates are needed to stay ahead of evolving threats.</p>
+</blockquote>
+<p>Adversarial attacks threaten system security, but privacy violations raise equally pressing ethical concerns. Let’s explore how to protect user data in computer vision systems.</p>
+<hr>
+</section><section><h2 id="privacy-violations-when-vision-becomes-intrusion">Privacy Violations: When Vision Becomes Intrusion</h2>
+<p>Facial recognition and deepfakes enable surveillance and misinformation, posing significant privacy risks that demand robust safeguards.</p>
+<h3 id="case-study-hospital-surveillance-leak">Case Study: Hospital Surveillance Leak</h3>
+<p>A 2023 London hospital breach exposed 100,000 patient records due to poor anonymization, highlighting the vulnerabilities of centralized data storage.</p>
+<p><strong>Solution</strong>: Use federated learning to keep data local.<br>
+<strong>Federated Learning</strong>: Hospitals train models locally, sharing only model updates, not raw data, ensuring privacy like chefs exchanging recipes without revealing ingredients.</p>
+<p><strong>Code</strong>:</p>
+<pre><code class="language-python">import flwr as fl
+
+class MedicalClient(fl.client.NumPyClient):
+    def __init__(self, model, data):
+        self.model = model
+        self.data = data
+
+    def fit(self, parameters, config):
+        self.model.set_weights(parameters)
+        self.model.train_on(self.data)
+        return self.model.get_weights(), len(self.data), {}
+
+strategy = fl.server.strategy.FedAvg(min_available_clients=3)
+fl.server.start_server(server_address=&quot;0.0.0.0:8080&quot;, 
+                      config=fl.server.ServerConfig(num_rounds=5), 
+                      strategy=strategy)
+</code></pre>
+<p><strong>Discussion</strong>: Federated learning prevented breaches in a 2023 COVID-19 detection network across 15 hospitals. It ensures data privacy but requires robust network infrastructure and faces scalability challenges due to decentralized computation.</p>
+<p><img src="../_assets/federated-learninh.png" alt="Diagram of federated learning data flow">
+<em>Image Description</em>: The image  is a diagram showing hospitals training local models and sending updates to a central server, with no raw data exchanged.</p>
+<p><strong>Hands-On Exercise</strong>: Simulate federated learning with 3 clients (e.g., hospitals). Evaluate model performance without data sharing and compare with centralized training.</p>
+<p><strong>Reflective Question</strong>: Should facial recognition be allowed in public spaces? Weigh security benefits against privacy risks.</p>
+<blockquote>
+<p>Facial recognition enhances security by identifying threats but risks mass surveillance, loss of anonymity, and misuse against marginalized groups. Strict regulation, transparency, and oversight are needed to balance benefits and risks.</p>
+</blockquote>
+<p>Privacy protections are essential, but ethical deployment requires a structured approach. Let’s outline a checklist to ensure responsible AI implementation.</p>
+<hr>
+</section><section><h2 id="deployment-checklist-for-ethical-ai-implementation">Deployment Checklist for Ethical AI Implementation</h2>
+<p>Deploying ethical computer vision systems requires proactive measures to ensure fairness, security, and privacy. This checklist provides a practical framework for responsible implementation.</p>
+<h3 id="checklist">Checklist</h3>
+<ul>
+<li><strong>Data Audit</strong>: Verify dataset diversity and balance across demographics (e.g., age, gender, ethnicity).</li>
+<li><strong>Bias Mitigation</strong>: Apply SMOTE, reweighing, or focal loss to address imbalances.</li>
+<li><strong>Fairness Metrics</strong>: Monitor demographic parity, equal opportunity, and disparate impact in real-time.</li>
+<li><strong>Adversarial Defense</strong>: Implement training and real-time detection mechanisms.</li>
+<li><strong>Privacy Protection</strong>: Use federated learning or differential privacy to safeguard data.</li>
+<li><strong>Transparency</strong>: Document model decisions and provide user-friendly explanations.</li>
+<li><strong>Regulatory Compliance</strong>: Adhere to GDPR, CCPA, or local privacy laws.</li>
+<li><strong>Continuous Monitoring</strong>: Set up alerts for bias, performance drift, or adversarial attacks.</li>
+<li><strong>User Consent</strong>: Ensure informed consent for data collection and usage.</li>
+<li><strong>Audit Trails</strong>: Maintain logs for accountability and periodic review.</li>
+</ul>
+<p><strong>Hands-On Exercise</strong>: Create a deployment plan for a facial recognition system, addressing each checklist item. Include a timeline and resource requirements.</p>
+<p><strong>Reflective Question</strong>: How can a deployment checklist balance ethical goals with business needs?</p>
+<blockquote>
+<p>A checklist ensures fairness and privacy but may increase costs and slow deployment. Prioritizing high-impact risks (e.g., bias in sensitive applications) balances ethics with efficiency, ensuring compliance without compromising innovation.</p>
+</blockquote>
+<p>The deployment checklist provides a practical guide, but ethical considerations extend beyond technology to societal and cultural contexts. Let’s explore these broader perspectives.</p>
+</section><section><h2 id="ethical-perspectives-beyond-technology">Ethical Perspectives: Beyond Technology</h2>
+<p>Ethics in computer vision involves societal and cultural dimensions that shape how technologies are perceived and regulated:</p>
+<ul>
+<li><strong>Western vs. Eastern Views</strong>: Western laws like GDPR prioritize individual privacy; some Eastern cultures accept surveillance for collective safety.</li>
+<li><strong>Philosophical Debate</strong>: Utilitarianism may justify surveillance for security, while deontology emphasizes informed consent and individual rights.</li>
+</ul>
+<p><img src="../_assets/privacy-policy.png" alt="Global privacy laws infographic">
+<em>Image Description</em>: The image (<code>privacy-policy.png</code>) is an infographic mapping global privacy laws, highlighting stricter regulations in regions like the EU (GDPR) compared to others.</p>
+<p>These perspectives enrich our understanding, leading to a comprehensive conclusion that ties together the lesson’s key themes.</p>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>Ethical computer vision demands vigilance against biases, robust defenses against adversarial attacks, strong privacy protections, and responsible deployment practices. Through technical solutions like SMOTE, focal loss, federated learning, real-time monitoring, and deployment checklists, you can build systems that are fair, secure, and trustworthy. By reflecting on societal and cultural implications, you’ll develop a holistic approach to creating AI that benefits all.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

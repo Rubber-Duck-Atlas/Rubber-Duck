@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Calibration</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-calibration">Lesson: Calibration</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Imagine capturing a breathtaking landscape photo only to realize that the edges appear stretched or warped. Similarly, think of old, faded images with crucial details in hidden shadows. These distortions and low-contrast issues arise frequently in image processing, affecting both human perception and computer vision tasks. Today, we will explore two essential techniques: Lens Distortion Correction and Histogram Equalization, which help restore visual fidelity and enhance contrast.</p>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, students will be able to:</p>
+<ul>
+<li>Explain the importance of lens distortion correction and its role in accurate image geometry.</li>
+<li>Discuss histogram equalization and contrast normalization to improve image perception.</li>
+</ul>
+</section><section><h2 id="lens-distortion-correction"><strong>Lens Distortion Correction</strong></h2>
+<p>Lens distortion refers to the geometric misplacement of image information from its ideal shape, which occurs due to the inherent optical properties of camera lenses. This correction is essential for accurately representing objects and enhancing the reliability of computer vision applications, such as facial recognition.</p>
+<p>Distortions happen because when a light ray passes through the curved surface of a lens, it experiences varying degrees of refraction depending on where it intersects with the curvature. As a result, certain areas of the image, particularly at the edges, may become unevenly magnified or compressed.</p>
+<h3 id="the-most-common-types-are"><strong>The most common types are:</strong></h3>
+<ul>
+<li><strong>Barrel Distortion</strong>: Causes straight lines to bulge outward, like a fisheye effect.</li>
+<li><strong>Pincushion Distortion</strong>: Causes straight lines to bend inward, giving an unnatural, stretched look.</li>
+</ul>
+<p>The Image explains the effect of barrel distortion and pincushion distortion on a square grid:
+<img src="../_assets/len.png" alt="lens"></p>
+<h3 id="how-does-lens-distortion-correction-work">How Does Lens Distortion Correction Work?</h3>
+<p>LDC (Lens Distortion Correction) helps fix the bending or warping in images caused by camera lenses. It does this by using a special lens profile designed for a specific lens.</p>
+<h3 id="how-is-a-lens-profile-created">How is a Lens Profile Created?</h3>
+<ul>
+<li>The lens is tested using known patterns (like calibration charts) to see how it distorts the image.</li>
+<li>Different settings, such as sensor size, resolution, and focal length, are adjusted until the distortion is corrected.</li>
+<li>Once the corrections look right, these settings are saved as a lens profile for future use.</li>
+</ul>
+<p><strong>What If the Lens is Unknown?</strong> If the lens distortion isn’t pre-tested, generic LDC algorithms can still help reduce distortion, but they may not be as precise as a custom profile.</p>
+<p>In the context of security camera systems, correcting lens distortion plays a crucial role in enhancing overall performance and ensuring consistent results. By dewarping video feeds, it not only facilitates easier human monitoring but also improves the accuracy of detection systems that utilize Computer Vision (CV).</p>
+<h3 id="correcting-lens-distortion-with-opencv">Correcting Lens Distortion with OpenCV</h3>
+<p>Modern algorithms allow us to correct these distortions by modeling the camera’s intrinsic parameters. Let’s apply a distortion correction using OpenCV.</p>
+<p>First, we need to obtain camera calibration parameters (intrinsic matrix and distortion coefficients), which are typically computed using a chessboard calibration technique. Here’s a simplified approach assuming we already have these values:</p>
+<pre><code class="language-python">import cv2
+import numpy as np
+from google.colab.patches import cv2_imshow 
+
+# Load the distorted image from URL
+image = cv2.imread(&quot;distortion.jpg&quot;)  # Download the image and save it locally first
+
+# Example camera matrix and distortion coefficients (for demonstration purposes)
+camera_matrix = np.array([[800, 0, 320], 
+                          [0, 800, 240], 
+                          [0, 0, 1]], dtype=np.float32)
+dist_coeffs = np.array([-0.3, 0.1, 0, 0, 0], dtype=np.float32)
+
+# Correct distortion
+h, w = image.shape[:2]
+new_camera_matrix, roi = cv2.getOptimalNewCameraMatrix(camera_matrix, dist_coeffs, (w,h), 1, (w,h))
+undistorted_image = cv2.undistort(image, camera_matrix, dist_coeffs, None, new_camera_matrix)
+
+# Display results
+cv2_imshow(image)
+cv2_imshow(undistorted_image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+</code></pre>
+<p><img src="../_assets/orgin.png" alt="Original Image"></p>
+<p><img src="../_assets/result_correction.png" alt="results of correction"></p>
+</section><section><h2 id="histogram-equalization-and-contrast-normalization"><strong>Histogram Equalization and Contrast Normalization</strong></h2>
+<p>In many images—especially those captured in low-light or uneven lighting—important details can be hidden in overly dark or bright regions. To make these features more visible and improve the overall visual quality, we use techniques like <strong>histogram equalization</strong> and <strong>contrast normalization</strong>.</p>
+<p>These methods enhance the image by <strong>redistributing pixel intensities</strong> or <strong>scaling contrast levels</strong>, making edges, textures, and objects easier to detect and analyze. Proper contrast adjustment can dramatically improve feature visibility and model accuracy for both human viewing and computer vision tasks.</p>
+<hr>
+<h3 id="why-is-contrast-enhancement-important">Why Is Contrast Enhancement Important?</h3>
+<p>Imagine looking at an old newspaper where the ink has faded, making it difficult to read. In computer vision, poor contrast affects feature extraction, edge detection, and classification accuracy in machine learning models. Histogram equalization helps by redistributing brightness values to improve visibility.</p>
+<p><strong>Histogram equalization:</strong> It is an image processing technique used to enhance the contrast or adjust the brightness values of an image. This method equalizes the pixel intensities of the image, making the distribution of color and brightness more balanced.</p>
+<p><strong>The process of histogram equalization involves the following steps:</strong></p>
+<ol>
+<li><strong>Histogram Creation</strong>: A histogram is generated based on the pixel intensities of the image.</li>
+<li><strong>Cumulative Distribution Function (CDF) Calculation</strong>: The cumulative sum of each bin in the histogram is computed, representing the overall pixel intensity distribution of the image.</li>
+<li><strong>Normalization</strong>: The cumulative distribution function is normalized, ensuring that values fall within a range of 0 to 255.</li>
+<li><strong>Applying the Transformation Function</strong>: Each pixel in the original image is transformed by considering the normalized CDF, resulting in a new value.</li>
+</ol>
+<p>Histogram equalization is used for applications such as enhancing image details, making the image more vibrant, or feature extraction. However, it should be noted that it may overly emphasize certain features or increase noise in some cases.</p>
+<p><strong>Example Code for Histogram Equalization in OpenCV:</strong></p>
+<pre><code class="language-python"># load grayscale image
+image = cv2.imread('dog.jpg', cv2.IMREAD_GRAYSCALE)
+
+# Apply histogram equalization
+equalized = cv2.equalizeHist(image)
+
+# Create a figure with subplots to compare the images
+plt.figure(figsize=(30, 10))
+
+# Show equalized image
+plt.subplot(1, 3, 1)
+plt.imshow(equalized, cmap='gray', vmin=0, vmax=255)
+plt.title('Equalized Image')
+
+# Compare original and equalized histograms
+plt.subplot(1, 3, 2)
+plt.hist(image.flatten(), 256, [0, 256])
+plt.title('Original Histogram')
+plt.subplot(1, 3, 3)
+plt.hist(equalized.flatten(), 256, [0, 256])
+plt.title('Equalized Histogram')
+plt.show()
+plt.show()
+</code></pre>
+<p><img src="../_assets/hist_equ_ex.png" alt="hist"></p>
+</section><section><h2 id="comparison-and-use-cases">Comparison and Use Cases</h2>
+<table>
+<thead>
+<tr>
+<th><strong>Technique</strong></th>
+<th><strong>Best Use Case</strong></th>
+<th><strong>Limitation</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Lens Distortion Correction</strong></td>
+<td>3D modeling, mapping, and AR</td>
+<td>Requires camera calibration</td>
+</tr>
+<tr>
+<td><strong>Histogram Equalization</strong></td>
+<td>Medical imaging, facial recognition</td>
+<td>May introduce noise</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>In this lesson, you learned how <strong>lens distortion correction</strong> improves geometric accuracy and why it's essential for precise measurements and object detection. You also explored how <strong>histogram equalization</strong> and <strong>contrast normalization</strong> enhance image clarity, making features more visible for both human analysis and computer vision tasks. These techniques are key to producing clean, accurate, and usable images.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

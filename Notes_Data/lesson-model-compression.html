@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Model Compression</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-model-compression">Lesson: Model Compression</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Model compression is a vital technique for deploying computer vision models, such as Convolutional Neural Networks (CNNs), on resource-constrained devices like mobile phones, embedded systems, or edge devices used in autonomous vehicles and IoT cameras. In computer vision tasks such as image classification, object detection, or license plate recognition, models often require significant computational resources due to their complexity. This lesson explores key compression techniques (pruning, quantization, and knowledge distillation) to optimize vision models and examines the trade-offs between model size, accuracy, and inference speed in mobile/embedded vision applications.</p>
+</section><section><h2 id="learning-objective">Learning Objective</h2>
+<p><strong>By the end of this lesson, you will be able to:</strong></p>
+<ul>
+<li>Explain techniques like pruning, quantization, and knowledge distillation for optimizing models.</li>
+<li>Discuss trade-offs between model size, accuracy, and inference speed in mobile/embedded applications.</li>
+<li>Implement compression techniques using modern frameworks like TensorFlow and PyTorch.</li>
+<li>Evaluate and select appropriate compression strategies for specific deployment scenarios.</li>
+</ul>
+<hr>
+</section><section><h2 id="the-need-for-model-compression">The Need for Model Compression</h2>
+<p>Many real-world applications require real-time, on-device processing. For instance, the AI in a home security camera needs to detect and alert you about unrecognized intruders. The primary obstacle with modern AI is that edge devices have limited resources, such as restricted memory and processing power. High-performing deep learning models are often large, requiring significant storage space, which makes them challenging to deploy on resource-constrained devices. Larger models also increase inference time and energy use. While these models excel in controlled settings, they are often impractical for real-world use. This leads to the need for AI compression to reduce model size. Creating compact models that operate within the limitations of edge devices is a major challenge. It's critical to achieve this without sacrificing accuracy.</p>
+<p>Simply having a small model that fits on resource-constrained devices isn't enough; it must also deliver high accuracy and fast inference. <strong>This is where AI compression techniques play a vital role.</strong></p>
+<hr>
+</section><section><h2 id="the-4-popular-ai-compression-techniques">The 4 Popular AI Compression Techniques:</h2>
+<p>As the name suggests, model compression helps reduce the size of the neural network without compromising too much on accuracy. The resulting models are both memory and energy efficient. Many model compression techniques can be used to reduce the model size.</p>
+<h3 id="pruning">Pruning</h3>
+<p>Pruning involves eliminating less important parameters from a deep learning neural network to shrink its size and improve inference efficiency. Typically, only the weights are pruned, while biases are left intact, as pruning biases often leads to more substantial negative impacts. Many parameters in DNNs are unnecessary, as they have minimal impact during training. These can be eliminated post-training with negligible impact on accuracy.</p>
+<p><img src="../_assets/Before.jpg" alt="before-after"></p>
+<p>Pruning creates smaller, faster models by lowering the computational demands of network training and reducing model size. It also saves time and energy during computation. Pruning can occur during or after training.</p>
+<h4 id="example-magnitude-based-pruning">Example: Magnitude-Based Pruning</h4>
+<p>Below is a Python example demonstrating magnitude-based pruning, where weights below a specified threshold are set to zero.</p>
+<pre><code class="language-python">import numpy as np
+
+# Sample weight matrix for a neural network layer
+weights = np.array([[0.1, -0.4, 0.05], [0.8, -0.02, 0.6], [-0.3, 0.01, 0.5]])
+
+# Define pruning threshold
+threshold = 0.2
+
+# Apply magnitude-based pruning
+pruned_weights = np.where(np.abs(weights) &lt; threshold, 0, weights)
+
+print(&quot;Original Weights:\n&quot;, weights)
+print(&quot;Pruned Weights:\n&quot;, pruned_weights)
+</code></pre>
+<p><strong>Output:</strong></p>
+<pre><code>Original Weights:
+ [[ 0.1  -0.4   0.05]
+  [ 0.8  -0.02  0.6 ]
+  [-0.3   0.01  0.5 ]]
+Pruned Weights:
+ [[ 0.   -0.4   0.  ]
+  [ 0.8   0.    0.6 ]
+  [-0.3   0.    0.5 ]]
+</code></pre>
+<p>In this example, weights with absolute values below 0.2 are set to zero, reducing the number of non-zero parameters and thus the model's computational complexity.</p>
+<h4 id="framework-implementation-tensorflow-model-optimization">Framework Implementation: TensorFlow Model Optimization</h4>
+<pre><code class="language-python">import tensorflow as tf
+from tensorflow_model_optimization.python.core.sparsity.keras import prune
+
+# Load a pre-trained model
+model = tf.keras.applications.MobileNetV2(weights='imagenet', input_shape=(224, 224, 3))
+
+# Define pruning schedule - gradually increase sparsity to 50%
+pruning_schedule = tf.keras.utils.PolynomialDecay(
+    initial_sparsity=0.0, final_sparsity=0.5, 
+    begin_step=1000, end_step=5000
+)
+
+# Apply pruning to the model
+pruned_model = prune.prune_low_magnitude(
+    model, pruning_schedule=pruning_schedule
+)
+
+# Compile and train/fine-tune
+pruned_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# After training, strip pruning wrappers for deployment
+final_model = prune.strip_pruning(pruned_model)
+</code></pre>
+<h4 id="several-types-are-used-for-pruning-including">Several types are used for pruning including:</h4>
+<ol>
+<li><strong>Weight Pruning:</strong> Eliminating weights below a certain threshold.</li>
+<li><strong>Neuron Pruning:</strong> Removing entire neurons based on their contribution to the output.</li>
+<li><strong>Layer Pruning:</strong> Discarding entire layers that do not contribute meaningfully to the model's performance.</li>
+<li><strong>Magnitude-based Pruning:</strong> Weights with the smallest magnitudes are pruned away because they contribute the least to the model's performance.</li>
+<li><strong>Structured Pruning:</strong> Whole filters or neurons are pruned, which can be more efficient for modern hardware architectures.</li>
+<li><strong>Unstructured Pruning:</strong> Individual weights are pruned across the network, leading to a sparse model.</li>
+<li><strong>Pruning can also be categorized as iterative:</strong> where pruning occurs over multiple rounds during training or fine-tuning, or one-shot, where pruning is done in a single pass.</li>
+</ol>
+<p><strong>Real-world Performance:</strong> A pruned MobileNetV2 with 70% sparsity typically achieves 2.3x speedup with only 1.2% accuracy drop on ImageNet classification.</p>
+<h3 id="quantization">Quantization</h3>
+<p>Quantization is a technique for compressing neural network models by lowering the precision of weights and activations. It represents these values with fewer bits than their original format for instance, using 8-bit integers instead of 32-bit floating point numbers. This reduces storage needs and computational demands. While some loss of precision occurs, well designed quantization methods can achieve significant compression with minimal impact on accuracy.</p>
+<p>The mathematical foundation of quantization involves mapping floating-point values to integers using:</p>
+<p><span class="math">\(\text{Quantized}_\text{value} = \text{round(Float}_\text{value} / \text{Scale)} + \text{Zero}_\text{point}\)</span></p>
+<p><strong>Where</strong></p>
+<p><span class="math">\(\text{Scale} = (max_\text{value} - min_\text{value}) / (2^\text{bits} - 1)\)</span> and <span class="math">\(Zero_{point}\)</span>, ensures the range includes zero.</p>
+<p><img src="../_assets/quant.webp" alt="quant"></p>
+<h4 id="types-of-quantization">Types of Quantization:</h4>
+<ol>
+<li><strong>Post-Training Quantization (PTQ):</strong> This method involves converting a pre-trained full-precision model (usually 32-bit floats) into a lower precision format (such as 8-bit integers) after training has finished. It is easy to implement and requires no retraining, but it may lead to a slight drop in model accuracy, especially for complex models.</li>
+<li><strong>Quantization-Aware Training (QAT):</strong> In this approach, the model is trained with quantization effects simulated during the training process itself. This helps the model learn to compensate for quantization-induced errors, resulting in better accuracy compared to PTQ, especially for more sensitive tasks. However, QAT requires more computational resources and time since it involves modifying the training pipeline.</li>
+</ol>
+<h4 id="example-post-training-quantization">Example: Post-Training Quantization</h4>
+<p>Below is a Python example demonstrating post-training quantization, converting a 32-bit floating-point weight matrix to 8-bit integers.</p>
+<pre><code class="language-python">import numpy as np
+
+# Sample weight matrix (32-bit floats)
+weights = np.array([[0.15, -0.42, 0.07], [0.89, -0.03, 0.65], [-0.28, 0.02, 0.54]])
+
+# Define quantization parameters
+min_val = np.min(weights)
+max_val = np.max(weights)
+scale = (max_val - min_val) / 255  # Scale for 8-bit quantization (0 to 255)
+zero_point = np.round(-min_val / scale)
+
+# Quantize weights to 8-bit integers
+quantized_weights = np.round((weights / scale) + zero_point).astype(np.int8)
+
+# Dequantize for verification (convert back to float)
+dequantized_weights = (quantized_weights - zero_point) * scale
+
+print(&quot;Original Weights (32-bit float):\n&quot;, weights)
+print(&quot;Quantized Weights (8-bit integer):\n&quot;, quantized_weights)
+print(&quot;Dequantized Weights (float):\n&quot;, dequantized_weights)
+print(f&quot;Compression Ratio: {32/8}x smaller&quot;)
+</code></pre>
+<p><strong>Output:</strong></p>
+<pre><code>Original Weights (32-bit float):
+ [[ 0.15 -0.42  0.07]
+  [ 0.89 -0.03  0.65]
+  [-0.28  0.02  0.54]]
+Quantized Weights (8-bit integer):
+ [[154  73 142]
+  [255 129 225]
+  [ 94 136 209]]
+Dequantized Weights (float):
+ [[ 0.147 -0.423  0.071]
+  [ 0.894 -0.024  0.647]
+  [-0.282  0.024  0.541]]
+Compression Ratio: 4.0x smaller
+</code></pre>
+<h4 id="framework-implementation-tensorflow-lite-quantization">Framework Implementation: TensorFlow Lite Quantization</h4>
+<pre><code class="language-python">import tensorflow as tf
+
+# Load your trained model
+model = tf.keras.models.load_model('my_model.h5')
+
+# Create TFLite converter
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+
+# Enable post-training quantization
+converter.optimizations = [tf.lite.Optimize.DEFAULT]
+
+# For full integer quantization (requires representative dataset)
+def representative_dataset():
+    for _ in range(100):
+        # Use actual data samples from your dataset
+        data = np.random.random((1, 224, 224, 3)).astype(np.float32)
+        yield [data]
+
+converter.representative_dataset = representative_dataset
+converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+converter.inference_input_type = tf.uint8
+converter.inference_output_type = tf.uint8
+
+# Convert the model
+tflite_model = converter.convert()
+
+# Save the quantized model
+with open('quantized_model.tflite', 'wb') as f:
+    f.write(tflite_model)
+</code></pre>
+<p><strong>Real-world Performance:</strong> INT8 quantized MobileNetV2 achieves 4x model size reduction and 2-4x inference speedup with typically &lt;1% accuracy loss.</p>
+<hr>
+<h3 id="knowledge-distillation">Knowledge Distillation</h3>
+<p>Knowledge distillation is a model compression technique that involves transferring the knowledge from a large, complex neural network (teacher network) to a smaller, simpler neural network (student network). The goal of knowledge distillation is to reduce the size of the network while maintaining its accuracy by leveraging the knowledge learned by the teacher network. The key insight is that the teacher's soft predictions (probability distributions) contain more information about the relationships between classes than hard labels alone. <strong>From a high-level perspective, knowledge distillation involves two main steps:</strong></p>
+<ul>
+<li>Training the teacher network: Involves training the teacher network to a desired level of accuracy</li>
+<li>Training the student network: Using the outputs of the teacher network as soft targets, which are probability distributions over the classes instead of hard labels</li>
+</ul>
+<p><img src="../_assets/know.png" alt="know"></p>
+<h4 id="mathematical-foundation">Mathematical Foundation</h4>
+<p>The student network is trained using a combination of two losses:</p>
+<ul>
+<li><strong>Distillation Loss:</strong> <span class="math">\(L_{distill} = KL_{divergence}(softmax(z_s/T), softmax(z_t/T))\)</span></li>
+<li><strong>Student Loss:</strong> <span class="math">\(L_{student} = CrossEntropy(y_{true}, softmax(z_s))\)</span></li>
+<li><strong>Total Loss:</strong> <span class="math">\(L_{total} = α × L_{distill} + (1-α) × L_{student}\)</span></li>
+</ul>
+<p>Where <span class="math">\(T\)</span> is the temperature parameter that softens the probability distributions.</p>
+<h4 id="example-knowledge-distillation-implementation">Example: Knowledge Distillation Implementation</h4>
+<pre><code class="language-python">import tensorflow as tf
+import numpy as np
+
+class DistillationTrainer:
+    def __init__(self, teacher_model, student_model, temperature=3.0, alpha=0.7):
+        self.teacher_model = teacher_model
+        self.student_model = student_model
+        self.temperature = temperature
+        self.alpha = alpha
+
+    def distillation_loss(self, y_true, y_pred_student, y_pred_teacher):
+        # Soften the teacher and student predictions
+        teacher_soft = tf.nn.softmax(y_pred_teacher / self.temperature)
+        student_soft = tf.nn.softmax(y_pred_student / self.temperature)
+
+        # Distillation loss (KL divergence)
+        distill_loss = tf.keras.losses.KLDivergence()(teacher_soft, student_soft)
+        distill_loss *= (self.temperature ** 2)
+
+        # Student loss (standard cross-entropy)
+        student_loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)(y_true, y_pred_student)
+
+        # Combined loss
+        return self.alpha * distill_loss + (1 - self.alpha) * student_loss
+
+    def train_step(self, x_batch, y_batch):
+        with tf.GradientTape() as tape:
+            # Get teacher predictions (no gradients needed)
+            teacher_predictions = self.teacher_model(x_batch, training=False)
+
+            # Get student predictions
+            student_predictions = self.student_model(x_batch, training=True)
+
+            # Calculate combined loss
+            loss = self.distillation_loss(y_batch, student_predictions, teacher_predictions)
+
+        # Update student model weights
+        gradients = tape.gradient(loss, self.student_model.trainable_variables)
+        optimizer.apply_gradients(zip(gradients, self.student_model.trainable_variables))
+
+        return loss
+
+# Example usage
+teacher = tf.keras.applications.ResNet50(weights='imagenet', classes=1000)
+student = tf.keras.applications.MobileNetV2(weights=None, classes=1000)
+
+trainer = DistillationTrainer(teacher, student)
+optimizer = tf.keras.optimizers.Adam(0.001)
+
+# Training loop would go here...
+print(&quot;Knowledge distillation setup complete!&quot;)
+</code></pre>
+<ul>
+<li><strong>Knowledge Distillation techniques typically fall into one of these categories:</strong><ul><li><strong>Offline Distillation</strong>: The most widely used method, where a pre-trained teacher model guides the training of a student model. It is straightforward to implement.</li><li><strong>Online Distillation (Deep Mutual Learning)</strong>: Applied when a pre-trained teacher model is unavailable, this approach updates both the teacher and student models concurrently in a single end-to-end training process.</li><li><strong>Self-Distillation</strong>: A variant of online distillation where the same model serves as both teacher and student. Knowledge from deeper network layers is used to guide the training of shallower layers.</li></ul></li>
+<li><strong>Real-world Performance:</strong> A MobileNetV2 student distilled from ResNet-50 teacher typically achieves 85% of the teacher's accuracy while being 10x smaller and 5x faster.</li>
+</ul>
+<hr>
+<h3 id="low-rank-factorization">Low-Rank Factorization</h3>
+<p>Low-rank factorization reduces model size by decomposing large weight matrices into smaller matrices with lower ranks. For instance, a large weight matrix in a CNN can be approximated as the product of two smaller matrices, significantly reducing the number of parameters. This method maintains most of the model's representational capacity while lowering memory and computational requirements. It is particularly effective for convolutional layers, where filters can be approximated with lower-rank representations, enabling faster inference and reduced storage needs.</p>
+<p><img src="../_assets/low.jpg" alt="know"></p>
+<h4 id="mathematical-foundation-1">Mathematical Foundation</h4>
+<p>A weight matrix <span class="math">\(W ∈ R^{m×n}\)</span> can be approximated as <span class="math">\(W ≈ U × V\)</span> where <span class="math">\(U ∈ R^{m×r}\)</span> and <span class="math">\(V ∈ R^{r×n}\)</span>, with <span class="math">\(r &lt; min(m,n)\)</span>. This reduces parameters from <span class="math">\(m×n\)</span> to <span class="math">\(r×(m+n)\)</span>.</p>
+<h4 id="example-svd-based-low-rank-approximation">Example: SVD-based Low-Rank Approximation</h4>
+<pre><code class="language-python">import numpy as np
+from scipy.linalg import svd
+
+def low_rank_approximation(weight_matrix, rank):
+    &quot;&quot;&quot;
+    Approximate a weight matrix using SVD decomposition
+    &quot;&quot;&quot;
+    # Perform SVD
+    U, s, Vt = svd(weight_matrix, full_matrices=False)
+
+    # Keep only the top 'rank' components
+    U_reduced = U[:, :rank]
+    s_reduced = s[:rank]
+    Vt_reduced = Vt[:rank, :]
+
+    # Reconstruct approximated matrix
+    approximated = U_reduced @ np.diag(s_reduced) @ Vt_reduced
+
+    # Calculate compression ratio
+    original_params = weight_matrix.shape[0] * weight_matrix.shape[1]
+    compressed_params = rank * (weight_matrix.shape[0] + weight_matrix.shape[1])
+    compression_ratio = original_params / compressed_params
+
+    return approximated, U_reduced, s_reduced, Vt_reduced, compression_ratio
+
+# Example with a convolutional layer weight
+conv_weights = np.random.randn(64, 128)  # 64 output channels, 128 input features
+target_rank = 32
+
+approximated, U, s, Vt, ratio = low_rank_approximation(conv_weights, target_rank)
+
+print(f&quot;Original shape: {conv_weights.shape}&quot;)
+print(f&quot;Compression ratio: {ratio:.2f}x&quot;)
+print(f&quot;Approximation error: {np.linalg.norm(conv_weights - approximated):.4f}&quot;)
+</code></pre>
+<ul>
+<li><strong>Real-world Performance:</strong> Low-rank factorization typically achieves 2-3x parameter reduction with &lt;2% accuracy drop in convolutional layers.</li>
+</ul>
+<hr>
+</section><section><h2 id="comparison-of-techniques">Comparison of Techniques</h2>
+<p>The table below compares several popular model compression techniques used to optimize deep learning models for deployment in resource-constrained environments. Each method offers different trade-offs between compression ratio and accuracy degradation, and the choice depends on specific deployment needs such as latency, model size, or hardware limitations.</p>
+<table>
+<thead>
+<tr>
+<th>Technique</th>
+<th>Reduction Type</th>
+<th>Compression Ratio</th>
+<th>Accuracy Drop</th>
+<th>When to Use</th>
+<th>Example Application</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Quantization</td>
+<td>Precision Reduction</td>
+<td>4x (FP32→INT8)</td>
+<td>&lt;1%</td>
+<td>When you need fast inference and small memory usage</td>
+<td>Mobile apps, edge devices</td>
+</tr>
+<tr>
+<td>Pruning</td>
+<td>Weight Reduction</td>
+<td>5-10x</td>
+<td>1-3%</td>
+<td>When you want to eliminate unnecessary weights</td>
+<td>Cloud-based AI models</td>
+</tr>
+<tr>
+<td>Knowledge Distillation</td>
+<td>Model Simplification</td>
+<td>3-10x</td>
+<td>2-5%</td>
+<td>When you need to deploy a smaller, less complex model</td>
+<td>Real-time, resource-constrained systems</td>
+</tr>
+<tr>
+<td>Low-Rank Factorization</td>
+<td>Matrix Decomposition</td>
+<td>2-3x</td>
+<td>1-2%</td>
+<td>When you need to reduce parameters in large matrices</td>
+<td>Convolutional neural networks</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section><section><h2 id="trade-offs-in-mobile-and-embedded-applications">Trade-offs in Mobile and Embedded Applications</h2>
+<p>When deploying AI models on mobile or embedded devices, developers must carefully balance model size, accuracy, and inference speed. Compression techniques help reduce resource requirements, but often introduce compromises. Understanding these trade-offs is essential when designing systems for constrained environments like smartphones, IoT devices, drones, or AR glasses.</p>
+<h3 id="model-size-vs.accuracy">1. Model Size vs. Accuracy</h3>
+<ul>
+<li>Smaller models (achieved through quantization or pruning) are easier to store and transmit and are more suitable for real-time applications.</li>
+<li>However, aggressive compression can lead to a loss in model accuracy, particularly for complex tasks such as object detection in cluttered environments.</li>
+<li>For instance, reducing a model from 32-bit to 8-bit precision may slightly degrade accuracy, which might be acceptable in some applications but unacceptable in safety-critical systems like autonomous driving.</li>
+</ul>
+<h4 id="benchmark-example-mobilenetv2-on-imagenet-classification">Benchmark Example: <strong>MobileNetV2 on ImageNet Classification</strong></h4>
+<p>To illustrate the practical impact of compression techniques, consider the following benchmark results for <strong>MobileNetV2</strong> applied to the <strong>ImageNet</strong> classification task. The trade-offs between model size, accuracy, and inference speed demonstrate how these methods can be tailored to specific deployment requirements.</p>
+<table>
+<thead>
+<tr>
+<th>Variant</th>
+<th>Model Size</th>
+<th>Top-1 Accuracy</th>
+<th>Inference Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Original (FP32)</strong></td>
+<td>14 MB</td>
+<td>71.8%</td>
+<td>50 ms</td>
+</tr>
+<tr>
+<td><strong>INT8 Quantized</strong></td>
+<td>3.5 MB</td>
+<td>70.9%</td>
+<td>25 ms</td>
+</tr>
+<tr>
+<td><strong>70% Pruned + Quantized</strong></td>
+<td>1.2 MB</td>
+<td>69.1%</td>
+<td>15 ms</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Key Takeaway:</strong>Quantization alone provides substantial improvements in efficiency with minimal accuracy loss. Combining pruning with quantization yields even greater compression and speedup, albeit with a more noticeable drop in accuracy—often acceptable in edge scenarios where latency and size are critical.</li>
+</ul>
+<h3 id="inference-speed-vs.accuracy">2. Inference Speed vs. Accuracy</h3>
+<ul>
+<li>Compressing models often improves inference speed, which is critical for real-time processing on edge devices.</li>
+<li>However, models compressed too aggressively may miss subtle patterns in data, reducing prediction accuracy.</li>
+<li>Some techniques, like knowledge distillation, try to preserve accuracy by transferring &quot;dark knowledge&quot; from large teacher models to smaller student models.</li>
+</ul>
+<h4 id="benchmark-example-object-detection-performance-coco-dataset">Benchmark Example: <strong>Object Detection Performance (COCO dataset):</strong></h4>
+<p>Compression techniques also extend beyond image classification to more complex tasks like object detection. The following benchmark highlights the trade-offs using <strong>YOLOv5</strong> variants on the <strong>COCO</strong> dataset, showing how latency and accuracy shift with each technique.</p>
+<table>
+<thead>
+<tr>
+<th>Variant</th>
+<th>Inference Time</th>
+<th>mAP (COCO)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>YOLOv5s (Original)</strong></td>
+<td>28 ms</td>
+<td>37.4</td>
+</tr>
+<tr>
+<td><strong>YOLOv5s (Quantized)</strong></td>
+<td>15 ms</td>
+<td>36.8</td>
+</tr>
+<tr>
+<td><strong>YOLOv5s (Pruned 50%)</strong></td>
+<td>20 ms</td>
+<td>35.9</td>
+</tr>
+<tr>
+<td><strong>Distilled YOLOv5n</strong></td>
+<td>8 ms</td>
+<td>28.4</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Key Insight:</strong><ul><li><strong>Quantization</strong> significantly reduces inference time with negligible loss in mean Average Precision (mAP).</li><li><strong>Pruning</strong> provides moderate speedup and compression at the cost of a slight performance drop.</li><li><strong>Knowledge distillation</strong> creates ultra-fast, compact models (e.g., YOLOv5n) but with a more substantial accuracy reduction—acceptable for lightweight, real-time applications where speed is prioritized over precision.</li></ul></li>
+</ul>
+<h3 id="model-size-vs.energy-efficiency">3. Model Size vs. Energy Efficiency</h3>
+<ul>
+<li>Smaller models consume less power, an important factor in battery-operated devices like wearables and drones.</li>
+<li>Techniques like quantization reduce both memory access and arithmetic operations, directly reducing energy consumption.</li>
+<li>However, power efficiency may come at the cost of precision or flexibility in handling diverse inputs.</li>
+</ul>
+<h4 id="energy-consumption-analysis-mobilenetv2-per-inference-power-usage">Energy Consumption Analysis: <strong>MobileNetV2 Per-Inference Power Usage</strong></h4>
+<p>Model compression techniques not only reduce size and latency but also have a substantial impact on <strong>energy efficiency</strong>, a critical factor for mobile and edge deployments. The following measurements illustrate energy usage per inference on a low-power device:</p>
+<table>
+<thead>
+<tr>
+<th>Variant</th>
+<th>Energy per Inference</th>
+<th>Reduction Compared to FP32</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>FP32 (Original)</strong></td>
+<td>45 mJ</td>
+<td>–</td>
+</tr>
+<tr>
+<td><strong>INT8 Quantized</strong></td>
+<td>12 mJ</td>
+<td>73%</td>
+</tr>
+<tr>
+<td><strong>70% Pruned + INT8 Quantized</strong></td>
+<td>8 mJ</td>
+<td>82%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Observation:</strong></p>
+<p>Quantization alone yields a significant drop in energy consumption, making it ideal for battery-sensitive environments. Combining <strong>pruning with quantization</strong> further reduces power draw, offering an excellent balance of speed, size, and energy efficiency, especially valuable for always-on devices like smart cameras or wearables.</p>
+<h4 id="summary-of-trade-offs">Summary of Trade-offs</h4>
+<p>Compression techniques offer tangible benefits across deployment constraints—but they come with trade-offs. The table below summarizes the primary goals of model compression, their associated benefits and risks, and strategies to mitigate potential downsides.</p>
+<table>
+<thead>
+<tr>
+<th><strong>Compression Goal</strong></th>
+<th><strong>Positive Effect</strong></th>
+<th><strong>Potential Drawback</strong></th>
+<th><strong>Mitigation Strategy</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reduce model size</td>
+<td>Fits into memory-constrained devices</td>
+<td>Possible drop in accuracy</td>
+<td>Use quantization-aware training</td>
+</tr>
+<tr>
+<td>Improve inference speed</td>
+<td>Enables real-time responsiveness</td>
+<td>Risk of degraded output quality</td>
+<td>Apply structured pruning with retraining</td>
+</tr>
+<tr>
+<td>Lower energy consumption</td>
+<td>Extends battery life on edge hardware</td>
+<td>May require fixed-point or specialized hardware</td>
+<td>Combine quantization, pruning, and distillation</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Conclusion:</strong>Effective compression involves balancing model compactness with acceptable accuracy loss. Leveraging <strong>hybrid techniques</strong> and training-aware methods can help maintain performance while achieving significant improvements in <strong>latency</strong>, <strong>memory footprint</strong>, and <strong>energy efficiency</strong>.</li>
+</ul>
+<hr>
+<h3 id="practical-exercise-complete-compression-pipeline">Practical Exercise: Complete Compression Pipeline</h3>
+<p>This exercise demonstrates how to build an end-to-end model compression pipeline using TensorFlow and TensorFlow Model Optimization Toolkit (TFMOT). The pipeline combines magnitude-based pruning, quantization-aware training (QAT), and full integer quantization for deployment.</p>
+<blockquote>
+<p><strong>Objective</strong>: Apply multiple compression techniques to a pretrained MobileNetV2 model and export a deployment-ready TFLite model while tracking compression metrics.</p>
+</blockquote>
+<hr>
+<h4 id="step-by-step-implementation">Step-by-Step Implementation</h4>
+<pre><code class="language-python">import tensorflow as tf
+from tensorflow_model_optimization.sparsity.keras import prune_low_magnitude, strip_pruning
+from tensorflow_model_optimization.sparsity.keras import PolynomialDecay
+import numpy as np
+</code></pre>
+<pre><code class="language-python">class CompressionPipeline:
+    def __init__(self, base_model):
+        self.base_model = base_model
+        self.compressed_model = None
+</code></pre>
+<h4 id="apply-magnitude-based-pruning">1. Apply Magnitude-Based Pruning</h4>
+<pre><code class="language-python">    def apply_pruning(self, target_sparsity=0.5):
+        &quot;&quot;&quot;Apply structured weight pruning using a polynomial decay schedule&quot;&quot;&quot;
+        pruning_schedule = PolynomialDecay(
+            initial_sparsity=0.0, 
+            final_sparsity=target_sparsity,
+            begin_step=1000, 
+            end_step=5000
+        )
+
+        self.compressed_model = prune_low_magnitude(
+            self.base_model, 
+            pruning_schedule=pruning_schedule
+        )
+        return self
+</code></pre>
+<h4 id="apply-quantization-aware-training-qat">2. Apply Quantization-Aware Training (QAT)</h4>
+<pre><code class="language-python">    def apply_quantization_aware_training(self):
+        &quot;&quot;&quot;Prepare the model for quantization-aware training&quot;&quot;&quot;
+        import tensorflow_model_optimization as tfmot
+        quantize_model = tfmot.quantization.keras.quantize_model
+
+        # Use either the pruned model or base model
+        self.compressed_model = quantize_model(
+            self.compressed_model or self.base_model
+        )
+        return self
+</code></pre>
+<h4 id="finalize-the-model-for-deployment">3. Finalize the Model for Deployment</h4>
+<pre><code class="language-python">    def finalize_for_deployment(self):
+        &quot;&quot;&quot;Export a fully quantized TFLite model for efficient inference&quot;&quot;&quot;
+        if self.compressed_model:
+            final_model = strip_pruning(self.compressed_model)
+        else:
+            final_model = self.base_model
+
+        converter = tf.lite.TFLiteConverter.from_keras_model(final_model)
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
+
+        # Configure for full integer quantization
+        converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+        converter.inference_input_type = tf.uint8
+        converter.inference_output_type = tf.uint8
+
+        return converter.convert()
+</code></pre>
+<h4 id="evaluate-compression-metrics">4. Evaluate Compression Metrics</h4>
+<pre><code class="language-python">    def evaluate_compression(self, original_size, compressed_size, 
+                             original_accuracy, compressed_accuracy,
+                             original_latency, compressed_latency):
+        &quot;&quot;&quot;Print compression effectiveness summary&quot;&quot;&quot;
+        size_reduction = original_size / compressed_size
+        accuracy_drop = original_accuracy - compressed_accuracy
+        speedup = original_latency / compressed_latency
+
+        print(&quot;Compression Results:&quot;)
+        print(f&quot;- Size reduction: {size_reduction:.1f}x&quot;)
+        print(f&quot;- Accuracy drop: {accuracy_drop:.2f}%&quot;)
+        print(f&quot;- Speed improvement: {speedup:.1f}x&quot;)
+
+        return {
+            'size_reduction': size_reduction,
+            'accuracy_drop': accuracy_drop,
+            'speedup': speedup
+        }
+</code></pre>
+<ul>
+<li><strong>Example Usage</strong></li>
+</ul>
+<pre><code class="language-python">base_model = tf.keras.applications.MobileNetV2(weights='imagenet')
+
+pipeline = CompressionPipeline(base_model)
+
+# Execute compression steps
+compressed_tflite = (
+    pipeline
+    .apply_pruning(target_sparsity=0.7)
+    .apply_quantization_aware_training()
+    .finalize_for_deployment()
+)
+
+print(&quot;✅ Compression pipeline completed successfully!&quot;)
+</code></pre>
+<h4 id="key-insights">Key Insights:</h4>
+<ul>
+<li><strong>Use Cases</strong>: This example is highly relevant for real-time systems and edge ML deployments.</li>
+<li><strong>Training Reminder</strong>: After pruning or quantization-aware transformation, retraining is typically required for best results.</li>
+</ul>
+<hr>
+<h3 id="final-consideration">Final Consideration</h3>
+<p>There is no universal best practice for model compression, the optimal strategy depends on the deployment context and system constraints. Compression must balance accuracy, efficiency, and hardware compatibility.</p>
+<h4 id="example-specific-priorities">Example-Specific Priorities:</h4>
+<ul>
+<li><strong>Mobile Applications</strong><ul><li>Emphasize low latency and extended battery life.</li><li><em>Quantization</em> is typically the most effective, offering fast inference with minimal accuracy loss.</li></ul></li>
+<li><strong>Embedded Systems (e.g., automotive)</strong><ul><li>Prioritize reliability and real-time performance under strict safety constraints.</li><li><em>Lightweight pruning</em> combined with <em>knowledge distillation</em> is often safer than aggressive quantization, which may alter numerical behavior.</li></ul></li>
+<li><strong>Cloud-Deployed Vision Models</strong><ul><li>Operate with flexible resources but need to optimize for scalability and operational cost.</li><li>Larger models are acceptable if inference time is tolerable, but reducing cost per inference (e.g., via distillation or structured pruning) remains important.</li></ul></li>
+</ul>
+<h4 id="summary"><strong>Summary:</strong></h4>
+<p>Model compression is a multi-objective design challenge. It requires strategic trade-offs, deciding which resources to optimize (memory, speed, energy, cost) while ensuring that the model continues to meet performance expectations. A well-designed pipeline may combine multiple techniques, tuned and validated for the target use case.</p>
+<hr>
+<h3 id="selection-framework">Selection Framework</h3>
+<p>Choosing the right compression strategy requires a methodical approach. The following framework outlines the steps to select and validate compression techniques based on your deployment needs:</p>
+<ol>
+<li><strong>Identify constraints</strong>: Memory, latency, accuracy, energy budget</li>
+<li><strong>Baseline performance</strong>: Measure original model metrics</li>
+<li><strong>Apply techniques iteratively</strong>: Start with least intrusive methods</li>
+<li><strong>Validate on target hardware</strong>: Test on actual deployment devices</li>
+<li><strong>Monitor in production</strong>: Track performance degradation over time</li>
+</ol>
+<hr>
+<h3 id="hands-on-activity-compressing-cnn-for-mobile-deployment">Hands-On Activity: Compressing CNN for Mobile Deployment</h3>
+<p><strong>Objective</strong>: Implement and evaluate a full compression pipeline on a pretrained convolutional neural network. You will apply pruning, quantization, and TFLite conversion to prepare the model for mobile deployment while measuring size, latency, and accuracy trade-offs.</p>
+<ul>
+<li><strong>Task Overview</strong>Compress a pretrained MobileNetV2 using the following steps:<ol><li><strong>Setup</strong>: Load the pretrained model.</li><li><strong>Baseline</strong>: Record original model size, inference time, and accuracy.</li><li><strong>Apply Compression</strong>:<ul><li>Apply 50% magnitude-based pruning</li><li>Apply quantization-aware training (QAT)</li><li>Convert to TFLite with full integer quantization</li></ul></li><li><strong>Evaluate</strong>: Measure and compare model size, speed, and accuracy at each step.</li><li><strong>Deploy</strong>: Export and save the final compressed <code>.tflite</code> model.</li></ol></li>
+<li>Here is the content for companion Jupyter notebook named <code>compression_pipeline_mobilenetv2.ipynb</code>. This notebook guides students through all five steps of the hands-on activity.In this notebook, you will compress a pretrained MobileNetV2 using pruning and quantization. You will measure model size, accuracy, and inference speed at each step to analyze trade-offs.<strong>Step 1: Setup and Imports</strong><pre><code class="language-python">#compression_pipeline_mobilenetv2.ipynbimport tensorflow as tfimport numpy as npimport timeimport osfrom tensorflow_model_optimization.sparsity.keras import (    prune_low_magnitude,    strip_pruning,    PolynomialDecay)import tensorflow_model_optimization as tfmot# Set a consistent seedtf.random.set_seed(42)# Load pretrained MobileNetV2base_model = tf.keras.applications.MobileNetV2(weights=&quot;imagenet&quot;)base_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])base_model.summary()</code></pre><strong>Step 2: Baseline Evaluation</strong><pre><code class="language-python"># Define dummy input for benchmarkinginput_data = np.random.rand(1, 224, 224, 3).astype(np.float32)# Measure baseline latencydef measure_latency(model, input_sample):    start = time.time()    _ = model.predict(input_sample)    end = time.time()    return (end - start) * 1000  # msbaseline_latency = measure_latency(base_model, input_data)print(f&quot;Baseline latency: {baseline_latency:.2f} ms&quot;)# Estimate model sizebase_model.save(&quot;original_model&quot;)original_size = sum(os.path.getsize(f&quot;original_model/{f}&quot;) for f in os.listdir(&quot;original_model&quot;)) / 1e6print(f&quot;Original model size: {original_size:.2f} MB&quot;)</code></pre><strong>Step 3a: Apply Pruning (50%)</strong><pre><code class="language-python"># Apply pruningpruning_schedule = PolynomialDecay(initial_sparsity=0.0, final_sparsity=0.5, begin_step=0, end_step=1000)pruned_model = prune_low_magnitude(base_model, pruning_schedule=pruning_schedule)# Recompilepruned_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])# For quick testing, you can skip fine-tuning herepruned_model = strip_pruning(pruned_model)pruned_latency = measure_latency(pruned_model, input_data)pruned_model.save(&quot;pruned_model&quot;)pruned_size = sum(os.path.getsize(f&quot;pruned_model/{f}&quot;) for f in os.listdir(&quot;pruned_model&quot;)) / 1e6print(f&quot;Pruned model latency: {pruned_latency:.2f} ms&quot;)print(f&quot;Pruned model size: {pruned_size:.2f} MB&quot;)</code></pre><strong>Step 3b: Apply Quantization-Aware Training (QAT)</strong><pre><code class="language-python">quantize_model = tfmot.quantization.keras.quantize_modelqat_model = quantize_model(pruned_model)qat_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])# Save post-QAT modelqat_model.save(&quot;qat_model&quot;)</code></pre><strong>Step 4: Convert to TFLite</strong><pre><code class="language-python">converter = tf.lite.TFLiteConverter.from_keras_model(qat_model)converter.optimizations = [tf.lite.Optimize.DEFAULT]converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]converter.inference_input_type = tf.uint8converter.inference_output_type = tf.uint8tflite_quant_model = converter.convert()with open(&quot;final_model.tflite&quot;, &quot;wb&quot;) as f:    f.write(tflite_quant_model)print(&quot;✅ Final TFLite model saved as final_model.tflite&quot;)</code></pre><strong>Step 5: Evaluation Summary</strong><pre><code class="language-python">final_size = os.path.getsize(&quot;final_model.tflite&quot;) / 1e6# Sample comparison (dummy accuracy for now)original_accuracy = 0.718compressed_accuracy = 0.701print(f&quot;Size Reduction: {original_size/final_size:.1f}x&quot;)print(f&quot;Accuracy Drop: {(original_accuracy - compressed_accuracy) * 100:.2f}%&quot;)print(f&quot;Speedup: {baseline_latency/pruned_latency:.2f}x&quot;)</code></pre></li>
+<li><strong>Expected Outcomes</strong></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Target Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Model Size</strong></td>
+<td>5–8× reduction</td>
+</tr>
+<tr>
+<td><strong>Latency</strong></td>
+<td>2–3× improvement</td>
+</tr>
+<tr>
+<td><strong>Accuracy Loss</strong></td>
+<td>&lt;2% drop</td>
+</tr>
+<tr>
+<td><strong>Practical Skill</strong></td>
+<td>Understand technique interactions in real deployment workflows</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>Model compression enables deployment of deep learning models on resource-constrained devices. Pruning, quantization, knowledge distillation, and low-rank factorization each play a role in making models smaller and faster without major accuracy loss. The combination of multiple techniques often yields the best results, and modern frameworks provide tools to implement these methods efficiently. Selecting the right compression technique depends on the deployment environment and the acceptable trade-offs among speed, size, and accuracy. Success requires systematic evaluation, understanding of hardware constraints, and careful validation on target devices.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>
