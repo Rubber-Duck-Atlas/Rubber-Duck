@@ -9,7 +9,7 @@ export default function TextFade({ text, className }: { text: string, className:
             key={i}
             className="inline-block animate-fade-up opacity-0"
             style={{
-              animationDelay: `${i * 25}ms`,
+              animationDelay: `${i * 10}ms`,
               animationFillMode: "forwards",
             }}
           >
