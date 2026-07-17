@@ -42,3 +42,6 @@ body {
   animation: fade-up 300ms ease-out forwards;
 }
 
+.animate-duration {
+  transition-duration: 200ms ;
+}
