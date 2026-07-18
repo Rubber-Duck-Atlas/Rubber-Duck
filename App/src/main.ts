@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import fs from "node:fs";
+import { homedir } from 'node:os';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -35,9 +36,29 @@ const createWindow = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
-  // IPC Handler for reading directory
+  // Handler for reading directory
   ipcMain.handle("list-files", async (_, dir: string) => {
     return fs.readdirSync(dir);
+  });
+
+  // Handler for reading documents
+  ipcMain.handle("get-documents", async () => {
+    return fs.readdirSync(path.join(homedir(), 'rubberduck/documents'));
+  });
+
+  // Handler for reading notes
+  ipcMain.handle("get-notes", async () => {
+    return fs.readdirSync(path.join(homedir(), 'rubberduck/notes'));
+  });
+
+  // Handler for adding files
+  ipcMain.handle("add-file", async (_, filePath: string, isNote: boolean) => {
+    const destDir = isNote ? path.join(homedir(), 'rubberduck/notes')
+                          : path.join(homedir(), 'rubberduck/documents');
+    const fileName = path.basename(filePath);
+    const destPath = path.join(destDir, fileName);
+    fs.copyFileSync(filePath, destPath);
+    return destPath;
   });
 
   createWindow()
