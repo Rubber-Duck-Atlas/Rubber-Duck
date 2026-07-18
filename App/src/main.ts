@@ -4,6 +4,20 @@ import started from 'electron-squirrel-startup';
 import fs from "node:fs";
 import { homedir } from 'node:os';
 
+// Ensure ~/rubberducky folders exist
+const rubberDuckDir = path.join(homedir(), 'rubberduck');
+if (!fs.existsSync(rubberDuckDir)) {
+  fs.mkdirSync(rubberDuckDir, { recursive: true });
+}
+const documentsDir = path.join(rubberDuckDir, 'documents');
+if (!fs.existsSync(documentsDir)) {
+  fs.mkdirSync(documentsDir, { recursive: true });
+}
+const notesDir = path.join(rubberDuckDir, 'notes');
+if (!fs.existsSync(notesDir)) {
+  fs.mkdirSync(notesDir, { recursive: true });
+}
+
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
