@@ -8,4 +8,5 @@ contextBridge.exposeInMainWorld("api", {
   getDocuments: () => ipcRenderer.invoke("get-documents"),
   getNotes: () => ipcRenderer.invoke("get-notes"),
   addFile: (filePath: string, isNote: boolean) => ipcRenderer.invoke("add-file", filePath, isNote),
+  openAndAddFiles: (isNote: boolean) => ipcRenderer.invoke("open-and-add-files", isNote),
 });

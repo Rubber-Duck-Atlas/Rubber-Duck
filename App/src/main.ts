@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import fs from "node:fs";
@@ -73,6 +73,24 @@ app.on('ready', () => {
     const destPath = path.join(destDir, fileName);
     fs.copyFileSync(filePath, destPath);
     return destPath;
+  });
+
+  // Handler for opening file picker dialog and copying selected files
+  ipcMain.handle("open-and-add-files", async (_, isNote: boolean) => {
+    const win = BrowserWindow.getFocusedWindow();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const result = await dialog.showOpenDialog(win!, {
+      properties: ['openFile', 'multiSelections'],
+    });
+    if (result.canceled || result.filePaths.length === 0) return [];
+    const destDir = isNote
+      ? path.join(homedir(), 'rubberduck/notes')
+      : path.join(homedir(), 'rubberduck/documents');
+    for (const filePath of result.filePaths) {
+      const fileName = path.basename(filePath);
+      fs.copyFileSync(filePath, path.join(destDir, fileName));
+    }
+    return fs.readdirSync(destDir);
   });
 
   createWindow()

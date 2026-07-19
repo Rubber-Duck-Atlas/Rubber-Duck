@@ -7,6 +7,7 @@ declare global {
       getDocuments(): Promise<string[]>;
       getNotes(): Promise<string[]>;
       addFile(filePath: string, isNote: boolean): Promise<string>;
+      openAndAddFiles(isNote: boolean): Promise<string[]>;
     };
   }
 }

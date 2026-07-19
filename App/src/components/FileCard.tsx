@@ -1,4 +1,4 @@
-import { ExternalLink } from "lucide-react";
+import { Ellipsis, ExternalLink } from "lucide-react";
 import React from "react";
 
 export default function FileCard({ FileName }: { FileName: string }) {
@@ -10,10 +10,10 @@ export default function FileCard({ FileName }: { FileName: string }) {
             .replaceAll("-", " ")
             .replaceAll("_", " ")}
         </h1>
-        <h2 className="text-xs">{FileName}</h2>
+        <h2 className="text-xs">{FileName}<span className="ml-1 p-0.5 px-2 bg-lilac rounded-2xl text-xs">{FileName.match(/\.([^.]+)$/)?.[1] ?? ""}</span></h2>
       </div>
       <div className="flex flex-col items-center">
-        <div className="p-0.5 px-2 bg-lilac rounded-2xl text-xs">{FileName.match(/\.([^.]+)$/)?.[1] ?? ""}</div>
+        <Ellipsis className="cursor-pointer p-0.5"/>
         <ExternalLink className="cursor-pointer p-0.5"/>
       </div>
     </div>
