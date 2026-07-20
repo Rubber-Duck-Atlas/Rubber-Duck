@@ -20,6 +20,11 @@ export default function Documents() {
     });
   };
 
+  const handleFileChange = ({ documents, notes }: { documents: string[]; notes: string[] }) => {
+    setDocuments(documents);
+    setNotes(notes);
+  };
+
   // Read files via electron contextBridge & IPC Handler
   useEffect(() => {
     window.api.getDocuments().then(setDocuments);
@@ -36,7 +41,7 @@ export default function Documents() {
             </h1>
             <div className="flex flex-col gap-2">
               {documents.map((f) => (
-                <FileCard FileName={f} />
+                <FileCard FileName={f} isNote={false} onChange={handleFileChange} key={f} />
               ))}
             </div>
           </section>
@@ -44,7 +49,7 @@ export default function Documents() {
             <h1 className="text-2xl text-center font-bold">Notes</h1>
             <div className="flex flex-col gap-2">
               {notes.map((f) => (
-                <FileCard FileName={f} />
+                <FileCard FileName={f} isNote={true} onChange={handleFileChange} key={f} />
               ))}
             </div>
           </section>
