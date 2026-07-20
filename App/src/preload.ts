@@ -5,7 +5,10 @@
 import { contextBridge, ipcRenderer } from "electron";
 contextBridge.exposeInMainWorld("api", {
   listFiles: (dir: string) => ipcRenderer.invoke("list-files", dir),
-  getDocuments: (dir: string) => ipcRenderer.invoke("get-documents", dir),
-  getNotes: (dir: string) => ipcRenderer.invoke("get-notes", dir),
-  addFile: (dir: string) => ipcRenderer.invoke("add-file", dir),
+  getDocuments: () => ipcRenderer.invoke("get-documents"),
+  getNotes: () => ipcRenderer.invoke("get-notes"),
+  openAndAddFiles: (isNote: boolean) => ipcRenderer.invoke("open-and-add-files", isNote),
+  moveFile: (fileName: string, isNote: boolean) => ipcRenderer.invoke("move-file", fileName, isNote),
+  deleteFile: (fileName: string, isNote: boolean) => ipcRenderer.invoke("delete-file", fileName, isNote),
+  readFileContent: (fileName: string, isNote: boolean) => ipcRenderer.invoke("read-file-content", fileName, isNote),
 });
