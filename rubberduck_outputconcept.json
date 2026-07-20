@@ -7,22 +7,27 @@
         {
             "path": "/home/jerry/Downloads/Rubber-Duck/Notes_Data/activity-compare-sensor-types-and-image-quality.pdf",
             "score": 0.145
+            "Snippet": "Qoute from socure ducumet"
         },
         {
             "path": "/home/jerry/Downloads/Rubber-Duck/Notes_Data/activity-implement-object-detection-with-YOLO-pdf (1).pdf",
-            "score": 0.129
+            "score": 0.129,
+            "Snippet": "Qoute from socure ducumet"
         },
         {
             "path": "/home/jerry/Downloads/Rubber-Duck/Notes_Data/activity-implement-object-detection-with-YOLO-pdf.pdf",
-            "score": 0.129
+            "score": 0.129,
+            "Snippet": "Qoute from socure ducumet"
         },
         {
             "path": "/home/jerry/Downloads/Rubber-Duck/Notes_Data/activity-compare-pruned-vs-full-cnn-performance-pdf.pdf",
-            "score": 0.120
+            "score": 0.120,
+            "Snippet": "Qoute from socure ducumet"
         },
         {
             "path": "/home/jerry/Downloads/Rubber-Duck/Notes_Data/activity-train-vit-for-classification-pdf.pdf",
-            "score": 0.095
+            "score": 0.095,
+            "Snippet": "Qoute from socure ducumet"
         }
     ]
 }
