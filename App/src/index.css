@@ -45,3 +45,33 @@ body {
 .animate-duration {
   transition-duration: 200ms ;
 }
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-ink);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-lilac);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-button {
+  background-color: var(--color-lilac);
+  width: 6px;
+  height: 6px;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+::-webkit-scrollbar-button:vertical:decrement {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='6' height='6'><polygon points='3,1 5.5,5 0.5,5' fill='%23E3DAFF'/></svg>");
+}
+
+::-webkit-scrollbar-button:vertical:increment {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='6' height='6'><polygon points='3,5 5.5,1 0.5,1' fill='%23E3DAFF'/></svg>");
+}
