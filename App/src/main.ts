@@ -3,6 +3,7 @@ import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import fs from "node:fs";
 import { homedir } from 'node:os';
+import { spawn } from 'node:child_process';
 
 // Ensure ~/rubberducky folders exist
 const rubberDuckDir = path.join(homedir(), 'rubberduck');
@@ -16,6 +17,88 @@ if (!fs.existsSync(documentsDir)) {
 const notesDir = path.join(rubberDuckDir, 'notes');
 if (!fs.existsSync(notesDir)) {
   fs.mkdirSync(notesDir, { recursive: true });
+}
+
+type RubberDuckResult = {
+  query: string;
+  results: Array<{
+    path: string;
+    score: number;
+    snippet: string;
+  }>;
+};
+
+function parseRubberDuckOutput(output: string): RubberDuckResult {
+  const queryMatch = output.match(/Top \d+ match\(es\) for '([^']+)':/);
+  const query = queryMatch ? queryMatch[1] : "";
+
+  const results: RubberDuckResult["results"] = [];
+  const resultRegex = /\d+\.\s+([^\s]+)\s+\(score:\s+([\d.]+)\)\s+(.+?)(?=\n\d+\.|$)/gs;
+
+  let match: RegExpExecArray | null;
+  while ((match = resultRegex.exec(output)) !== null) {
+    results.push({
+      path: match[1],
+      score: parseFloat(match[2]),
+      snippet: match[3].trim(),
+    });
+  }
+
+  return { query, results };
+}
+
+function findRubberDuckScriptPath() {
+  const candidates = [
+    path.resolve(app.getAppPath(), '..', 'rubber_duck.py'),
+    path.resolve(app.getAppPath(), 'rubber_duck.py'),
+    path.resolve(process.cwd(), '..', 'rubber_duck.py'),
+    path.resolve(process.cwd(), 'rubber_duck.py'),
+  ];
+
+  for (const scriptPath of candidates) {
+    if (fs.existsSync(scriptPath)) {
+      return scriptPath;
+    }
+  }
+
+  throw new Error('Could not find rubber_duck.py');
+}
+
+function runRubberDuckQuery(query: string): Promise<RubberDuckResult> {
+  return new Promise((resolve, reject) => {
+    const script = findRubberDuckScriptPath();
+    const python = spawn('python', [
+      script,
+      '--data-dir',
+      path.join(homedir(), 'rubberduck', 'documents'),
+      '--query',
+      query,
+    ]);
+
+    let stdout = '';
+    let stderr = '';
+
+    python.stdout.on('data', (data: Buffer) => {
+      stdout += data.toString();
+    });
+
+    python.stderr.on('data', (data: Buffer) => {
+      stderr += data.toString();
+    });
+
+    python.on('error', (error) => {
+      reject(error);
+    });
+
+    python.on('close', (code) => {
+      if (code !== 0) {
+        reject(new Error(`rubber_duck.py exited with code ${code}: ${stderr.trim()}`));
+        return;
+      }
+
+      resolve(parseRubberDuckOutput(stdout));
+    });
+  });
 }
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -51,6 +134,10 @@ const createWindow = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
+  ipcMain.handle('rubber-duck-query', async (_, query: string) => {
+    return runRubberDuckQuery(query);
+  });
+
   // Handler for reading directory
   ipcMain.handle("list-files", async (_, dir: string) => {
     return fs.readdirSync(dir);
