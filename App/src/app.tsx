@@ -5,6 +5,8 @@ import Home from "./pages/Home";
 import Documents from "./pages/Documents";
 import Settings from "./pages/Settings";
 import AppLayout from "./layouts/AppLayout";
+import AuthLayout from "./layouts/AuthLayout";
+import Welcome from "./pages/Welcome";
 
 const rootElement = document.getElementById("root");
 
@@ -22,6 +24,10 @@ root.render(
         <Route path="/" element={<Home />} />
         <Route path="/Documents" element={<Documents />} />
         <Route path="/settings" element={<Settings />} />
+      </Route>
+
+      <Route element={<AuthLayout />}>
+        <Route path="/welcome" element={<Welcome />} />
       </Route>
 
       {/* Catch unknown routes */}
