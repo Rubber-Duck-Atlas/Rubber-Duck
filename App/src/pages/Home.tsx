@@ -1,19 +1,29 @@
 import React, { useState } from "react";
 import TextFade from "../components/TextFade";
-import { Folder } from "lucide-react";
+import SearchResult from "../components/SearchResult";
+import { Folder, Forward, LoaderCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import RubberDuck from "../lib/RubberDuck";
+import SearchResultsList from "../components/SearchResultsList";
 
 export default function Home() {
   const navigate = useNavigate();
   const [query, setQuery] = useState<string>("");
+  const [lastSearch, setLastSearch] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
   const [searchView, setSearchView] = useState<boolean>(false);
+  const [queryResults, setQueryResults] = useState<RubberDuckResult | undefined>(undefined);
 
   const text = "What can I find for you?";
 
   const handleQuery = () => {
+    setLoading(true)
     if (!query) return;
     RubberDuck(query).then((result) => {
+      setLoading(false)
+      setLastSearch(query)
+      setSearchView(true)
+      setQueryResults(result)
       console.log(result);
     });
   };
@@ -23,6 +33,8 @@ export default function Home() {
       handleQuery();
     }
   };
+
+  const sortedResults = [...(queryResults?.results ?? [])].sort((a, b) => b.score - a.score);
 
   return (
     <>
@@ -34,22 +46,29 @@ export default function Home() {
           className={`${searchView ? "hidden " : ""}font-bold text-3xl cursor-default animate-duration`}
           text={text}
         />
-
-        <input
-          type="text"
-          name="search"
-          id="search"
-          placeholder="Search..."
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          onKeyDown={handleSearchKeyDown}
-          className="p-2 w-96 rounded-xl bg-peri text-ink font-bold animate-fade-up opacity-0"
-          style={{
-            animationDelay: `${text.length * 10 - 100}ms`,
-            animationFillMode: "forwards",
-          }}
-        />
+        <div className="p-2 gap-2 w-96 rounded-xl bg-peri text-ink font-bold animate-fade-up opacity-0 flex justify-between">
+          <input
+            type="text"
+            name="search"
+            id="search"
+            placeholder="Search..."
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={handleSearchKeyDown}
+            className="flex-1"
+            style={{
+              animationDelay: `${text.length * 10 - 100}ms`,
+              animationFillMode: "forwards",
+            }}
+          />{loading ? <LoaderCircle className="animate-spin" /> : <Forward onClick={handleQuery} />}
+        </div>
+        {searchView ? (
+          <SearchResultsList query={lastSearch} results={sortedResults}/>
+        ) : (
+          <></>
+        )}
       </main>
+
 
       {/* Link to prototype file viewer thingy */}
       <Folder
