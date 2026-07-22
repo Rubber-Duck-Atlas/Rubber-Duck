@@ -1,7 +1,22 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import fs from "node:fs";
+import { homedir } from 'node:os';
+
+// Ensure ~/rubberducky folders exist
+const rubberDuckDir = path.join(homedir(), 'rubberduck');
+if (!fs.existsSync(rubberDuckDir)) {
+  fs.mkdirSync(rubberDuckDir, { recursive: true });
+}
+const documentsDir = path.join(rubberDuckDir, 'documents');
+if (!fs.existsSync(documentsDir)) {
+  fs.mkdirSync(documentsDir, { recursive: true });
+}
+const notesDir = path.join(rubberDuckDir, 'notes');
+if (!fs.existsSync(notesDir)) {
+  fs.mkdirSync(notesDir, { recursive: true });
+}
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -15,6 +30,7 @@ const createWindow = () => {
     height: 600,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      plugins: true,
     },
   });
 
@@ -35,9 +51,65 @@ const createWindow = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
-  // IPC Handler for reading directory
+  // Handler for reading directory
   ipcMain.handle("list-files", async (_, dir: string) => {
     return fs.readdirSync(dir);
+  });
+
+  // Handler for reading documents
+  ipcMain.handle("get-documents", async () => {
+    return fs.readdirSync(path.join(homedir(), 'rubberduck/documents'));
+  });
+
+  // Handler for reading notes
+  ipcMain.handle("get-notes", async () => {
+    return fs.readdirSync(path.join(homedir(), 'rubberduck/notes'));
+  });
+
+  // Handler for opening file picker dialog and copying selected files
+  ipcMain.handle("open-and-add-files", async (_, isNote: boolean) => {
+    const win = BrowserWindow.getFocusedWindow();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const result = await dialog.showOpenDialog(win!, {
+      properties: ['openFile', 'multiSelections'],
+    });
+    if (result.canceled || result.filePaths.length === 0) return [];
+    const destDir = isNote
+      ? path.join(homedir(), 'rubberduck/notes')
+      : path.join(homedir(), 'rubberduck/documents');
+    for (const filePath of result.filePaths) {
+      const fileName = path.basename(filePath);
+      fs.copyFileSync(filePath, path.join(destDir, fileName));
+    }
+    return fs.readdirSync(destDir);
+  });
+
+  // Handler for reading a file's content for preview
+  ipcMain.handle("read-file-content", async (_, fileName: string, isNote: boolean) => {
+    const dir = isNote ? notesDir : documentsDir;
+    const buffer = fs.readFileSync(path.join(dir, fileName));
+    return buffer.toString("base64");
+  });
+
+  // Handler for moving a file between the documents and notes folders
+  ipcMain.handle("move-file", async (_, fileName: string, isNote: boolean) => {
+    const fromDir = isNote ? notesDir : documentsDir;
+    const toDir = isNote ? documentsDir : notesDir;
+    fs.renameSync(path.join(fromDir, fileName), path.join(toDir, fileName));
+    return {
+      documents: fs.readdirSync(documentsDir),
+      notes: fs.readdirSync(notesDir),
+    };
+  });
+
+  // Handler for deleting a file from the documents or notes folder
+  ipcMain.handle("delete-file", async (_, fileName: string, isNote: boolean) => {
+    const dir = isNote ? notesDir : documentsDir;
+    fs.unlinkSync(path.join(dir, fileName));
+    return {
+      documents: fs.readdirSync(documentsDir),
+      notes: fs.readdirSync(notesDir),
+    };
   });
 
   createWindow()
