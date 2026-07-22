@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import List, Tuple
 
 from pypdf import PdfReader
+
+# Placeholder until the application has real user accounts.
+DEFAULT_USER_ID = "placeholder-user"
 
 
 # Clean up whitespace so extracted PDF text is easier to search.
@@ -100,6 +105,37 @@ def build_snippet(text: str, query: str, window: int = 80) -> str:
     return text[:window] + ("..." if len(text) > window else "")
 
 
+# Save search results to a timestamped JSON file inside the Results folder.
+def save_results_json(
+    query: str,
+    results: List[Tuple[float, Path, str]],
+    output_dir: Path | str = "Results",
+    user_id: str = DEFAULT_USER_ID,
+) -> Path:
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    output_path = output_dir / f"{user_id}_{timestamp}.json"
+
+    payload = {
+        "query": query,
+        "results": [
+            {
+                "path": str(path),
+                "score": round(score, 3),
+                "Snippet": snippet,
+            }
+            for score, path, snippet in results
+        ],
+    }
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=4)
+
+    return output_path
+
+
 def run_interactive_search(data_dir: Path, top_k: int) -> None:
     print(f"Scanning PDFs in {data_dir}...")
     pdf_paths = find_pdf_files(data_dir)
@@ -127,6 +163,9 @@ def run_interactive_search(data_dir: Path, top_k: int) -> None:
             print(f"{rank}. {path.name} (score: {score:.3f})")
             print(f"   {snippet}")
 
+        saved_path = save_results_json(query, results)
+        print(f"Saved results to {saved_path}")
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Search keyword content inside PDF files")
@@ -134,6 +173,8 @@ def main() -> None:
     parser.add_argument("--query", default="", help="Keyword or phrase to search")
     parser.add_argument("--top-k", type=int, default=5, help="Number of matches to return")
     parser.add_argument("--interactive", action="store_true", help="Run the search engine interactively")
+    parser.add_argument("--user-id", default=DEFAULT_USER_ID, help="Placeholder user identifier used in the saved results filename")
+    parser.add_argument("--output-dir", default="Results", help="Folder where search result JSON files are saved")
     args = parser.parse_args()
 
     data_dir = Path(args.data_dir).resolve()
@@ -164,6 +205,9 @@ def main() -> None:
     for rank, (score, path, snippet) in enumerate(results, start=1):
         print(f"{rank}. {path} (score: {score:.3f})")
         print(f"   {snippet}")
+
+    saved_path = save_results_json(args.query, results, output_dir=args.output_dir, user_id=args.user_id)
+    print(f"Saved results to {saved_path}")
 
 
 if __name__ == "__main__":
