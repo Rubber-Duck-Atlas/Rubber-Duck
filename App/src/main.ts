@@ -64,13 +64,13 @@ function findRubberDuckScriptPath() {
   throw new Error('Could not find rubber_duck.py');
 }
 
-function runRubberDuckQuery(query: string): Promise<RubberDuckResult> {
+function runRubberDuckQuery(query: string, searchNotes: boolean): Promise<RubberDuckResult> {
   return new Promise((resolve, reject) => {
     const script = findRubberDuckScriptPath();
     const python = spawn('python', [
       script,
       '--data-dir',
-      path.join(homedir(), 'rubberduck', 'documents'),
+      path.join(homedir(), 'rubberduck', searchNotes ? 'notes' : 'documents'),
       '--query',
       query,
     ]);
@@ -134,8 +134,8 @@ const createWindow = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
-  ipcMain.handle('rubber-duck-query', async (_, query: string) => {
-    return runRubberDuckQuery(query);
+  ipcMain.handle('rubber-duck-query', async (_, query: string, searchNotes: boolean) => {
+    return runRubberDuckQuery(query, searchNotes);
   });
 
   // Handler for reading directory

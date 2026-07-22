@@ -12,19 +12,22 @@ export default function Home() {
   const [lastSearch, setLastSearch] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [searchView, setSearchView] = useState<boolean>(false);
-  const [queryResults, setQueryResults] = useState<RubberDuckResult | undefined>(undefined);
+  const [queriedDocuments, setQueriedDocuments] = useState<RubberDuckResult | undefined>(undefined);
+  const [queriedNotes, setQueriedNotes] = useState<RubberDuckResult | undefined>(undefined);
 
   const text = "What can I find for you?";
 
   const handleQuery = () => {
     setLoading(true)
     if (!query) return;
-    RubberDuck(query).then((result) => {
-      setLoading(false)
-      setLastSearch(query)
-      setSearchView(true)
-      setQueryResults(result)
-      console.log(result);
+    RubberDuck(query, false).then((document_results) => {
+      RubberDuck(query, true).then((note_results) => {
+        setLastSearch(query)
+        setQueriedDocuments(document_results)
+        setQueriedNotes(note_results)
+        setSearchView(true)
+        setLoading(false)
+      });
     });
   };
 
@@ -34,7 +37,8 @@ export default function Home() {
     }
   };
 
-  const sortedResults = [...(queryResults?.results ?? [])].sort((a, b) => b.score - a.score);
+  const sortedDocuments = [...(queriedDocuments?.results ?? [])].sort((a, b) => b.score - a.score);
+  const sortedNotes = [...(queriedNotes?.results ?? [])].sort((a, b) => b.score - a.score);
 
   return (
     <>
@@ -62,9 +66,15 @@ export default function Home() {
             }}
           />{loading ? <LoaderCircle className="animate-spin" /> : <Forward onClick={handleQuery} />}
         </div>
-        {searchView ? (
-          <SearchResultsList query={lastSearch} results={sortedResults}/>
-        ) : (
+        {searchView ? <div className="flex flex-col gap-4">
+          <h1 className="font-bold text-lg text-center">
+            Showing results for "{lastSearch}"
+          </h1>
+          <div className="flex gap-4">
+            <SearchResultsList title="Documents" results={sortedDocuments}/>
+            <SearchResultsList title="Notes" results={sortedNotes}/>
+          </div>
+        </div> : (
           <></>
         )}
       </main>
