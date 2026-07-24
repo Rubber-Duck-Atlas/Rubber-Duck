@@ -7,6 +7,8 @@ import Settings from "./pages/Settings";
 import AppLayout from "./layouts/AppLayout";
 import AuthLayout from "./layouts/AuthLayout";
 import Welcome from "./pages/Welcome";
+import Onboarding from "./pages/Onboarding";
+import Register from "./pages/Register";
 
 const rootElement = document.getElementById("root");
 
@@ -28,6 +30,8 @@ root.render(
 
       <Route element={<AuthLayout />}>
         <Route path="/welcome" element={<Welcome />} />
+        <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/register" element={<Register />} />
       </Route>
 
       {/* Catch unknown routes */}
