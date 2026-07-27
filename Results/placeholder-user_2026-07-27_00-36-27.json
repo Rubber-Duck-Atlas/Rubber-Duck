@@ -1,0 +1,65 @@
+{
+    "query": "vit",
+    "results": [
+        {
+            "path": "C:\\Users\\lance\\OneDrive\\Documents\\AtlasT1\\Rubber-Duck\\Notes_Data\\lesson-vision-transformers.html",
+            "score": 0.115,
+            "Snippet": "mage is 224\u00d7224 and RGB. Check if the object is centered and clear. Try 'google/vit-base-patch32-224' for larger patches (less accuracy, faster). Conclusion Vision...",
+            "metadata": {
+                "source": "C:\\Users\\lance\\OneDrive\\Documents\\AtlasT1\\Rubber-Duck\\Notes_Data\\lesson-vision-transformers.html",
+                "file_name": "lesson-vision-transformers.html",
+                "file_type": "html",
+                "chunk_index": 13,
+                "total_chunks": 14
+            }
+        },
+        {
+            "path": "C:\\Users\\lance\\OneDrive\\Documents\\AtlasT1\\Rubber-Duck\\Notes_Data\\activity-compare-pruned-vs-full-cnn-performance-pdf.pdf",
+            "score": 0.098,
+            "Snippet": "b import drive drive.mount('/content/drive') # Example to save torch.save(model_vit.state_dict(), '/content/drive/MyDrive/vit_cifar10.pth') tuning. 6. Fine-Tune Pr...",
+            "metadata": {
+                "source": "C:\\Users\\lance\\OneDrive\\Documents\\AtlasT1\\Rubber-Duck\\Notes_Data\\activity-compare-pruned-vs-full-cnn-performance-pdf.pdf",
+                "file_name": "activity-compare-pruned-vs-full-cnn-performance-pdf.pdf",
+                "file_type": "pdf",
+                "chunk_index": 3,
+                "total_chunks": 4
+            }
+        },
+        {
+            "path": "C:\\Users\\lance\\OneDrive\\Documents\\AtlasT1\\Rubber-Duck\\Notes_Data\\activity-train-vit-for-classification-pdf.pdf",
+            "score": 0.091,
+            "Snippet": "Activity: Train ViT for Classification Introduction In this activity, you will fine-tun...",
+            "metadata": {
+                "source": "C:\\Users\\lance\\OneDrive\\Documents\\AtlasT1\\Rubber-Duck\\Notes_Data\\activity-train-vit-for-classification-pdf.pdf",
+                "file_name": "activity-train-vit-for-classification-pdf.pdf",
+                "file_type": "pdf",
+                "chunk_index": 0,
+                "total_chunks": 7
+            }
+        },
+        {
+            "path": "C:\\Users\\lance\\OneDrive\\Documents\\AtlasT1\\Rubber-Duck\\Notes_Data\\lesson-vision-transformers.html",
+            "score": 0.09,
+            "Snippet": "he Transformer uses self-attention to see the whole picture. With 12 layers (in ViT-B/16), it refines the cat\u2019s features, ensuring every piece contributes to the f...",
+            "metadata": {
+                "source": "C:\\Users\\lance\\OneDrive\\Documents\\AtlasT1\\Rubber-Duck\\Notes_Data\\lesson-vision-transformers.html",
+                "file_name": "lesson-vision-transformers.html",
+                "file_type": "html",
+                "chunk_index": 5,
+                "total_chunks": 14
+            }
+        },
+        {
+            "path": "C:\\Users\\lance\\OneDrive\\Documents\\AtlasT1\\Rubber-Duck\\Notes_Data\\activity-train-vit-for-classification-pdf.pdf",
+            "score": 0.09,
+            "Snippet": "training, especially for ViT. Conclusion In this activity, you: Loaded and preprocessed the CIFAR-10 dataset...",
+            "metadata": {
+                "source": "C:\\Users\\lance\\OneDrive\\Documents\\AtlasT1\\Rubber-Duck\\Notes_Data\\activity-train-vit-for-classification-pdf.pdf",
+                "file_name": "activity-train-vit-for-classification-pdf.pdf",
+                "file_type": "pdf",
+                "chunk_index": 6,
+                "total_chunks": 7
+            }
+        }
+    ]
+}
