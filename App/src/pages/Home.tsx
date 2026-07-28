@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import TextFade from "../components/TextFade";
-import { Folder, Forward, LoaderCircle, Search, X } from "lucide-react";
+import { Folder, Forward, LoaderCircle, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import RubberDuck from "../lib/RubberDuck";
 import SearchResultsList from "../components/SearchResultsList";
