@@ -10,6 +10,7 @@ import Welcome from "./pages/Welcome";
 import Onboarding from "./pages/Onboarding";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
+import VerifyEmail from "./pages/VerifyEmail";
 
 const rootElement = document.getElementById("root");
 
@@ -34,6 +35,7 @@ root.render(
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/verifyemail" element={<VerifyEmail />} />
       </Route>
 
       {/* Catch unknown routes */}
