@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import TextFade from "../components/TextFade";
-import SearchResult from "../components/SearchResult";
-import { Folder, Forward, LoaderCircle } from "lucide-react";
+import { Folder, Forward, LoaderCircle, Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import RubberDuck from "../lib/RubberDuck";
 import SearchResultsList from "../components/SearchResultsList";
@@ -67,9 +66,11 @@ export default function Home() {
           />{loading ? <LoaderCircle className="animate-spin" /> : <Forward onClick={handleQuery} />}
         </div>
         {searchView ? <div className="flex flex-col gap-4">
-          <h1 className="font-bold text-lg text-center">
-            Showing results for "{lastSearch}"
-          </h1>
+          <h1 className="font-bold text-lg text-center flex mx-auto">
+            Showing results for "{lastSearch}" <X className="m-auto cursor-pointer text-red-400" onClick={() => {
+              setSearchView(false)
+            }}/>
+          </h1> 
           <div className="flex gap-4">
             <SearchResultsList title="Documents" results={sortedDocuments}/>
             <SearchResultsList title="Notes" results={sortedNotes}/>
@@ -85,12 +86,6 @@ export default function Home() {
         className="absolute top-3 left-3 w-8 h-8 text-white cursor-pointer"
         onClick={() => navigate("/Documents")}
       />
-      <div
-        className="absolute bottom-3 left-3 p-1 bg-white cursor-pointer"
-        onClick={() => setSearchView(!searchView)}
-      >
-        debug
-      </div>
     </>
   );
 }
