@@ -9,6 +9,7 @@ import AuthLayout from "./layouts/AuthLayout";
 import Welcome from "./pages/Welcome";
 import Onboarding from "./pages/Onboarding";
 import Register from "./pages/Register";
+import Login from "./pages/Login";
 
 const rootElement = document.getElementById("root");
 
@@ -32,6 +33,7 @@ root.render(
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
       </Route>
 
       {/* Catch unknown routes */}
