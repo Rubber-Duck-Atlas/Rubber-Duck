@@ -32,15 +32,18 @@ function parseRubberDuckOutput(output: string): RubberDuckResult {
   const queryMatch = output.match(/Top \d+ match\(es\) for '([^']+)':/);
   const query = queryMatch ? queryMatch[1] : "";
 
-  const results: RubberDuckResult["results"] = [];
-  const resultRegex = /\d+\.\s+([^\s]+)\s+\(score:\s+([\d.]+)\)\s+(.+?)(?=\n\d+\.|$)/gs;
+  const lines = output.split('\n');
+  const resultLineRegex = /^\d+\.\s+(.+)\s+\(score:\s+([\d.]+)\)\s*$/;
 
-  let match: RegExpExecArray | null;
-  while ((match = resultRegex.exec(output)) !== null) {
+  const results: RubberDuckResult["results"] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const match = lines[i].match(resultLineRegex);
+    if (!match) continue;
+
     results.push({
-      path: match[1],
+      path: match[1].trim(),
       score: parseFloat(match[2]),
-      snippet: match[3].trim(),
+      snippet: (lines[i + 1] ?? "").trim(),
     });
   }
 
