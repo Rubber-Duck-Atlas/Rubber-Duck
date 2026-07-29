@@ -11,10 +11,10 @@ export default function AppLayout() {
       <Sidebar />
 
         {/* Creates space to the right of sidebar */}
-      <main className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 bg-ink text-peri">
         {/* Displays current page */}
         <Outlet />
-      </main>
+      </div>
     </div>
   );
 }
