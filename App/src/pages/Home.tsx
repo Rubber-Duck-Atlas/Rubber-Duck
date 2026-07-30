@@ -72,8 +72,8 @@ export default function Home() {
             }}/>
           </h1> 
           <div className="flex gap-4">
-            <SearchResultsList title="Documents" results={sortedDocuments}/>
-            <SearchResultsList title="Notes" results={sortedNotes}/>
+            <SearchResultsList title="Documents" results={sortedDocuments} isNote={false}/>
+            <SearchResultsList title="Notes" results={sortedNotes} isNote={true}/>
           </div>
         </div> : (
           <></>
