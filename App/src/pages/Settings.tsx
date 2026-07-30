@@ -14,7 +14,7 @@ export default function Settings() {
       </div>
 
       {/* Account Section */}
-      <div className="p-5">
+      <div className="mx-auto flex flex-col max-w-sm items-center gap-x-4 rounded-xl bg-white p-6 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
         <section>
           <h2>Account</h2>
 
@@ -28,7 +28,7 @@ export default function Settings() {
       </div>
 
       {/* Storage Section */}
-      <div className="p-5">
+      <div className="mx-auto flex flex-col max-w-sm items-center gap-x-4 rounded-xl bg-white p-6 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
         <section>
           <h2>Storage</h2>
 
@@ -42,7 +42,7 @@ export default function Settings() {
       </div>
 
       {/* About Section */}
-      <div className="p-5">
+      <div className="mx-auto flex flex-col max-w-sm items-center gap-x-4 rounded-xl bg-white p-6 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
         <section>
           <h2>About</h2>
 

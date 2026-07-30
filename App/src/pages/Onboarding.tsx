@@ -61,7 +61,7 @@ export default function Onboarding() {
   return (
     <main className="flex w-full max-w-lg flex-col items-center text-center">
       {/* Top Section */}
-      <div>
+      <div className="flex justify-between items-center w-full p-5">
         {/* gives users the option to skip onboarding and go straight to create an account */}
         <Link to="/register" className="">
           Skip

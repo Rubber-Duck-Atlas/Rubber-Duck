@@ -16,61 +16,63 @@ export default function Register() {
         <p className="text-lilac">Rubber Duck</p>
       </div>
 
-      {/* Header Section */}
-      <div>
-        <h1 className="text-2xl">Create an Account</h1>
+      <div className="mx-auto flex flex-col max-w-sm items-center gap-x-4 rounded-xl bg-white p-6 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
+        {/* Header Section */}
+        <div>
+          <h1 className="text-2xl">Create an Account</h1>
 
-        <p className="text-lilac">Upload. Search. Learn</p>
-      </div>
+          <p className="text-lilac">Upload. Search. Learn</p>
+        </div>
 
-      {/* Email Registration */}
-      <div className="flex flex-col">
-        <form className="flex flex-col text-peri">
-          <label>
-            Full Name:<input type="text"></input>
-          </label>
-          <label>
-            Email:<input type="email"></input>
-          </label>
-          <label>
-            Password:<input type="password"></input>
-          </label>
-          <label>
-            Confirm Password:<input type="password"></input>
-          </label>
+        {/* Email Registration */}
+        <div className="flex flex-col">
+          <form className="flex flex-col text-peri">
+            <label>
+              Full Name:<input type="text"></input>
+            </label>
+            <label>
+              Email:<input type="email"></input>
+            </label>
+            <label>
+              Password:<input type="password"></input>
+            </label>
+            <label>
+              Confirm Password:<input type="password"></input>
+            </label>
 
+            <button className="w-full max-w-xs rounded-xl bg-lilac px-8 py-3 text-center font-bold text-ink transition hover:opacity-90">
+              Create Account
+            </button>
+          </form>
+        </div>
+
+        {/* Divider Text */}
+        <div>
+          <p>---------------------------- OR ----------------------------</p>
+        </div>
+
+        {/* Google Registration */}
+        <div>
           <button className="w-full max-w-xs rounded-xl bg-lilac px-8 py-3 text-center font-bold text-ink transition hover:opacity-90">
-            Create Account
+            Continue with Google
           </button>
-        </form>
-      </div>
+        </div>
 
-      {/* Divider Text */}
-      <div>
-        <p>----------------------------- OR -----------------------------</p>
-      </div>
+        {/* Storage Note Text */}
+        <div>
+          <p className="text-xs">
+            Your uploaded files will be stored locally on this device in Rubber
+            Duck's app folder. Cloud storage may be added in a future update.
+          </p>
+        </div>
 
-      {/* Google Registration */}
-      <div>
-        <button className="w-full max-w-xs rounded-xl bg-lilac px-8 py-3 text-center font-bold text-ink transition hover:opacity-90">
-          Continue with Google
-        </button>
-      </div>
-
-      {/* Storage Note Text */}
-      <div>
-        <p className="text-xs">
-          Your uploaded files will be stored locally on this device in Rubber
-          Duck's app folder. Cloud storage may be added in a future update.
-        </p>
-      </div>
-
-      {/* Login Link */}
-      <div>
-        <p>Already have an account?</p>
-        <Link to="/login" className="">
-          Log in
-        </Link>
+        {/* Login Link */}
+        <div>
+          <p>Already have an account?</p>
+          <Link to="/login" className="">
+            Log in
+          </Link>
+        </div>
       </div>
     </main>
   );

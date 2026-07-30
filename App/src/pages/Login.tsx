@@ -16,54 +16,56 @@ export default function Login() {
         <p className="text-lilac">Rubber Duck</p>
       </div>
 
-      {/* Header Section */}
-      <div>
-        <h1 className="text-2xl">Welcome Back!</h1>
+      <div className="mx-auto flex flex-col max-w-sm items-center gap-x-4 rounded-xl bg-white p-6 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
+        {/* Header Section */}
+        <div>
+          <h1 className="text-2xl">Welcome Back!</h1>
 
-        <p className="text-lilac">Login to continue</p>
-      </div>
+          <p className="text-lilac">Login to continue</p>
+        </div>
 
-      {/* Email Login */}
-      <div className="flex flex-col">
-        <form className="flex flex-col text-peri">
-          <label>
-            Email:<input type="email"></input>
-          </label>
-          <label>
-            Password:<input type="password"></input>
-          </label>
+        {/* Email Login */}
+        <div className="flex flex-col">
+          <form className="flex flex-col text-peri">
+            <label>
+              Email:<input type="email"></input>
+            </label>
+            <label>
+              Password:<input type="password"></input>
+            </label>
 
+            <button className="w-full max-w-xs rounded-xl bg-lilac px-8 py-3 text-center font-bold text-ink transition hover:opacity-90">
+              Login
+            </button>
+          </form>
+        </div>
+
+        {/* Forgot password link */}
+        <div>
+          <Link to="/forgotpassword" className="">
+            Forgot Password
+          </Link>
+        </div>
+
+        {/* Divider Text */}
+        <div>
+          <p>----------------------------- OR -----------------------------</p>
+        </div>
+
+        {/* Google Login */}
+        <div>
           <button className="w-full max-w-xs rounded-xl bg-lilac px-8 py-3 text-center font-bold text-ink transition hover:opacity-90">
-            Login
+            Continue with Google
           </button>
-        </form>
-      </div>
+        </div>
 
-      {/* Forgot password link */}
-      <div>
-        <Link to="/forgotpassword" className="">
-          Forgot Password
-        </Link>
-      </div>
-
-      {/* Divider Text */}
-      <div>
-        <p>----------------------------- OR -----------------------------</p>
-      </div>
-
-      {/* Google Login */}
-      <div>
-        <button className="w-full max-w-xs rounded-xl bg-lilac px-8 py-3 text-center font-bold text-ink transition hover:opacity-90">
-          Continue with Google
-        </button>
-      </div>
-
-      {/* Login Link */}
-      <div>
-        <p>Don't have an account?</p>
-        <Link to="/register" className="">
-          Create one
-        </Link>
+        {/* Login Link */}
+        <div>
+          <p>Don't have an account?</p>
+          <Link to="/register" className="">
+            Create one
+          </Link>
+        </div>
       </div>
     </main>
   );
