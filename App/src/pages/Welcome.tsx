@@ -31,7 +31,7 @@ export default function Welcome() {
           to="/onboarding"
           className="w-full max-w-xs rounded-xl bg-lilac px-8 py-3 text-center font-bold text-ink transition hover:opacity-90"
         >
-          Get Started...
+          Get Started
         </Link>
       </div>
     </main>

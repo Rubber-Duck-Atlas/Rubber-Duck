@@ -2,8 +2,8 @@
 @source "./**/*.{ts,tsx}";
 
 @theme {
-  --color-lilac: #7D5BA6;
-  --color-peri: #E3DAFF;
+  --color-lilac: #7d5ba6;
+  --color-peri: #e3daff;
   --color-ink: #001524;
 }
 
@@ -43,7 +43,7 @@ body {
 }
 
 .animate-duration {
-  transition-duration: 200ms ;
+  transition-duration: 200ms;
 }
 
 ::-webkit-scrollbar {
@@ -74,4 +74,262 @@ body {
 
 ::-webkit-scrollbar-button:vertical:increment {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='6' height='6'><polygon points='3,5 5.5,1 0.5,1' fill='%23E3DAFF'/></svg>");
+}
+
+/* Shared background for Auth pages (Welcome, Onboarding, Login, etc.) */
+.auth-shell {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 10% 20%,
+      rgba(125, 91, 166, 0.28),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 82% 72%,
+      rgba(101, 116, 205, 0.2),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 50% 110%,
+      rgba(227, 218, 255, 0.1),
+      transparent 38%
+    ),
+    var(--color-ink);
+}
+
+/* Small stars placed individually so the sky does not repeat in tiles */
+.auth-shell::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: 1px;
+  height: 1px;
+  border-radius: 50%;
+  pointer-events: none;
+
+  box-shadow:
+    3vw 7vh rgba(255, 255, 255, 0.75),
+    11vw 16vh rgba(227, 218, 255, 0.5),
+    18vw 5vh rgba(255, 255, 255, 0.45),
+    27vw 26vh rgba(125, 91, 166, 0.75),
+    34vw 12vh rgba(255, 255, 255, 0.65),
+    42vw 34vh rgba(227, 218, 255, 0.45),
+    49vw 9vh rgba(255, 255, 255, 0.8),
+    57vw 19vh rgba(125, 91, 166, 0.6),
+    65vw 6vh rgba(227, 218, 255, 0.7),
+    73vw 29vh rgba(255, 255, 255, 0.5),
+    81vw 12vh rgba(125, 91, 166, 0.7),
+    89vw 22vh rgba(255, 255, 255, 0.75),
+    96vw 8vh rgba(227, 218, 255, 0.5),
+    6vw 43vh rgba(227, 218, 255, 0.65),
+    14vw 58vh rgba(255, 255, 255, 0.45),
+    23vw 39vh rgba(125, 91, 166, 0.65),
+    31vw 67vh rgba(255, 255, 255, 0.8),
+    38vw 51vh rgba(227, 218, 255, 0.5),
+    46vw 73vh rgba(255, 255, 255, 0.55),
+    54vw 45vh rgba(125, 91, 166, 0.75),
+    62vw 61vh rgba(255, 255, 255, 0.65),
+    70vw 49vh rgba(227, 218, 255, 0.55),
+    78vw 76vh rgba(255, 255, 255, 0.7),
+    86vw 55vh rgba(125, 91, 166, 0.55),
+    94vw 68vh rgba(255, 255, 255, 0.45),
+    8vw 86vh rgba(255, 255, 255, 0.75),
+    19vw 78vh rgba(125, 91, 166, 0.6),
+    29vw 91vh rgba(227, 218, 255, 0.55),
+    40vw 84vh rgba(255, 255, 255, 0.5),
+    51vw 95vh rgba(125, 91, 166, 0.7),
+    60vw 82vh rgba(255, 255, 255, 0.75),
+    72vw 91vh rgba(227, 218, 255, 0.5),
+    83vw 87vh rgba(255, 255, 255, 0.55),
+    93vw 96vh rgba(125, 91, 166, 0.65);
+
+  filter: drop-shadow(0 0 2px rgba(227, 218, 255, 0.55));
+  animation: twinkle-small 5s ease-in-out infinite alternate;
+}
+
+/* Fewer, larger glowing stars */
+.auth-shell::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  pointer-events: none;
+
+  box-shadow:
+    8vw 24vh 3px rgba(255, 255, 255, 0.75),
+    21vw 14vh 4px rgba(125, 91, 166, 0.65),
+    36vw 31vh 3px rgba(227, 218, 255, 0.65),
+    52vw 18vh 4px rgba(255, 255, 255, 0.75),
+    68vw 36vh 3px rgba(125, 91, 166, 0.6),
+    84vw 17vh 4px rgba(227, 218, 255, 0.65),
+    94vw 42vh 3px rgba(255, 255, 255, 0.7),
+    15vw 48vh 4px rgba(125, 91, 166, 0.55),
+    29vw 58vh 3px rgba(255, 255, 255, 0.7),
+    44vw 46vh 4px rgba(227, 218, 255, 0.55),
+    58vw 69vh 3px rgba(255, 255, 255, 0.65),
+    74vw 57vh 4px rgba(125, 91, 166, 0.65),
+    88vw 72vh 3px rgba(227, 218, 255, 0.65),
+    5vw 74vh 4px rgba(255, 255, 255, 0.6),
+    25vw 88vh 3px rgba(125, 91, 166, 0.55),
+    47vw 82vh 4px rgba(255, 255, 255, 0.7),
+    67vw 94vh 3px rgba(227, 218, 255, 0.55),
+    91vw 89vh 4px rgba(255, 255, 255, 0.65);
+
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.55))
+    drop-shadow(0 0 6px rgba(125, 91, 166, 0.35));
+
+  animation: twinkle-large 7s ease-in-out infinite alternate;
+}
+
+/* Shared appearance for all three shooting stars */
+.shooting-star {
+  position: absolute;
+  z-index: 1;
+  width: 11rem;
+  height: 2px;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(227, 218, 255, 0.25),
+    rgba(255, 255, 255, 0.95)
+  );
+
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.85))
+    drop-shadow(0 0 9px rgba(125, 91, 166, 0.65));
+}
+
+/* Bright head of each shooting star */
+.shooting-star::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: white;
+
+  box-shadow:
+    0 0 7px white,
+    0 0 14px rgba(227, 218, 255, 0.9);
+
+  transform: translateY(-50%);
+}
+
+/* Star one: left to right, slightly upward */
+.shooting-star-one {
+  top: 32%;
+  left: -14rem;
+  animation: shooting-star-one 18s linear infinite;
+}
+
+/* Star two: right to left, slightly downward */
+.shooting-star-two {
+  top: 18%;
+  right: -14rem;
+
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(227, 218, 255, 0.25),
+    transparent
+  );
+
+  animation: shooting-star-two 18s linear infinite;
+}
+
+/* Moves the bright head to the left for the reverse-facing star */
+.shooting-star-two::after {
+  right: auto;
+  left: -2px;
+}
+
+/* Star three: lower-left to upper-right */
+.shooting-star-three {
+  top: 78%;
+  left: -14rem;
+  animation: shooting-star-three 18s linear infinite;
+}
+
+/* Appears near the beginning of the animation cycle */
+@keyframes shooting-star-one {
+  0%,
+  8% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(-6deg);
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  17% {
+    opacity: 0.95;
+  }
+
+  20%,
+  100% {
+    opacity: 0;
+    transform: translate3d(calc(100vw + 28rem), -10vh, 0) rotate(-6deg);
+  }
+}
+
+/* Appears around the middle of the animation cycle */
+@keyframes shooting-star-two {
+  0%,
+  39% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(7deg);
+  }
+
+  41% {
+    opacity: 1;
+  }
+
+  48% {
+    opacity: 0.95;
+  }
+
+  51%,
+  100% {
+    opacity: 0;
+    transform: translate3d(calc(-100vw - 28rem), 12vh, 0) rotate(-15deg);
+  }
+}
+
+/* Appears near the end of the animation cycle */
+@keyframes shooting-star-three {
+  0%,
+  72% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(-18deg);
+  }
+
+  74% {
+    opacity: 1;
+  }
+
+  81% {
+    opacity: 0.95;
+  }
+
+  84%,
+  100% {
+    opacity: 0;
+    transform: translate3d(calc(100vw + 28rem), -48vh, 0) rotate(-18deg);
+  }
 }
