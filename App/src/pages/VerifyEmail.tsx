@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import img from "../images/rumi.png";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { auth, emailVerificationActionCodeSettings } from "../lib/firebase";
@@ -7,7 +7,6 @@ import { sendEmailVerification } from "firebase/auth";
 export default function VerifyEmail() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [code, setCode] = useState("");
   const email = (location.state as { email?: string } | null)?.email ?? auth.currentUser?.email ?? "your email address";
 
   const handleVerify = async () => {
@@ -50,16 +49,15 @@ export default function VerifyEmail() {
       <div>
         <h1 className="text-2xl">Check your email!</h1>
 
-        <p className="text-peri">A 6-digit code was sent to {email}</p>
+        <p className="text-peri">A verification link was sent to {email}</p>
       </div>
 
-      {/* Verification code stuff */}
+      {/* Verification link confirmation */}
       <div className="flex flex-col">
-        <label>6-digit code:</label>
-        <input type="text" placeholder="Code" onChange={(event) => setCode(event.target.value)} />
+        <p>Open the email and click the verification link, then return here.</p>
 
         <button className="bg-lilac text-ink" onClick={handleVerify}>
-          Verify
+          I verified my email
         </button>
       </div>
 
