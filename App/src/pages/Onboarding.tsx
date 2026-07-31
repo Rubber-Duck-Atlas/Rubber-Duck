@@ -13,21 +13,21 @@ const onboardingSteps = [
     description:
       "Use the upload button to import your textbooks, notes, and lessons.",
     src: uploadImg,
-    alt: "Decorative image of a man and woman uploading files.",
+    alt: "Decorative image.",
   },
   {
     id: 1,
     title: "Search",
     description: "Search keywords to find relevant information.",
     src: searchImg,
-    alt: "Decorative image of a woman using search bar.",
+    alt: "Decorative image.",
   },
   {
     id: 2,
     title: "Learn",
     description: "Learn with helpful quotes, sources, and page references.",
     src: learnImg,
-    alt: "Decorative image of a man going up a book staircase.",
+    alt: "Decorative image.",
   },
 ];
 
@@ -59,11 +59,11 @@ export default function Onboarding() {
   });
 
   return (
-    <main className="flex w-full max-w-lg flex-col items-center text-center">
+    <main className="flex flex-col w-full min-h-[calc(100vh-3rem)] items-center text-center">
       {/* Top Section */}
-      <div className="flex justify-between items-center w-full p-5">
+      <div className="flex justify-between items-center w-full pb-2">
         {/* gives users the option to skip onboarding and go straight to create an account */}
-        <Link to="/register" className="">
+        <Link to="/register" className="text-xl">
           Skip
         </Link>
 
@@ -74,40 +74,49 @@ export default function Onboarding() {
         />
       </div>
 
-      {/* Middle Section */}
-      <div>
-        {/* gives user a relevant graphic to whichever step they're on */}
-        <img className="w-120 h-120 object-contain" src={currentStep.src} />
+      <div className="flex flex-1 flex-col w-full items-center justify-center">
+        {/* Image Section */}
+        <div className="flex items-center justify-center max-w-lg w-full h-96 mb-6">
+          {/* gives user a relevant graphic to whichever step they're on */}
+          <img
+            className="max-w-full max-h-full object-contain"
+            src={currentStep.src}
+            alt={currentStep.alt}
+          />
+        </div>
 
-        <h2 className="text-2xl">{currentStep.title}</h2>
+        {/* Middle Section */}
+        <div className="max-w-lg w-full">
+          <h1 className="text-2xl">{currentStep.title}</h1>
 
-        <p>{currentStep.description}</p>
-      </div>
+          <p>{currentStep.description}</p>
+        </div>
 
-      {/* Bottom Section */}
-      <div>
-        {/* shows the pagination dots */}
-        <ul className="my-6 flex items-center justify-center gap-2">
-          {listScreens}
-        </ul>
+        {/* Bottom Section */}
+        <div className="max-w-lg w-full">
+          {/* shows the pagination dots */}
+          <ul className="my-6 flex items-center justify-center gap-2">
+            {listScreens}
+          </ul>
 
-        {/* checks to see if user is on last step and shows corresponding button link */}
-        {isLastStep ? (
-          <Link
-            to="/register"
-            className="w-full max-w-xs rounded-xl bg-lilac px-8 py-3 text-center font-bold text-ink transition hover:opacity-90"
-          >
-            Create Account
-          </Link>
-        ) : (
-          <button
-            type="button"
-            onClick={handleNext}
-            className="w-full max-w-xs rounded-xl bg-lilac px-8 py-3 text-center font-bold text-ink transition hover:opacity-90"
-          >
-            Continue
-          </button>
-        )}
+          {/* checks to see if user is on last step and shows corresponding button link */}
+          {isLastStep ? (
+            <Link
+              to="/register"
+              className="w-full max-w-xs rounded-xl bg-lilac px-8 py-3 inline-flex items-center justify-center text-center font-bold text-ink transition hover:opacity-90"
+            >
+              Create Account
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={handleNext}
+              className="w-full max-w-xs rounded-xl bg-lilac px-8 py-3 text-center font-bold text-ink transition hover:opacity-90"
+            >
+              Continue
+            </button>
+          )}
+        </div>
       </div>
     </main>
   );
