@@ -1,58 +1,69 @@
 import React from "react";
+import SettingsCard from "../components/SettingsCard";
 
 export default function Settings() {
   const username = "User Name";
   const email = "user@email.com";
 
   return (
-    <main className="flex w-full max-w-lg flex-col items-center text-center">
+    <main className="flex flex-col w-full items-center text-center px-6 pb-4 pt-2">
       {/* Header Section */}
-      <div>
-        <h1>Settings</h1>
+      <div className="w-full max-w-5xl mx-auto">
+        <h1 className="text-3xl font-bold">Settings</h1>
 
         <p>Manage your account, storage, and app information.</p>
+
+        <div className="mt-4 h-px w-full bg-peri/40" />
       </div>
 
-      {/* Account Section */}
-      <div className="mx-auto flex flex-col max-w-sm items-center gap-x-4 rounded-xl bg-white p-6 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
-        <section>
-          <h2>Account</h2>
-
+      <div className="flex flex-col gap-5 mt-4 w-full max-w-4xl mx-auto">
+        {/* Account Section */}
+        <SettingsCard title="Account">
           <p>Name: {username}</p>
           <p>Email: {email}</p>
 
-          <button className="bg-lilac text-ink">Change Password</button>
+          <button
+            type="button"
+            className="mx-auto rounded-xl w-full max-w-xs text-center p-1.5 bg-lilac text-ink transition hover:opacity-90 cursor-pointer"
+          >
+            Change Password
+          </button>
 
-          <button className="bg-lilac text-ink">Log Out</button>
-        </section>
-      </div>
+          <button
+            type="button"
+            className="mx-auto rounded-xl w-full max-w-xs text-center p-1.5 bg-lilac text-ink transition hover:opacity-90 cursor-pointer"
+          >
+            Log Out
+          </button>
+        </SettingsCard>
 
-      {/* Storage Section */}
-      <div className="mx-auto flex flex-col max-w-sm items-center gap-x-4 rounded-xl bg-white p-6 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
-        <section>
-          <h2>Storage</h2>
-
+        {/* Storage Section */}
+        <SettingsCard title="Storage">
           <p>Storage Type: Local</p>
           <p>Folder: Rubber Duck app folder</p>
           <p>Uploaded files are stored locally on this device.</p>
 
-          <p className="text-xs">Coming soon...</p>
-          <button className="bg-lilac text-ink">Change File Location</button>
-        </section>
-      </div>
+          <div className="flex flex-col items-center gap-1">
+            <p className="mx-auto text-xs">Coming soon...</p>
+            <button
+              type="button"
+              className="mx-auto rounded-xl w-full max-w-xs text-center p-1.5 bg-lilac/50 text-ink cursor-not-allowed"
+              disabled
+            >
+              Change File Location
+            </button>
+          </div>
+        </SettingsCard>
 
-      {/* About Section */}
-      <div className="mx-auto flex flex-col max-w-sm items-center gap-x-4 rounded-xl bg-white p-6 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
-        <section>
-          <h2>About</h2>
-
+        {/* About Section */}
+        <SettingsCard title="About">
           <p>App name: Rubber Duck</p>
           <p>
             Description: An AI study buddy that searches your uploaded documents
             and notes for relevant information.
           </p>
           <p>Version: Development Build 0.1.0</p>
-        </section>
+        </SettingsCard>
       </div>
     </main>
   );
