@@ -1,7 +1,7 @@
 import React from "react";
 import SearchResult from "./SearchResult";
 
-export default function SearchResultsList({title, results}: {title: string, results: any}) {
+export default function SearchResultsList({title, results, isNote}: {title: string, results: any, isNote: boolean}) {
 
   return <div className="w-full max-w-2xl flex flex-col gap-3">
     {title.length>0 ? <h1 className="font-bold text-lg text-center">
@@ -17,6 +17,7 @@ export default function SearchResultsList({title, results}: {title: string, resu
             path={result.path}
             score={result.score}
             snippet={result.snippet}
+            isNote={isNote}
           />
         ))}
       </div>

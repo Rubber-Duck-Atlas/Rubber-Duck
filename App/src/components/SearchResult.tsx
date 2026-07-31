@@ -6,9 +6,10 @@ type SearchResultProps = {
   path: string;
   score: number;
   snippet: string;
+  isNote: boolean;
 };
 
-export default function SearchResult({ path, score, snippet }: SearchResultProps) {
+export default function SearchResult({ path, score, snippet, isNote }: SearchResultProps) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const fileName = path.split(/[\\/]/).pop() ?? path;
   const displayName = fileName
@@ -39,7 +40,7 @@ export default function SearchResult({ path, score, snippet }: SearchResultProps
       </div>
       <FilePreview
         fileName={fileName}
-        isNote={false}
+        isNote={isNote}
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
       />
