@@ -20,7 +20,7 @@ class RubberDuckTests(unittest.TestCase):
             c.save()
 
             pdf_paths = [pdf_path]
-            _, documents = rubber_duck.build_index(pdf_paths)
+            _, documents = rubber_duck.build_index(pdf_paths, cache_path=None)
             self.assertIsNotNone(documents)
 
             results = rubber_duck.search("machine learning", None, documents, top_k=3)
@@ -51,7 +51,7 @@ class RubberDuckTests(unittest.TestCase):
             txt_path = tmp_path / "notes.txt"
             txt_path.write_text(" ".join(f"word{i}" for i in range(500)), encoding="utf-8")
 
-            index, documents = rubber_duck.build_index([txt_path], chunk_size=200, chunk_overlap=40)
+            index, documents = rubber_duck.build_index([txt_path], chunk_size=200, chunk_overlap=40, cache_path=None)
             self.assertIsNotNone(documents)
             assert documents is not None
             self.assertGreater(len(documents), 1)
