@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&display=swap");
 @import "tailwindcss";
 @source "./**/*.{ts,tsx}";
 
@@ -10,6 +11,10 @@
 :root {
   color: #0f172a;
   font-family: Inter, "Segoe UI", sans-serif;
+}
+
+.brand-font-fredoka {
+  font-family: "Fredoka", "Segoe UI", sans-serif;
 }
 
 * {

@@ -80,7 +80,9 @@ export default function Register() {
           alt="A yellow rubber duck wearing a black graduation cap with a purple tassel"
         />
 
-        <h1 className="text-peri text-3xl font-bold">Rubber Duck</h1>
+        <h1 className="brand-font-fredoka text-peri text-3xl font-bold">
+          Rubber Duck
+        </h1>
       </div>
 
       <div className="mx-auto flex flex-col max-w-sm items-center gap-2 rounded-xl bg-white p-6 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
