@@ -1,8 +1,48 @@
-import React from "react";
+import React, { useState } from "react";
 import img from "../images/rumi.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  GoogleAuthProvider,
+  sendEmailVerification,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+} from "firebase/auth";
+import { auth, emailVerificationActionCodeSettings } from "../lib/firebase";
 
 export default function Login() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    try {
+      const credential = await signInWithEmailAndPassword(auth, email, password);
+
+      if (!credential.user.emailVerified) {
+        await sendEmailVerification(credential.user, emailVerificationActionCodeSettings);
+        navigate("/verifyemail", { state: { email } });
+        return;
+      }
+
+      navigate("/");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to log in.";
+      window.alert(message);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+      navigate("/");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to sign in with Google.";
+      window.alert(message);
+    }
+  };
+
   return (
     <main className="flex w-full max-w-lg flex-col items-center text-center">
       {/* Top Section */}
@@ -26,12 +66,22 @@ export default function Login() {
 
         {/* Email Login */}
         <div className="flex flex-col">
-          <form className="flex flex-col text-peri">
+          <form className="flex flex-col text-peri" onSubmit={handleLogin}>
             <label>
-              Email:<input type="email"></input>
+              Email:
+              <input
+                type="email"
+                onChange={(event) => setEmail(event.target.value)}
+                required
+              ></input>
             </label>
             <label>
-              Password:<input type="password"></input>
+              Password:
+              <input
+                type="password"
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              ></input>
             </label>
 
             <button className="w-full max-w-xs rounded-xl bg-lilac px-8 py-3 text-center font-bold text-ink transition hover:opacity-90">
@@ -54,7 +104,11 @@ export default function Login() {
 
         {/* Google Login */}
         <div>
-          <button className="w-full max-w-xs rounded-xl bg-lilac px-8 py-3 text-center font-bold text-ink transition hover:opacity-90">
+          <button
+            className="w-full max-w-xs rounded-xl bg-lilac px-8 py-3 text-center font-bold text-ink transition hover:opacity-90"
+            type="button"
+            onClick={handleGoogleLogin}
+          >
             Continue with Google
           </button>
         </div>

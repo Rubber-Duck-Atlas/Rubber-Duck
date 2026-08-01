@@ -1,8 +1,17 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { auth } from "../lib/firebase";
+import { signOut } from "firebase/auth";
 
 export default function Settings() {
-  const username = "User Name";
-  const email = "user@email.com";
+  const navigate = useNavigate();
+  const username = auth.currentUser?.displayName ?? "User Name";
+  const email = auth.currentUser?.email ?? "user@email.com";
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    navigate("/login");
+  };
 
   return (
     <main className="flex w-full max-w-lg flex-col items-center text-center">
@@ -23,7 +32,7 @@ export default function Settings() {
 
           <button className="bg-lilac text-ink">Change Password</button>
 
-          <button className="bg-lilac text-ink">Log Out</button>
+          <button className="bg-lilac text-ink" onClick={handleLogout}>Log Out</button>
         </section>
       </div>
 
