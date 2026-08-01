@@ -24,49 +24,51 @@ export default function ForgotPassword() {
   return (
     <main className="flex w-full max-w-lg flex-col items-center text-center">
       {/* Top Section */}
-      <div className="flex flex-1 w-full">
+      <div className="flex flex-1 gap-4 w-full justify-center items-center py-4">
         <img
           className="w-12 h-12 object-contain"
           src={img}
           alt="A yellow rubber duck wearing a black graduation cap with a purple tassel"
         />
 
-        <p className="text-lilac">Rubber Duck</p>
+        <h1 className="text-peri text-3xl font-bold">Rubber Duck</h1>
       </div>
 
-      {/* Header Text */}
-      <div>
-        <h1>Forgot your password?</h1>
+      <div className="mx-auto flex flex-col max-w-sm items-center gap-2 rounded-xl bg-white p-6 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
+        {/* Header Text */}
+        <h1 className="text-2xl">Forgot your password?</h1>
 
         <p>
-          Enter the email connected to your account and we'll send you
+          Enter the email connected to your account and we&apos;ll send you
           instructions to reset your password.
         </p>
-      </div>
 
-      {/* Email input */}
-      <div className="mx-auto flex flex-col max-w-sm items-center gap-x-4 rounded-xl bg-white p-6 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
-        <form id="forgot-password-form" onSubmit={handleReset}>
-          <label>
-            Email:
-            <input
-              type="email"
-              onChange={(event) => setEmail(event.target.value)}
-              required
-            ></input>
-          </label>
-        </form>
-        <button className="bg-lilac text-ink" type="submit" form="forgot-password-form">
-          Send Reset Link
-        </button>
-      </div>
+        {/* Email input */}
+        <div className="flex flex-col w-full">
+          <form className="flex flex-col text-peri w-full gap-4" onSubmit={handleReset}>
+            <label className="w-full border-b border-current">
+              <input
+                placeholder="Email"
+                type="email"
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                className="w-full text-xl outline-none bg-transparent"
+              ></input>
+            </label>
 
-      {/* Back to login button */}
-      <div>
-        <p>Remember your password?</p>
-        <Link to="/login" className="">
-          Back to Login
-        </Link>
+            <button className="w-full max-w-xs rounded-xl bg-lilac px-8 py-2 text-center font-bold text-ink transition hover:opacity-90">
+              Send Reset Link
+            </button>
+          </form>
+        </div>
+
+        {/* Back to login button */}
+        <div>
+          <p>Remember your password?</p>
+          <Link to="/login" className="text-lilac">
+            Back to Login
+          </Link>
+        </div>
       </div>
     </main>
   );
