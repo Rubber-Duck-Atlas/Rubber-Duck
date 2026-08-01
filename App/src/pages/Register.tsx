@@ -1,8 +1,55 @@
-import React from "react";
+import React, { useState } from "react";
 import img from "../images/rumi.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  signInWithPopup,
+  updateProfile,
+} from "firebase/auth";
+import { auth, emailVerificationActionCodeSettings } from "../lib/firebase";
 
 export default function Register() {
+  const navigate = useNavigate();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const handleRegister = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (password !== confirmPassword) {
+      window.alert("Passwords do not match.");
+      return;
+    }
+
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+
+      if (fullName) {
+        await updateProfile(credential.user, { displayName: fullName });
+      }
+
+      await sendEmailVerification(credential.user, emailVerificationActionCodeSettings);
+      navigate("/verifyemail", { state: { email } });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to create account.";
+      window.alert(message);
+    }
+  };
+
+  const handleGoogleRegister = async () => {
+    try {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+      navigate("/");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to sign in with Google.";
+      window.alert(message);
+    }
+  };
+
   return (
     <main className="flex w-full max-w-lg flex-col items-center text-center">
       {/* Top Section */}
@@ -26,18 +73,38 @@ export default function Register() {
 
         {/* Email Registration */}
         <div className="flex flex-col">
-          <form className="flex flex-col text-peri">
+          <form className="flex flex-col text-peri" onSubmit={handleRegister}>
             <label>
-              Full Name:<input type="text"></input>
+              Full Name:
+              <input
+                type="text"
+                onChange={(event) => setFullName(event.target.value)}
+              ></input>
             </label>
             <label>
-              Email:<input type="email"></input>
+              Email:
+              <input
+                type="email"
+                // value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+              ></input>
             </label>
             <label>
-              Password:<input type="password"></input>
+              Password:
+              <input
+                type="password"
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              ></input>
             </label>
             <label>
-              Confirm Password:<input type="password"></input>
+              Confirm Password:
+              <input
+                type="password"
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                required
+              ></input>
             </label>
 
             <button className="w-full max-w-xs rounded-xl bg-lilac px-8 py-3 text-center font-bold text-ink transition hover:opacity-90">
@@ -53,7 +120,11 @@ export default function Register() {
 
         {/* Google Registration */}
         <div>
-          <button className="w-full max-w-xs rounded-xl bg-lilac px-8 py-3 text-center font-bold text-ink transition hover:opacity-90">
+          <button
+            className="w-full max-w-xs rounded-xl bg-lilac px-8 py-3 text-center font-bold text-ink transition hover:opacity-90"
+            type="button"
+            onClick={handleGoogleRegister}
+          >
             Continue with Google
           </button>
         </div>
