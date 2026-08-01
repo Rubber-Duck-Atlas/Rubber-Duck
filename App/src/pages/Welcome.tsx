@@ -8,7 +8,7 @@ export default function Welcome() {
       {/* Top group */}
       <div className="flex flex-col items-center gap-6">
         <img
-          className="w-24 h-24 object-contain"
+          className="w-24 h-24 object-contain drop-shadow-[0_0_14px_rgba(180,130,255,0.45)]"
           src={img}
           alt="A yellow rubber duck wearing a black graduation cap with a purple tassel"
         />

@@ -10,6 +10,7 @@ import {
 } from "firebase/auth";
 import { auth, emailVerificationActionCodeSettings } from "../lib/firebase";
 import { FirebaseError } from "firebase/app";
+import googleButton from "../images/google-logo.svg";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -80,9 +81,9 @@ export default function Register() {
           alt="A yellow rubber duck wearing a black graduation cap with a purple tassel"
         />
 
-        <h1 className="brand-font-fredoka text-peri text-3xl font-bold">
+        <p className="brand-font-fredoka text-peri text-3xl font-bold">
           Rubber Duck
-        </h1>
+        </p>
       </div>
 
       <div className="mx-auto flex flex-col max-w-sm items-center gap-2 rounded-xl bg-white p-6 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
@@ -91,7 +92,10 @@ export default function Register() {
 
         {/* Email Registration */}
         <div className="flex flex-col w-full">
-          <form className="flex flex-col text-peri w-full gap-4" onSubmit={handleRegister}>
+          <form
+            className="flex flex-col text-peri w-full gap-4"
+            onSubmit={handleRegister}
+          >
             <label className="w-full border-b border-current">
               <input
                 placeholder="Full Name"
@@ -128,7 +132,10 @@ export default function Register() {
               ></input>
             </label>
 
-            <button className="w-full max-w-xs rounded-xl bg-lilac px-8 py-2 text-center font-bold text-ink transition hover:opacity-90">
+            <button
+              type="submit"
+              className="w-full max-w-xs rounded-xl bg-lilac px-8 py-2 text-center font-bold text-ink transition hover:opacity-90 cursor-pointer"
+            >
               Create Account
             </button>
           </form>
@@ -144,11 +151,16 @@ export default function Register() {
         {/* Google Registration */}
         <div className="w-full">
           <button
-            className="w-full max-w-xs rounded-xl bg-lilac px-8 py-2 text-center font-bold text-ink transition hover:opacity-90"
+            className="mx-auto block w-full max-w-xs cursor-pointer bg-transparent p-0 transition hover:opacity-90 rounded-xl overflow-hidden"
             type="button"
             onClick={handleGoogleRegister}
+            aria-label="Sign in with Google"
           >
-            Continue with Google
+            <img
+              src={googleButton}
+              alt=""
+              className="block h-auto w-full rounded-xl"
+            />
           </button>
         </div>
 
