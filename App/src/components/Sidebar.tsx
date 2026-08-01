@@ -1,30 +1,39 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Folder, House, Settings } from "lucide-react";
+import img from "../images/rumi.png";
+import { Folder, Search, Settings } from "lucide-react";
 
 // Shared sidebar navigation for main application pages
 export default function Sidebar() {
   return (
-    <aside className="min-h-screen w-64 bg-black p-5 text-white">
-      {/* header / branding */}
-      <div>
-        <h1 className="text-xl text-lilac text-center ">Rubber Duck Nav</h1>
+    <aside className="fixed inset-y-0 left-0 z-20 flex h-screen w-12 flex-col overflow-hidden bg-slate-950 text-white transition-[width] duration-300 ease-out hover:w-36">
+
+      <div className="flex w-full justify-center py-3">
+        <img
+          src={img}
+          alt="Rubber Duck logo"
+          className="h-6 w-6 aspect-square object-contain"
+        />
       </div>
 
-      <nav className="mt-8 flex flex-col gap-1">
+      <nav className="flex flex-1 flex-col gap-1">
         {/* Navigates to home */}
         <NavLink
           to="/"
           className={({ isActive }) =>
             isActive
               ? // shows ui for the page currently open
-                "flex items-center gap-3 rounded-lg bg-lilac px-4 py-3 text-white"
+                "flex items-center gap-3 rounded-lg bg-transparent px-3 py-3 text-lilac"
               : // shows ui for an inactive navigation link
-                "flex items-center gap-3 rounded-lg px-4 py-3 text-peri hover:bg-slate-800"
+                "flex items-center gap-3 rounded-lg bg-transparent px-3 py-3 text-peri hover:text-white"
           }
         >
-          <House />
-          <span>Home</span>
+          <span className="h-6 w-6 shrink-0">
+            <Search className="h-full w-full aspect-square" />
+          </span>
+          <span className="whitespace-nowrap">
+            Home
+          </span>
         </NavLink>
 
         {/* Navigates to document library */}
@@ -33,13 +42,17 @@ export default function Sidebar() {
           className={({ isActive }) =>
             isActive
               ? // shows ui for the page currently open
-                "flex items-center gap-3 rounded-lg bg-lilac px-4 py-3 text-white"
+                "flex items-center gap-3 rounded-lg bg-transparent px-3 py-3 text-lilac"
               : // shows ui for an inactive navigation link
-                "flex items-center gap-3 rounded-lg px-4 py-3 text-peri hover:bg-slate-800"
+                "flex items-center gap-3 rounded-lg bg-transparent px-3 py-3 text-peri hover:text-white"
           }
         >
-          <Folder />
-          <span>Documents</span>
+          <span className="h-6 w-6 shrink-0">
+            <Folder className="h-full w-full aspect-square" />
+          </span>
+          <span className="whitespace-nowrap">
+            Documents
+          </span>
         </NavLink>
 
         {/* Navigates to settings */}
@@ -48,13 +61,17 @@ export default function Sidebar() {
           className={({ isActive }) =>
             isActive
               ? // shows ui for the page currently open
-                "flex items-center gap-3 rounded-lg bg-lilac px-4 py-3 text-white"
+                "mt-auto flex items-center gap-3 rounded-lg bg-transparent px-3 py-3 text-lilac"
               : // shows ui for an inactive navigation link
-                "flex items-center gap-3 rounded-lg px-4 py-3 text-peri hover:bg-slate-800"
+                "mt-auto flex items-center gap-3 rounded-lg bg-transparent px-3 py-3 text-peri hover:text-white"
           }
         >
-          <Settings />
-          <span>Settings</span>
+          <span className="h-6 w-6 shrink-0">
+            <Settings className="h-full w-full aspect-square" />
+          </span>
+          <span className="whitespace-nowrap">
+            Settings
+          </span>
         </NavLink>
       </nav>
     </aside>

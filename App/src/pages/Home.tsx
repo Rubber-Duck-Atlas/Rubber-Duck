@@ -79,13 +79,6 @@ export default function Home() {
           <></>
         )}
       </main>
-
-
-      {/* Link to prototype file viewer thingy */}
-      <Folder
-        className="absolute top-3 left-3 w-8 h-8 text-white cursor-pointer"
-        onClick={() => navigate("/Documents")}
-      />
     </>
   );
 }
