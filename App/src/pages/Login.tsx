@@ -8,6 +8,7 @@ import {
   signInWithPopup,
 } from "firebase/auth";
 import { auth, emailVerificationActionCodeSettings } from "../lib/firebase";
+import { FirebaseError } from "firebase/app";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -18,17 +19,25 @@ export default function Login() {
     event.preventDefault();
 
     try {
-      const credential = await signInWithEmailAndPassword(auth, email, password);
+      const credential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
 
       if (!credential.user.emailVerified) {
-        await sendEmailVerification(credential.user, emailVerificationActionCodeSettings);
+        await sendEmailVerification(
+          credential.user,
+          emailVerificationActionCodeSettings,
+        );
         navigate("/verifyemail", { state: { email } });
         return;
       }
 
       navigate("/");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to log in.";
+      const message =
+        error instanceof Error ? error.message : "Unable to log in.";
       window.alert(message);
     }
   };
@@ -38,7 +47,18 @@ export default function Login() {
       await signInWithPopup(auth, new GoogleAuthProvider());
       navigate("/");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to sign in with Google.";
+      if (
+        error instanceof FirebaseError &&
+        (error.code === "auth/popup-closed-by-user" ||
+          error.code === "auth/cancelled-popup-request")
+      ) {
+        return;
+      }
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to sign in with Google.";
       window.alert(message);
     }
   };

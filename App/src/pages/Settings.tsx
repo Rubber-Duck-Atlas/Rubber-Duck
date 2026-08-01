@@ -29,15 +29,19 @@ export default function Settings() {
       <div className="mx-auto mt-4 flex w-full max-w-4xl flex-col gap-5">
         {/* Account Section */}
         <SettingsCard title="Account">
-          <p>Name: {username}</p>
-          <p>Email: {email}</p>
+          <p>
+            <span className="text-peri/60">Name: </span>
+            <span className="font-semibold text-peri/90 [text-shadow:0_0_8px_rgba(180,130,255,0.55)]">
+              {username}
+            </span>
+          </p>
 
-          <button
-            type="button"
-            className="mx-auto w-full max-w-xs cursor-pointer rounded-xl bg-lilac p-1.5 text-center text-ink transition hover:opacity-90"
-          >
-            Change Password
-          </button>
+          <p>
+            <span className="text-peri/60">Email: </span>
+            <span className="font-semibold text-peri/90 [text-shadow:0_0_8px_rgba(180,130,255,0.55)]">
+              {email}
+            </span>
+          </p>
 
           <button
             type="button"

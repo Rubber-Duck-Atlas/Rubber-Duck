@@ -9,6 +9,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth, emailVerificationActionCodeSettings } from "../lib/firebase";
+import { FirebaseError } from "firebase/app";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -26,16 +27,24 @@ export default function Register() {
     }
 
     try {
-      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      const credential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
 
       if (fullName) {
         await updateProfile(credential.user, { displayName: fullName });
       }
 
-      await sendEmailVerification(credential.user, emailVerificationActionCodeSettings);
+      await sendEmailVerification(
+        credential.user,
+        emailVerificationActionCodeSettings,
+      );
       navigate("/verifyemail", { state: { email } });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to create account.";
+      const message =
+        error instanceof Error ? error.message : "Unable to create account.";
       window.alert(message);
     }
   };
@@ -45,7 +54,18 @@ export default function Register() {
       await signInWithPopup(auth, new GoogleAuthProvider());
       navigate("/");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to sign in with Google.";
+      if (
+        error instanceof FirebaseError &&
+        (error.code === "auth/popup-closed-by-user" ||
+          error.code === "auth/cancelled-popup-request")
+      ) {
+        return;
+      }
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to sign in with Google.";
       window.alert(message);
     }
   };
