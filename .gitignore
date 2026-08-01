@@ -1,0 +1,3 @@
+__pycache__/
+*.pyc
+.rubber_duck_cache.pkl

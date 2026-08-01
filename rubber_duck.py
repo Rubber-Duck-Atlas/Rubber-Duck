@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import pickle
 import re
 from datetime import datetime
 from pathlib import Path
@@ -17,6 +18,10 @@ DEFAULT_USER_ID = "placeholder-user"
 
 # File types the search engine knows how to read.
 SUPPORTED_EXTENSIONS = (".pdf", ".html", ".htm", ".docx", ".txt")
+
+# Where extracted text is cached so re-indexing a large library doesn't
+# require re-reading every file from scratch on each run.
+DEFAULT_CACHE_PATH = Path(__file__).resolve().parent / ".rubber_duck_cache.pkl"
 
 
 # Clean up whitespace so extracted PDF text is easier to search.
@@ -81,6 +86,41 @@ def extract_text(path: Path) -> str:
     return ""
 
 
+# Load the cache of previously extracted document text, keyed by file path.
+def load_text_cache(cache_path: Path) -> dict:
+    if not cache_path.exists():
+        return {}
+    try:
+        with cache_path.open("rb") as cache_file:
+            return pickle.load(cache_file)
+    except Exception as exc:
+        print(f"Warning: could not read cache {cache_path.name}: {exc}")
+        return {}
+
+
+# Persist the extracted-text cache to disk for reuse on the next run.
+def save_text_cache(cache_path: Path, cache: dict) -> None:
+    try:
+        with cache_path.open("wb") as cache_file:
+            pickle.dump(cache, cache_file)
+    except Exception as exc:
+        print(f"Warning: could not save cache {cache_path.name}: {exc}")
+
+
+# Return a document's text, reusing the cached extraction when the file's
+# size and modified time haven't changed since it was last indexed.
+def get_document_text(path: Path, cache: dict) -> str:
+    stat = path.stat()
+    key = str(path)
+    cached = cache.get(key)
+    if cached and cached["mtime"] == stat.st_mtime and cached["size"] == stat.st_size:
+        return cached["text"]
+
+    text = extract_text(path)
+    cache[key] = {"mtime": stat.st_mtime, "size": stat.st_size, "text": text}
+    return text
+
+
 # Find every supported document (PDF, HTML, DOCX) under the provided folder.
 def find_document_files(root: Path) -> List[Path]:
     if not root.exists():
@@ -125,10 +165,13 @@ def build_index(
     document_paths: List[Path],
     chunk_size: int = 200,
     chunk_overlap: int = 40,
+    cache_path: Path | None = DEFAULT_CACHE_PATH,
 ) -> Tuple[dict | None, List[dict] | None]:
+    cache = load_text_cache(cache_path) if cache_path else {}
+
     chunks: List[dict] = []
     for document_path in document_paths:
-        text = extract_text(document_path)
+        text = get_document_text(document_path, cache) if cache_path else extract_text(document_path)
         if not text:
             continue
 
@@ -147,6 +190,12 @@ def build_index(
                     "total_chunks": total_chunks,
                 },
             })
+
+    if cache_path:
+        # Drop entries for files that no longer exist so the cache doesn't grow forever.
+        current_keys = {str(path) for path in document_paths}
+        cache = {key: value for key, value in cache.items() if key in current_keys}
+        save_text_cache(cache_path, cache)
 
     if not chunks:
         return None, None
@@ -210,20 +259,16 @@ def build_snippet(text: str, query: str, window: int = 80) -> str:
     return text[:window] + ("..." if len(text) > window else "")
 
 
-# Save search results to a timestamped JSON file inside the Results folder.
-def save_results_json(
+# Build the JSON-serializable results payload for a search, including a
+# placeholder user id and the timestamp of the search.
+def build_results_payload(
     query: str,
     results: List[dict],
-    output_dir: Path | str = "Results",
     user_id: str = DEFAULT_USER_ID,
-) -> Path:
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    output_path = output_dir / f"{user_id}_{timestamp}.json"
-
-    payload = {
+) -> dict:
+    return {
+        "user_id": user_id,
+        "timestamp": datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
         "query": query,
         "results": [
             {
@@ -236,25 +281,15 @@ def save_results_json(
         ],
     }
 
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=4)
 
-    return output_path
-
-
-def run_interactive_search(data_dir: Path, top_k: int, chunk_size: int = 200, chunk_overlap: int = 40) -> None:
-    print(f"Scanning documents in {data_dir}...")
-    document_paths = find_document_files(data_dir)
-    if not document_paths:
-        print("No PDF, HTML, DOCX, or TXT files were found. Place documents in the Notes_Data folder and try again.")
-        return
-
-    index, documents = build_index(document_paths, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-    if index is None or documents is None:
-        print("No searchable text was extracted from the documents.")
-        return
-
-    print(f"Indexed {len(documents)} chunk(s) from {len(document_paths)} document(s).")
+def run_interactive_search(
+    document_count: int,
+    index: dict,
+    documents: List[dict],
+    top_k: int,
+    user_id: str = DEFAULT_USER_ID,
+) -> None:
+    print(f"Indexed {len(documents)} chunk(s) from {document_count} document(s).")
     while True:
         query = input("\nEnter a keyword or phrase (blank to quit): ").strip()
         if not query:
@@ -270,8 +305,8 @@ def run_interactive_search(data_dir: Path, top_k: int, chunk_size: int = 200, ch
             print(f"{rank}. {result['path'].name} (score: {result['score']:.3f}, chunk {chunk_position})")
             print(f"   {result['snippet']}")
 
-        saved_path = save_results_json(query, results)
-        print(f"Saved results to {saved_path}")
+        payload = build_results_payload(query, results, user_id=user_id)
+        print(json.dumps(payload, indent=4))
 
 
 def main() -> None:
@@ -280,10 +315,11 @@ def main() -> None:
     parser.add_argument("--query", default="", help="Keyword or phrase to search")
     parser.add_argument("--top-k", type=int, default=5, help="Number of matches to return")
     parser.add_argument("--interactive", action="store_true", help="Run the search engine interactively")
-    parser.add_argument("--user-id", default=DEFAULT_USER_ID, help="Placeholder user identifier used in the saved results filename")
-    parser.add_argument("--output-dir", default="Results", help="Folder where search result JSON files are saved")
+    parser.add_argument("--user-id", default=DEFAULT_USER_ID, help="Placeholder user identifier included in the JSON output")
     parser.add_argument("--chunk-size", type=int, default=200, help="Number of words per chunk")
     parser.add_argument("--chunk-overlap", type=int, default=40, help="Number of overlapping words between consecutive chunks")
+    parser.add_argument("--no-cache", action="store_true", help="Disable the on-disk text extraction cache")
+    parser.add_argument("--rebuild-cache", action="store_true", help="Ignore any existing cache and re-extract every document")
     args = parser.parse_args()
 
     data_dir = Path(args.data_dir).resolve()
@@ -292,13 +328,18 @@ def main() -> None:
         print(f"No PDF, HTML, DOCX, or TXT files were found in {data_dir}.")
         return
 
-    index, documents = build_index(document_paths, chunk_size=args.chunk_size, chunk_overlap=args.chunk_overlap)
+    cache_path = None if args.no_cache else DEFAULT_CACHE_PATH
+    if args.rebuild_cache and cache_path and cache_path.exists():
+        cache_path.unlink()
+
+    print(f"Scanning {len(document_paths)} document(s) in {data_dir}...")
+    index, documents = build_index(document_paths, chunk_size=args.chunk_size, chunk_overlap=args.chunk_overlap, cache_path=cache_path)
     if index is None or documents is None:
         print("No searchable text was extracted from the documents.")
         return
 
     if args.interactive:
-        run_interactive_search(data_dir, args.top_k, chunk_size=args.chunk_size, chunk_overlap=args.chunk_overlap)
+        run_interactive_search(len(document_paths), index, documents, args.top_k, user_id=args.user_id)
         return
 
     if not args.query.strip():
@@ -316,8 +357,8 @@ def main() -> None:
         print(f"{rank}. {result['path']} (score: {result['score']:.3f}, chunk {chunk_position})")
         print(f"   {result['snippet']}")
 
-    saved_path = save_results_json(args.query, results, output_dir=args.output_dir, user_id=args.user_id)
-    print(f"Saved results to {saved_path}")
+    payload = build_results_payload(args.query, results, user_id=args.user_id)
+    print(json.dumps(payload, indent=4))
 
 
 if __name__ == "__main__":
