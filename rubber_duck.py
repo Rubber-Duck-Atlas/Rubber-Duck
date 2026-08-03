@@ -1,17 +1,28 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import pickle
 import re
+import sys
+import urllib.error
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 from typing import List, Tuple
 
-import docx
+import numpy as np
 from bs4 import BeautifulSoup
 from pypdf import PdfReader
+
+try:
+    import docx
+    DOCX_IMPORT_ERROR = None
+except Exception as exc:
+    docx = None
+    DOCX_IMPORT_ERROR = exc
 
 # Placeholder until the application has real user accounts.
 DEFAULT_USER_ID = "placeholder-user"
@@ -23,10 +34,24 @@ SUPPORTED_EXTENSIONS = (".pdf", ".html", ".htm", ".docx", ".txt")
 # require re-reading every file from scratch on each run.
 DEFAULT_CACHE_PATH = Path(__file__).resolve().parent / ".rubber_duck_cache.pkl"
 
+# Local sentence-transformers model used for embedding-based semantic search.
+DEFAULT_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+
+# Where chunk embeddings are cached so a large library isn't re-embedded on every run.
+DEFAULT_EMBEDDING_CACHE_PATH = Path(__file__).resolve().parent / ".rubber_duck_embeddings.pkl"
+
+# Local LLM served by Ollama (https://ollama.com), used to synthesize answers
+# grounded in the retrieved chunks.
+DEFAULT_OLLAMA_URL = "http://localhost:11434/api/generate"
+DEFAULT_LLM_MODEL = "llama3.2"
+
 
 # Clean up whitespace so extracted PDF text is easier to search.
+# Also strips lone UTF-16 surrogates that some malformed PDFs produce, which
+# would otherwise crash UTF-8 encoding later (e.g. during embedding/hashing).
 def normalize_text(text: str) -> str:
-    return re.sub(r"\s+", " ", text or "").strip()
+    text = (text or "").encode("utf-8", errors="ignore").decode("utf-8", errors="ignore")
+    return re.sub(r"\s+", " ", text).strip()
 
 
 # Read the text from a single PDF file so it can be indexed and searched.
@@ -53,6 +78,12 @@ def extract_text_from_html(html_path: Path) -> str:
 
 # Read the paragraph text from a single DOCX file so it can be indexed and searched.
 def extract_text_from_docx(docx_path: Path) -> str:
+    if docx is None:
+        print(
+            "Warning: python-docx/lxml is unavailable; skipping "
+            f"{docx_path.name}: {DOCX_IMPORT_ERROR}"
+        )
+        return ""
     try:
         document = docx.Document(str(docx_path))
         paragraphs = [paragraph.text for paragraph in document.paragraphs]
@@ -166,6 +197,7 @@ def build_index(
     chunk_size: int = 200,
     chunk_overlap: int = 40,
     cache_path: Path | None = DEFAULT_CACHE_PATH,
+    build_keyword_index: bool = True,
 ) -> Tuple[dict | None, List[dict] | None]:
     cache = load_text_cache(cache_path) if cache_path else {}
 
@@ -181,7 +213,9 @@ def build_index(
             chunks.append({
                 "path": document_path,
                 "text": chunk,
-                "tokens": tokenize(chunk),
+                # Skipped when only semantic search is needed - tokenizing every
+                # chunk to build the keyword index is slow for large libraries.
+                "tokens": tokenize(chunk) if build_keyword_index else [],
                 "metadata": {
                     "source": str(document_path),
                     "file_name": document_path.name,
@@ -201,9 +235,10 @@ def build_index(
         return None, None
 
     index: dict = {}
-    for chunk in chunks:
-        for token in set(chunk["tokens"]):
-            index.setdefault(token, []).append(chunk["path"])
+    if build_keyword_index:
+        for chunk in chunks:
+            for token in set(chunk["tokens"]):
+                index.setdefault(token, []).append(chunk["path"])
     return index, chunks
 
 
@@ -237,6 +272,104 @@ def search(query: str, index: dict | None, documents: List[dict] | None, top_k: 
             "score": float(score),
             "path": doc["path"],
             "snippet": snippet,
+            "text": doc["text"],
+            "metadata": doc["metadata"],
+        })
+    return results
+
+
+# Load the cache of previously computed chunk embeddings, keyed by a hash of
+# the chunk's text so identical chunks are only ever embedded once.
+def load_embedding_cache(cache_path: Path) -> dict:
+    if not cache_path.exists():
+        return {}
+    try:
+        with cache_path.open("rb") as cache_file:
+            return pickle.load(cache_file)
+    except Exception as exc:
+        print(f"Warning: could not read embedding cache {cache_path.name}: {exc}")
+        return {}
+
+
+# Persist the embedding cache to disk for reuse on the next run.
+def save_embedding_cache(cache_path: Path, cache: dict) -> None:
+    try:
+        with cache_path.open("wb") as cache_file:
+            pickle.dump(cache, cache_file)
+    except Exception as exc:
+        print(f"Warning: could not save embedding cache {cache_path.name}: {exc}")
+
+
+_embedding_model = None
+
+
+# Lazily load the sentence-transformers model so keyword-only searches never
+# pay the (slow) import/download/load cost of the embedding model.
+def get_embedding_model(model_name: str = DEFAULT_EMBEDDING_MODEL):
+    global _embedding_model
+    if _embedding_model is None:
+        from sentence_transformers import SentenceTransformer
+        print(f"Loading embedding model '{model_name}' (first run may download it)...")
+        _embedding_model = SentenceTransformer(model_name)
+    return _embedding_model
+
+
+# Compute (or reuse cached) embeddings for every chunk, keyed by a hash of
+# the chunk's text so unchanged chunks are never re-embedded.
+def embed_chunks(
+    documents: List[dict],
+    model_name: str = DEFAULT_EMBEDDING_MODEL,
+    cache_path: Path | None = DEFAULT_EMBEDDING_CACHE_PATH,
+) -> np.ndarray:
+    cache = load_embedding_cache(cache_path) if cache_path else {}
+
+    keys = [hashlib.sha1(doc["text"].encode("utf-8")).hexdigest() for doc in documents]
+    missing_indices = [i for i, key in enumerate(keys) if key not in cache]
+
+    if missing_indices:
+        model = get_embedding_model(model_name)
+        missing_texts = [documents[i]["text"] for i in missing_indices]
+        print(f"Embedding {len(missing_texts)} new/changed chunk(s)...")
+        vectors = model.encode(missing_texts, batch_size=32, show_progress_bar=True, normalize_embeddings=True)
+        for i, vector in zip(missing_indices, vectors):
+            cache[keys[i]] = vector
+
+    if cache_path:
+        # Drop entries for chunks that no longer exist so the cache doesn't grow forever.
+        used_keys = set(keys)
+        cache = {key: value for key, value in cache.items() if key in used_keys}
+        save_embedding_cache(cache_path, cache)
+
+    return np.array([cache[key] for key in keys], dtype=np.float32)
+
+
+# Rank document chunks by cosine similarity between the query and each
+# chunk's embedding. Returns results in the same shape as search().
+def semantic_search(
+    query: str,
+    chunk_embeddings: np.ndarray | None,
+    documents: List[dict] | None,
+    top_k: int = 5,
+    model_name: str = DEFAULT_EMBEDDING_MODEL,
+) -> List[dict]:
+    if not query.strip() or not documents or chunk_embeddings is None or len(chunk_embeddings) == 0:
+        return []
+
+    model = get_embedding_model(model_name)
+    query_vector = model.encode([query], normalize_embeddings=True)[0]
+
+    scores = chunk_embeddings @ query_vector
+    ranked_indices = np.argsort(scores)[::-1][:top_k]
+
+    results: List[dict] = []
+    for doc_index in ranked_indices:
+        doc = documents[int(doc_index)]
+        snippet = build_snippet(doc["text"], query)
+        results.append({
+            "score": float(scores[doc_index]),
+            "path": doc["path"],
+            "snippet": snippet,
+            "text": doc["text"],
             "metadata": doc["metadata"],
         })
     return results
@@ -257,6 +390,57 @@ def build_snippet(text: str, query: str, window: int = 80) -> str:
             snippet = text[start:end].replace("\n", " ")
             return snippet + ("..." if end < len(text) else "")
     return text[:window] + ("..." if len(text) > window else "")
+
+
+# Build a grounded prompt instructing the LLM to answer only from the
+# retrieved chunks and cite which source each part of the answer came from.
+def build_answer_prompt(query: str, results: List[dict]) -> str:
+    sources = "\n\n".join(
+        f"[{rank}] Source: {result['metadata']['file_name']} "
+        f"(chunk {result['metadata']['chunk_index'] + 1}/{result['metadata']['total_chunks']})\n"
+        f"{result['text']}"
+        for rank, result in enumerate(results, start=1)
+    )
+    return (
+        "Answer the question using ONLY the information in the sources below. "
+        "Cite sources with their bracketed number, e.g. [1]. "
+        "If the sources don't contain the answer, say so instead of guessing.\n\n"
+        f"Sources:\n{sources}\n\n"
+        f"Question: {query}\n"
+        "Answer:"
+    )
+
+
+# Ask a local Ollama model to synthesize an answer grounded in the retrieved
+# chunks. Requires Ollama running locally (`ollama serve`) with the model
+# already pulled (`ollama pull <model>`).
+def generate_answer(
+    query: str,
+    results: List[dict],
+    model: str = DEFAULT_LLM_MODEL,
+    ollama_url: str = DEFAULT_OLLAMA_URL,
+) -> str:
+    if not results:
+        return "No relevant sources were found in the library to answer this question."
+
+    prompt = build_answer_prompt(query, results)
+    payload = json.dumps({"model": model, "prompt": prompt, "stream": False}).encode("utf-8")
+    request = urllib.request.Request(
+        ollama_url,
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=180) as response:
+            body = json.loads(response.read().decode("utf-8"))
+            return body.get("response", "").strip()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        return (
+            f"Could not reach the local LLM at {ollama_url}: {exc}\n"
+            f"Make sure Ollama is installed and running, and that the model is pulled "
+            f"(`ollama pull {model}`)."
+        )
 
 
 # Build the JSON-serializable results payload for a search, including a
@@ -288,13 +472,20 @@ def run_interactive_search(
     documents: List[dict],
     top_k: int,
     user_id: str = DEFAULT_USER_ID,
+    use_semantic: bool = False,
+    chunk_embeddings: np.ndarray | None = None,
+    ask: bool = False,
+    llm_model: str = DEFAULT_LLM_MODEL,
 ) -> None:
     print(f"Indexed {len(documents)} chunk(s) from {document_count} document(s).")
     while True:
         query = input("\nEnter a keyword or phrase (blank to quit): ").strip()
         if not query:
             break
-        results = search(query, index, documents, top_k=top_k)
+        if use_semantic:
+            results = semantic_search(query, chunk_embeddings, documents, top_k=top_k)
+        else:
+            results = search(query, index, documents, top_k=top_k)
         if not results:
             print("No strong matches found.")
             continue
@@ -304,6 +495,11 @@ def run_interactive_search(
             chunk_position = f"{result['metadata']['chunk_index'] + 1}/{result['metadata']['total_chunks']}"
             print(f"{rank}. {result['path'].name} (score: {result['score']:.3f}, chunk {chunk_position})")
             print(f"   {result['snippet']}")
+
+        if ask:
+            print("\nGenerating answer...")
+            answer = generate_answer(query, results, model=llm_model)
+            print(f"\nAnswer:\n{answer}")
 
         payload = build_results_payload(query, results, user_id=user_id)
         print(json.dumps(payload, indent=4))
@@ -320,6 +516,9 @@ def main() -> None:
     parser.add_argument("--chunk-overlap", type=int, default=40, help="Number of overlapping words between consecutive chunks")
     parser.add_argument("--no-cache", action="store_true", help="Disable the on-disk text extraction cache")
     parser.add_argument("--rebuild-cache", action="store_true", help="Ignore any existing cache and re-extract every document")
+    parser.add_argument("--semantic", action="store_true", help="Use embedding-based semantic search instead of keyword search")
+    parser.add_argument("--ask", action="store_true", help="Answer the query with a local LLM grounded in retrieved chunks (implies --semantic)")
+    parser.add_argument("--llm-model", default=DEFAULT_LLM_MODEL, help="Ollama model name to use with --ask")
     args = parser.parse_args()
 
     data_dir = Path(args.data_dir).resolve()
@@ -332,21 +531,43 @@ def main() -> None:
     if args.rebuild_cache and cache_path and cache_path.exists():
         cache_path.unlink()
 
+    use_semantic = args.semantic or args.ask
     print(f"Scanning {len(document_paths)} document(s) in {data_dir}...")
-    index, documents = build_index(document_paths, chunk_size=args.chunk_size, chunk_overlap=args.chunk_overlap, cache_path=cache_path)
+    index, documents = build_index(
+        document_paths,
+        chunk_size=args.chunk_size,
+        chunk_overlap=args.chunk_overlap,
+        cache_path=cache_path,
+        build_keyword_index=not use_semantic,
+    )
     if index is None or documents is None:
         print("No searchable text was extracted from the documents.")
         return
 
+    chunk_embeddings = None
+    if use_semantic:
+        embedding_cache_path = None if args.no_cache else DEFAULT_EMBEDDING_CACHE_PATH
+        chunk_embeddings = embed_chunks(documents, cache_path=embedding_cache_path)
+
     if args.interactive:
-        run_interactive_search(len(document_paths), index, documents, args.top_k, user_id=args.user_id)
+        run_interactive_search(
+            len(document_paths),
+            index,
+            documents,
+            args.top_k,
+            user_id=args.user_id,
+            use_semantic=use_semantic,
+            chunk_embeddings=chunk_embeddings,
+            ask=args.ask,
+            llm_model=args.llm_model,
+        )
         return
 
     if not args.query.strip():
         print("Provide a query with --query or run in interactive mode with --interactive.")
         return
 
-    results = search(args.query, index, documents, top_k=args.top_k)
+    results = semantic_search(args.query, chunk_embeddings, documents, top_k=args.top_k) if use_semantic else search(args.query, index, documents, top_k=args.top_k)
     if not results:
         print("No strong matches found.")
         return
@@ -357,9 +578,19 @@ def main() -> None:
         print(f"{rank}. {result['path']} (score: {result['score']:.3f}, chunk {chunk_position})")
         print(f"   {result['snippet']}")
 
+    if args.ask:
+        print("\nGenerating answer...")
+        answer = generate_answer(args.query, results, model=args.llm_model)
+        print(f"\nAnswer:\n{answer}")
+
     payload = build_results_payload(args.query, results, user_id=args.user_id)
     print(json.dumps(payload, indent=4))
 
 
 if __name__ == "__main__":
+    # Documents often contain non-ASCII symbols (math, accents); force UTF-8
+    # output so redirecting stdout to a file doesn't crash on Windows' default
+    # console codepage.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     main()
