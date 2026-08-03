@@ -9,11 +9,13 @@ export default function Sidebar() {
     <aside className="fixed inset-y-0 left-0 z-20 flex h-screen w-12 flex-col overflow-hidden bg-slate-950 text-white transition-[width] duration-300 ease-out hover:w-36">
 
       <div className="flex w-full justify-center py-3">
-        <img
-          src={img}
-          alt="Rubber Duck logo"
-          className="h-6 w-6 aspect-square object-contain"
-        />
+        <NavLink to="/">
+          <img
+            src={img}
+            alt="Rubber Duck logo"
+            className="h-6 w-6 aspect-square object-contain"
+          />
+        </NavLink>
       </div>
 
       <nav className="flex flex-1 flex-col gap-1">

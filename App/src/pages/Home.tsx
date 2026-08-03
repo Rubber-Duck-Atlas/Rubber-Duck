@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import TextFade from "../components/TextFade";
-import { Folder, Forward, LoaderCircle, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Forward, LoaderCircle, X } from "lucide-react";
 import RubberDuck from "../lib/RubberDuck";
 import SearchResultsList from "../components/SearchResultsList";
 
 export default function Home() {
-  const navigate = useNavigate();
   const [query, setQuery] = useState<string>("");
   const [lastSearch, setLastSearch] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -67,11 +65,11 @@ export default function Home() {
         </div>
         {searchView ? <div className="flex flex-col gap-4">
           <h1 className="font-bold text-lg text-center flex mx-auto">
-            Showing results for "{lastSearch}" <X className="m-auto cursor-pointer text-red-400" onClick={() => {
+            Showing results for "{lastSearch}" <X className="m-auto cursor-pointer text-lilac" onClick={() => {
               setSearchView(false)
             }}/>
           </h1> 
-          <div className="flex gap-4">
+          <div className="flex gap-8">
             <SearchResultsList title="Documents" results={sortedDocuments} isNote={false}/>
             <SearchResultsList title="Notes" results={sortedNotes} isNote={true}/>
           </div>

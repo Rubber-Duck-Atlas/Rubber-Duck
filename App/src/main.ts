@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import fs from "node:fs";
@@ -118,6 +118,7 @@ const createWindow = () => {
       preload: path.join(__dirname, 'preload.js'),
       plugins: true,
     },
+    // titleBarStyle: 'hidden'
   });
 
   // and load the index.html of the app.
@@ -137,6 +138,8 @@ const createWindow = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
+  Menu.setApplicationMenu(null);
+
   ipcMain.handle('rubber-duck-query', async (_, query: string, searchNotes: boolean) => {
     return runRubberDuckQuery(query, searchNotes);
   });
