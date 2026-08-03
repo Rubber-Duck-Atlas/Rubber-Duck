@@ -1,8 +1,18 @@
 export {};
 
 declare global {
+  type RubberDuckResult = {
+    query: string;
+    results: Array<{
+      path: string;
+      score: number;
+      snippet: string;
+    }>;
+  };
+
   interface Window {
     api: {
+      runRubberDuckQuery(query: string, searchNotes: boolean): Promise<RubberDuckResult>;
       listFiles(dir: string): Promise<string[]>;
       getDocuments(): Promise<string[]>;
       getNotes(): Promise<string[]>;
