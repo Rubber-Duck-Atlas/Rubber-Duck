@@ -110,16 +110,20 @@ if (started) {
 }
 
 const createWindow = () => {
+  
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       plugins: true,
     },
     // titleBarStyle: 'hidden'
   });
+
+  mainWindow.removeMenu();
 
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
