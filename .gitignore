@@ -1,1 +1,4 @@
-Results/
+__pycache__/
+*.pyc
+.rubber_duck_cache.pkl
+.rubber_duck_embeddings.pkl

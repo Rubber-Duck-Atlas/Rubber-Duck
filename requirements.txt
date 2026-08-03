@@ -1,2 +1,7 @@
 pypdf>=4.0.0
 reportlab>=4.2.0
+beautifulsoup4>=4.12.0
+python-docx>=1.1.0
+# Pulls in a CPU-only torch build by default; see README for GPU install instructions.
+sentence-transformers>=3.0.0
+numpy>=1.26.0
