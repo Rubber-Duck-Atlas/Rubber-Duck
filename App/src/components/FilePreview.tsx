@@ -9,11 +9,23 @@ type FilePreviewProps = {
 };
 
 export default function FilePreview({ fileName, isNote, open, onClose }: FilePreviewProps) {
+  const [remarkGfm, setRemarkGfm] = useState<any>(null);
+  const [ReactMarkdown, setReactMarkdown] = useState<any>(null);
   const [previewContent, setPreviewContent] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const isHtml = /\.html?$/i.test(fileName);
   const isPdf = /\.pdf$/i.test(fileName);
+
+  useEffect(() => {
+    Promise.all([
+      import("react-markdown"),
+      import("remark-gfm"),
+    ]).then(([rm, gfm]) => {
+      setReactMarkdown(() => rm.default);
+      setRemarkGfm(() => gfm.default);
+    });
+  }, []);
 
   // Load the file's content whenever the preview is opened
   useEffect(() => {
@@ -81,7 +93,15 @@ export default function FilePreview({ fileName, isNote, open, onClose }: FilePre
           ) : isHtml ? (
             <iframe title={fileName} srcDoc={previewContent ?? ""} className="w-full h-full bg-white" />
           ) : (
-            <pre className="text-xs whitespace-pre-wrap p-2 h-full overflow-auto">{previewContent}</pre>
+            <div className="prose prose-invert prose-sm max-w-none p-4 h-full overflow-auto">
+              {ReactMarkdown ? (
+                <ReactMarkdown remarkPlugins={remarkGfm ? [remarkGfm] : []}>
+                  {previewContent ?? ""}
+                </ReactMarkdown>
+              ) : (
+                <pre className="text-xs whitespace-pre-wrap">{previewContent}</pre>
+              )}
+            </div>
           )}
         </div>
       </div>

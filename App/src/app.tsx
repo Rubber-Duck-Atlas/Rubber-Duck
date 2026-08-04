@@ -12,6 +12,7 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import VerifyEmail from "./pages/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword";
+import Editor from "./pages/Editor";
 
 const rootElement = document.getElementById("root");
 
@@ -28,7 +29,8 @@ root.render(
       <Route element={<AppLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/Documents" element={<Documents />} />
-        <Route path="/settings" element={<Settings />} />
+        <Route path="/Settings" element={<Settings />} />
+        <Route path="/Editor" element={<Editor />} />
       </Route>
 
       <Route element={<AuthLayout />}>

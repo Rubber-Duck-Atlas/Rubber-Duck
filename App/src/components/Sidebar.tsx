@@ -1,7 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import img from "../images/rumi.png";
-import { Folder, Search, Settings } from "lucide-react";
+import { Folder, Search, Settings, SquarePen } from "lucide-react";
 
 // Shared sidebar navigation for main application pages
 export default function Sidebar() {
@@ -57,9 +57,28 @@ export default function Sidebar() {
           </span>
         </NavLink>
 
+        {/* Navigates to text editor */}
+        <NavLink
+          to="/Editor"
+          className={({ isActive }) =>
+            isActive
+              ? // shows ui for the page currently open
+                "flex items-center gap-3 rounded-lg bg-transparent px-3 py-3 text-lilac"
+              : // shows ui for an inactive navigation link
+                "flex items-center gap-3 rounded-lg bg-transparent px-3 py-3 text-peri hover:text-white"
+          }
+        >
+          <span className="h-6 w-6 shrink-0">
+            <SquarePen className="h-full w-full aspect-square" />
+          </span>
+          <span className="whitespace-nowrap">
+            Editor
+          </span>
+        </NavLink>
+
         {/* Navigates to settings */}
         <NavLink
-          to="/settings"
+          to="/Settings"
           className={({ isActive }) =>
             isActive
               ? // shows ui for the page currently open
