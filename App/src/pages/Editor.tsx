@@ -6,6 +6,7 @@ import { markdown } from "@codemirror/lang-markdown";
 const STORAGE_KEY = "editor-doc";
 const FILENAME_KEY = "editor-filename";
 const ISNOTE_KEY = "editor-isnote";
+const PREVIEW_KEY = "editor-show-preview";
 
 export default function Editor() {
   const editorRef = useRef<HTMLDivElement>(null);
@@ -17,7 +18,9 @@ export default function Editor() {
     () => localStorage.getItem(FILENAME_KEY)
   );
   const isNote = localStorage.getItem(ISNOTE_KEY) !== "false";
-  const [showPreview, setShowPreview] = useState(false);
+  const [showPreview, setShowPreview] = useState(
+    () => localStorage.getItem(PREVIEW_KEY) === "true"
+  );
   const [previewContent, setPreviewContent] = useState(
     () => localStorage.getItem(STORAGE_KEY) ?? ""
   );
@@ -133,7 +136,13 @@ export default function Editor() {
         </span>
         <div className="flex items-center gap-2 flex-1 justify-end">
           <button
-            onClick={() => setShowPreview((v) => !v)}
+            onClick={() => {
+              setShowPreview((v) => {
+                const nextValue = !v;
+                localStorage.setItem(PREVIEW_KEY, String(nextValue));
+                return nextValue;
+              });
+            }}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${showPreview
               ? "bg-lilac/30 text-peri hover:bg-lilac/40"
               : "bg-peri/10 text-peri/50 hover:text-peri hover:bg-peri/20"
