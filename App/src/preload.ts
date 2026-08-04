@@ -13,4 +13,5 @@ contextBridge.exposeInMainWorld("api", {
   deleteFile: (fileName: string, isNote: boolean) => ipcRenderer.invoke("delete-file", fileName, isNote),
   readFileContent: (fileName: string, isNote: boolean) => ipcRenderer.invoke("read-file-content", fileName, isNote),
   saveNote: (fileName: string, content: string) => ipcRenderer.invoke("save-note", fileName, content),
+  saveFile: (fileName: string, content: string, isNote: boolean) => ipcRenderer.invoke("save-file", fileName, content, isNote),
 });

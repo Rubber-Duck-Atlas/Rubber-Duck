@@ -1,5 +1,6 @@
 import { Ellipsis, ExternalLink } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import FilePreview from "./FilePreview";
 
 type FileCardProps = {
@@ -9,6 +10,7 @@ type FileCardProps = {
 };
 
 export default function FileCard({ FileName, isNote, onChange }: FileCardProps) {
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -23,6 +25,19 @@ export default function FileCard({ FileName, isNote, onChange }: FileCardProps) 
     const result = await window.api.deleteFile(FileName, isNote);
     onChange(result);
     setMenuOpen(false);
+  };
+
+  const isEditable = /\.(txt|md)$/i.test(FileName);
+
+  const handleEdit = async () => {
+    const base64 = await window.api.readFileContent(FileName, isNote);
+    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    const text = new TextDecoder("utf-8").decode(bytes);
+    localStorage.setItem("editor-doc", text);
+    localStorage.setItem("editor-filename", FileName);
+    localStorage.setItem("editor-isnote", String(isNote));
+    setMenuOpen(false);
+    navigate("/Editor");
   };
 
   const closePreview = () => {
@@ -61,6 +76,15 @@ export default function FileCard({ FileName, isNote, onChange }: FileCardProps) 
           />
           {menuOpen && (
             <div className="absolute right-0 top-6 z-10 w-48 bg-ink border border-peri rounded-xl shadow-lg overflow-hidden flex flex-col">
+              {isEditable && (
+                <button
+                  type="button"
+                  className="text-left px-3 py-1.5 text-xs text-peri hover:bg-lilac hover:text-ink cursor-pointer"
+                  onClick={handleEdit}
+                >
+                  Edit
+                </button>
+              )}
               <button
                 type="button"
                 className="text-left px-3 py-1.5 text-xs text-peri hover:bg-lilac hover:text-ink cursor-pointer"

@@ -5,6 +5,7 @@ import { markdown } from "@codemirror/lang-markdown";
 
 const STORAGE_KEY = "editor-doc";
 const FILENAME_KEY = "editor-filename";
+const ISNOTE_KEY = "editor-isnote";
 
 export default function Editor() {
   const editorRef = useRef<HTMLDivElement>(null);
@@ -15,6 +16,7 @@ export default function Editor() {
   const [currentFile, setCurrentFile] = useState<string | null>(
     () => localStorage.getItem(FILENAME_KEY)
   );
+  const isNote = localStorage.getItem(ISNOTE_KEY) !== "false";
   const [showPreview, setShowPreview] = useState(false);
   const [previewContent, setPreviewContent] = useState(
     () => localStorage.getItem(STORAGE_KEY) ?? ""
@@ -69,6 +71,7 @@ export default function Editor() {
     });
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(FILENAME_KEY);
+    localStorage.removeItem(ISNOTE_KEY);
     setCurrentFile(null);
     setConfirmClear(false);
   }
@@ -84,7 +87,7 @@ export default function Editor() {
     const content = viewRef.current?.state.doc.toString() ?? "";
     setSaving(true);
     try {
-      await window.api.saveNote(safeName, content);
+      await window.api.saveFile(safeName, content, isNote);
       localStorage.setItem(FILENAME_KEY, safeName);
       setCurrentFile(safeName);
       setShowInput(false);
@@ -129,6 +132,16 @@ export default function Editor() {
           {currentFile ?? "Unsaved note"}
         </span>
         <div className="flex items-center gap-2 flex-1 justify-end">
+          <button
+            onClick={() => setShowPreview((v) => !v)}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              showPreview
+                ? "bg-lilac/30 text-peri hover:bg-lilac/40"
+                : "bg-peri/10 text-peri/50 hover:text-peri hover:bg-peri/20"
+            }`}
+          >
+            Markdown Preview
+          </button>
           {showInput && (
             <>
               <input
@@ -147,16 +160,6 @@ export default function Editor() {
               </button>
             </>
           )}
-          <button
-            onClick={() => setShowPreview((v) => !v)}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              showPreview
-                ? "bg-lilac/30 text-peri hover:bg-lilac/40"
-                : "bg-peri/10 text-peri/50 hover:text-peri hover:bg-peri/20"
-            }`}
-          >
-            Markdown Preview
-          </button>
           <button
             onClick={showInput ? confirmSaveAs : openSaveAs}
             disabled={saving || (showInput && !inputValue.trim())}
