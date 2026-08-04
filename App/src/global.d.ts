@@ -20,6 +20,7 @@ declare global {
       moveFile(fileName: string, isNote: boolean): Promise<{ documents: string[]; notes: string[] }>;
       deleteFile(fileName: string, isNote: boolean): Promise<{ documents: string[]; notes: string[] }>;
       readFileContent(fileName: string, isNote: boolean): Promise<string>;
+      saveNote(fileName: string, content: string): Promise<string[]>;
     };
   }
 }

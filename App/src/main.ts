@@ -181,6 +181,13 @@ app.on('ready', () => {
     return fs.readdirSync(destDir);
   });
 
+  // Handler for saving a note to the notes folder
+  ipcMain.handle("save-note", async (_, fileName: string, content: string) => {
+    const safeName = path.basename(fileName);
+    fs.writeFileSync(path.join(notesDir, safeName), content, "utf-8");
+    return fs.readdirSync(notesDir);
+  });
+
   // Handler for reading a file's content for preview
   ipcMain.handle("read-file-content", async (_, fileName: string, isNote: boolean) => {
     const dir = isNote ? notesDir : documentsDir;
