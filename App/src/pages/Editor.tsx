@@ -38,6 +38,7 @@ export default function Editor() {
 
     const saved = localStorage.getItem(STORAGE_KEY);
     const doc = saved ?? defaultText;
+    setPreviewContent(doc)
 
     const view = new EditorView({
       parent: editorRef.current,
@@ -119,11 +120,10 @@ export default function Editor() {
           <button
             onClick={handleClear}
             onBlur={() => setConfirmClear(false)}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              confirmClear
-                ? "bg-red-500/80 text-white hover:bg-red-500"
-                : "bg-peri/10 text-peri/50 hover:text-peri hover:bg-peri/20"
-            }`}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${confirmClear
+              ? "bg-red-500/80 text-white hover:bg-red-500"
+              : "bg-peri/10 text-peri/50 hover:text-peri hover:bg-peri/20"
+              }`}
           >
             {confirmClear ? "Clear unsaved changes?" : "New"}
           </button>
@@ -134,11 +134,10 @@ export default function Editor() {
         <div className="flex items-center gap-2 flex-1 justify-end">
           <button
             onClick={() => setShowPreview((v) => !v)}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              showPreview
-                ? "bg-lilac/30 text-peri hover:bg-lilac/40"
-                : "bg-peri/10 text-peri/50 hover:text-peri hover:bg-peri/20"
-            }`}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${showPreview
+              ? "bg-lilac/30 text-peri hover:bg-lilac/40"
+              : "bg-peri/10 text-peri/50 hover:text-peri hover:bg-peri/20"
+              }`}
           >
             Markdown Preview
           </button>
@@ -182,6 +181,7 @@ export default function Editor() {
         <div ref={editorRef} className={`cm-editor-host min-h-0 overflow-hidden ${showPreview ? "w-1/2" : "w-full"}`} />
         {showPreview && (
           <div className="w-1/2 border-l border-peri/10 overflow-auto">
+            <h1 className="text-center w-full p-2">Markdown preview</h1>
             <div className="prose prose-invert prose-sm max-w-none p-6">
               {ReactMarkdown ? (
                 <ReactMarkdown remarkPlugins={remarkGfm ? [remarkGfm] : []}>
