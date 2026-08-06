@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 __pycache__/
 *.pyc
 .rubber_duck_cache.pkl
 .rubber_duck_embeddings.pkl
-=======
 Results/
->>>>>>> 3ed79b3 (Searching now functional-ish. Parses rubberduck terminal output into json format and displays results. Seperated filepreview into seperate component)
