@@ -11,6 +11,7 @@ import {
 import { auth, emailVerificationActionCodeSettings } from "../lib/firebase";
 import { FirebaseError } from "firebase/app";
 import googleButton from "../images/google-logo.svg";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -18,14 +19,27 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleRegister = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (password !== confirmPassword) {
-      window.alert("Passwords do not match.");
+    setError("");
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
       return;
     }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const credential = await createUserWithEmailAndPassword(
@@ -42,11 +56,26 @@ export default function Register() {
         credential.user,
         emailVerificationActionCodeSettings,
       );
+
       navigate("/verifyemail", { state: { email } });
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unable to create account.";
-      window.alert(message);
+    } catch (error: unknown) {
+      if (error instanceof FirebaseError) {
+        if (error.code === "auth/email-already-in-use") {
+          setError("An account already exists with this email.");
+        } else if (error.code === "auth/invalid-email") {
+          setError("Enter a valid email address.");
+        } else if (error.code === "auth/weak-password") {
+          setError("Password must be at least 6 characters.");
+        } else if (error.code === "auth/network-request-failed") {
+          setError("Check your internet connection and try again.");
+        } else {
+          setError("Something went wrong. Please try again.");
+        }
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -113,30 +142,80 @@ export default function Register() {
                 className="w-full text-xl outline-none bg-transparent"
               ></input>
             </label>
-            <label className="w-full border-b border-current">
+            <div className="relative border-b border-current">
+              <label htmlFor="register-password" className="sr-only">
+                Password
+              </label>
+
               <input
+                id="register-password"
                 placeholder="Password"
-                type="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 required
-                className="w-full text-xl outline-none bg-transparent"
-              ></input>
-            </label>
-            <label className="w-full border-b border-current">
+                minLength={6}
+                className="w-full bg-transparent pr-10 text-xl outline-none"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+                className="absolute right-1 top-1/2 -translate-y-1/2 cursor-pointer rounded p-1 text-peri transition hover:text-lilac focus-visible:outline-2 focus-visible:outline-lilac"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+
+            <p className="-mt-2 text-left text-xs text-slate-400">
+              Password must be at least 6 characters.
+            </p>
+
+            <div className="relative border-b border-current">
+              <label htmlFor="confirm-password" className="sr-only">
+                Confirm password
+              </label>
+
               <input
+                id="confirm-password"
                 placeholder="Confirm Password"
-                type="password"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
                 required
-                className="w-full text-xl outline-none bg-transparent"
-              ></input>
-            </label>
+                minLength={6}
+                className="w-full bg-transparent pr-10 text-xl outline-none"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((current) => !current)}
+                aria-label={
+                  showConfirmPassword
+                    ? "Hide confirm password"
+                    : "Show confirm password"
+                }
+                aria-pressed={showConfirmPassword}
+                className="absolute right-1 top-1/2 -translate-y-1/2 cursor-pointer rounded p-1 text-peri transition hover:text-lilac focus-visible:outline-2 focus-visible:outline-lilac"
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+
+            {error && (
+              <p role="alert" className="text-sm font-medium text-red-400">
+                {error}
+              </p>
+            )}
 
             <button
               type="submit"
-              className="w-full max-w-xs rounded-xl bg-lilac px-8 py-2 text-center font-bold text-ink transition hover:opacity-90 cursor-pointer"
+              disabled={loading}
+              className="w-full max-w-xs cursor-pointer rounded-xl bg-lilac px-8 py-2 text-center font-bold text-ink transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Create Account
+              {loading ? "Creating account..." : "Create Account"}
             </button>
           </form>
         </div>
@@ -151,7 +230,7 @@ export default function Register() {
         {/* Google Registration */}
         <div className="w-full">
           <button
-            className="mx-auto block w-full max-w-xs cursor-pointer bg-transparent p-0 transition hover:opacity-90 rounded-xl overflow-hidden"
+            className="mx-auto h-10 w-full max-w-xs cursor-pointer overflow-hidden rounded-xl bg-[#F2F2F2] p-0 transition hover:opacity-90"
             type="button"
             onClick={handleGoogleRegister}
             aria-label="Sign in with Google"
@@ -159,7 +238,7 @@ export default function Register() {
             <img
               src={googleButton}
               alt=""
-              className="block h-auto w-full rounded-xl"
+              className="block h-full w-full object-fill"
             />
           </button>
         </div>
