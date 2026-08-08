@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import fs from "node:fs";
@@ -110,15 +110,20 @@ if (started) {
 }
 
 const createWindow = () => {
+  
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       plugins: true,
     },
+    // titleBarStyle: 'hidden'
   });
+
+  mainWindow.removeMenu();
 
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
@@ -137,6 +142,8 @@ const createWindow = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
+  Menu.setApplicationMenu(null);
+
   ipcMain.handle('rubber-duck-query', async (_, query: string, searchNotes: boolean) => {
     return runRubberDuckQuery(query, searchNotes);
   });
@@ -172,6 +179,21 @@ app.on('ready', () => {
       fs.copyFileSync(filePath, path.join(destDir, fileName));
     }
     return fs.readdirSync(destDir);
+  });
+
+  // Handler for saving a note to the notes folder
+  ipcMain.handle("save-note", async (_, fileName: string, content: string) => {
+    const safeName = path.basename(fileName);
+    fs.writeFileSync(path.join(notesDir, safeName), content, "utf-8");
+    return fs.readdirSync(notesDir);
+  });
+
+  // Handler for saving a file to either notes or documents
+  ipcMain.handle("save-file", async (_, fileName: string, content: string, isNote: boolean) => {
+    const safeName = path.basename(fileName);
+    const dir = isNote ? notesDir : documentsDir;
+    fs.writeFileSync(path.join(dir, safeName), content, "utf-8");
+    return fs.readdirSync(dir);
   });
 
   // Handler for reading a file's content for preview
