@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Introduction To Named Entity Recognition</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-introduction-to-named-entity-recognition-ner">Lesson: Introduction to Named Entity Recognition (NER)</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In today's world of ever-growing text data, efficiently extracting meaningful information is essential. Named Entity Recognition (NER) is a key Natural Language Processing (NLP) technique that automatically identifies important entities such as people, locations, and dates within the organization's text. NER plays a crucial role in various NLP tasks, including linking text to structured knowledge sources like Wikipedia, analyzing sentiment toward specific entities, and anonymizing text for privacy. However, NER is challenging due to the ambiguity in segmenting entity spans and distinguishing entities from regular words, as most words in a text are not named entities. Additionally, type ambiguity, where the same word may refer to different entity types, adds to the complexity of the task.</p>
+<p>In this lesson, we will explore:</p>
+<ul>
+<li>The definition and importance of NER.</li>
+<li>Real-world applications of NER, such as chatbots and automated tagging.</li>
+<li>How NER models work and categorize different types of entities.</li>
+</ul>
+<p>Understanding NER will give you valuable insights into how text data can be structured and analyzed for various applications.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Define</strong> Named Entity Recognition and its significance in NLP.</li>
+<li><strong>Identify</strong> different types of named entities in a given text.</li>
+<li><strong>Explain</strong> real-world applications of NER in various industries.</li>
+<li><strong>Understand</strong> how NER models process text to detect entities.</li>
+</ol>
+<hr>
+</section><section><h2 id="what-is-named-entity-recognition-ner">What is Named Entity Recognition (NER)?</h2>
+<p>A named entity is essentially anything that can be identified by a proper name, such as a person, location, or organization. Named Entity Recognition (NER) is the process of detecting these names in a text and categorizing them by type. The most common entity tags include PER (person), LOC (location), ORG (organization), and GPE (geo-political entity). However, the concept of named entities is often broadened to include elements that aren’t traditionally entities, such as temporal expressions (dates and times) and numerical values (like prices). Many applications will also need to use specific entity types like proteins, genes, commercial products, or works of art. The following table shows typical generic named entity types:</p>
+<table>
+<thead>
+<tr>
+<th>Entity Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PER (Person)</strong></td>
+<td>Names of individuals</td>
+<td>&quot;Marie Curie&quot;</td>
+</tr>
+<tr>
+<td><strong>ORG (Organization)</strong></td>
+<td>Companies, institutions, agencies</td>
+<td>&quot;OpenAI&quot;, &quot;Harvard University&quot;</td>
+</tr>
+<tr>
+<td><strong>LOC (Location)</strong></td>
+<td>Physical places</td>
+<td>&quot;Sahara Desert&quot;, &quot;Pacific Ocean&quot;</td>
+</tr>
+<tr>
+<td><strong>GPE (Geo-Political Entity)</strong></td>
+<td>Countries, cities, states</td>
+<td>&quot;France&quot;, &quot;New York&quot;</td>
+</tr>
+<tr>
+<td><strong>DATE/TIME</strong></td>
+<td>Dates and times</td>
+<td>&quot;July 4, 1776&quot;, &quot;10:30 AM&quot;</td>
+</tr>
+<tr>
+<td><strong>MONEY</strong></td>
+<td>Monetary values</td>
+<td>&quot;$500&quot;, &quot;100 euros&quot;</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section><section><h2 id="why-is-ner-important">Why is NER Important?</h2>
+<p><strong>Named Entity Recognition (NER)</strong> plays a crucial role in Natural Language Processing by identifying and classifying key pieces of information—such as names of people, places, organizations, dates, and more—within unstructured text.</p>
+<p>NER is a foundational step in transforming raw text into structured, meaningful data and is used across many real-world applications:</p>
+<table>
+<thead>
+<tr>
+<th><strong>Application</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Chatbots &amp; Virtual Assistants</strong></td>
+<td>Understand user input by recognizing names, dates, locations, and other entities to enable personalized and context-aware responses.</td>
+</tr>
+<tr>
+<td><strong>Automated Content Tagging</strong></td>
+<td>Assign relevant tags or metadata to documents, articles, and social media posts to improve organization, discoverability, and categorization.</td>
+</tr>
+<tr>
+<td><strong>Sentiment Analysis</strong></td>
+<td>Link opinions to specific <strong>brands</strong>, <strong>products</strong>, or <strong>events</strong> by identifying the entities being discussed.</td>
+</tr>
+<tr>
+<td><strong>Information Extraction</strong></td>
+<td>Extract structured information from unstructured text to power <strong>search engines</strong>, <strong>knowledge graphs</strong>, or <strong>business intelligence tools</strong>.</td>
+</tr>
+<tr>
+<td><strong>Legal &amp; Medical Document Processing</strong></td>
+<td>Identify and extract critical information like <strong>people</strong>, <strong>dates</strong>, <strong>diagnoses</strong>, or <strong>court rulings</strong> from highly specialized documents.</td>
+</tr>
+</tbody>
+</table>
+<p>NER helps bridge the gap between human language and machine understanding, making it an essential component in modern NLP pipelines.</p>
+<hr>
+</section><section><h2 id="how-does-named-entity-recognition-ner-work">How Does Named Entity Recognition (NER) Work?</h2>
+<p><strong>Named Entity Recognition (NER)</strong> models use <strong>machine learning</strong>—and increasingly, <strong>deep learning</strong>—to analyze text and identify specific terms as <strong>named entities</strong> (like people, places, or dates), assigning appropriate labels to them.</p>
+<p>NER typically involves three core steps:</p>
+<ol>
+<li><strong>Tokenization</strong><ul><li>The text is split into smaller units called <strong>tokens</strong> (usually words or subwords), preparing it for further analysis.</li></ul></li>
+<li><strong>Part-of-Speech Tagging</strong><ul><li>Each token is assigned a <strong>grammatical role</strong> (noun, verb, adjective, etc.), helping the model understand sentence structure and context.</li></ul></li>
+<li><strong>Entity Recognition &amp; Classification</strong><ul><li>The model scans for words or phrases that match patterns of known entities, then <strong>classifies them into categories</strong> such as <code>PERSON</code>, <code>LOCATION</code>, <code>ORGANIZATION</code>, <code>DATE</code>, <code>PRODUCT</code>, etc.</li></ul></li>
+</ol>
+<h3 id="modern-ner-techniques">Modern NER Techniques</h3>
+<p>Modern NER systems such as those in <strong>spaCy</strong>, <strong>NLTK</strong>, or transformer-based models like <strong>BERT</strong>, use <strong>deep learning</strong> architectures (e.g., LSTMs, CRFs, Transformers) to achieve <strong>context-aware</strong> and highly accurate entity recognition.</p>
+<p>These models are trained on large annotated datasets, allowing them to capture nuanced patterns and disambiguate entities based on context.</p>
+<hr>
+</section><section><h2 id="challenges-in-named-entity-recognition-ner">Challenges in Named Entity Recognition (NER)</h2>
+<p>While NER is a powerful tool for extracting structured information from text, it faces several real-world challenges that impact accuracy and reliability:</p>
+<table>
+<thead>
+<tr>
+<th><strong>Challenge</strong></th>
+<th><strong>Description</strong></th>
+<th><strong>Example</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Ambiguity</strong></td>
+<td>Words can have multiple meanings depending on context</td>
+<td><code>&quot;Apple&quot;</code> could refer to a <strong>company</strong> or a <strong>fruit</strong></td>
+</tr>
+<tr>
+<td><strong>Misspellings &amp; Variations</strong></td>
+<td>Entities may appear in different formats or with spelling errors</td>
+<td><code>&quot;NYC&quot;</code> vs. <code>&quot;New York City&quot;</code> — same location</td>
+</tr>
+<tr>
+<td><strong>Domain-Specific Vocabulary</strong></td>
+<td>General models may fail to recognize terms in specialized fields</td>
+<td><code>&quot;Amoxicillin&quot;</code> may not be recognized as a drug</td>
+</tr>
+<tr>
+<td><strong>Context-Dependence</strong></td>
+<td>A word’s meaning often relies on surrounding text</td>
+<td><code>&quot;Amazon&quot;</code> could mean a <strong>company</strong>, <strong>rainforest</strong>, or <strong>mythological tribe</strong></td>
+</tr>
+<tr>
+<td><strong>Multi-Word Entities</strong></td>
+<td>Entities often span several words, making detection more complex</td>
+<td><code>&quot;New York City&quot;</code>, <code>&quot;Barack Obama&quot;</code>, <code>&quot;World Health Organization&quot;</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="addressing-these-challenges">Addressing These Challenges</h3>
+<p>Modern NER systems tackle these limitations using <strong>deep learning techniques</strong> and <strong>contextual embeddings</strong>:</p>
+<ul>
+<li><strong>spaCy</strong> – Offers pre-trained pipelines with good general-purpose NER capabilities.</li>
+<li><strong>BERT-based models</strong> – Use transformers to understand context and disambiguate entities effectively.</li>
+<li><strong>Domain-specific models</strong> – Custom-trained NER systems tailored to specific fields (e.g., biomedical NER models using BioBERT).</li>
+</ul>
+<hr>
+<h3 id="how-ner-identifies-entities-like-names-dates-and-locations">How NER Identifies Entities Like Names, Dates, and Locations</h3>
+<p>Named Entity Recognition (NER) systems identify entities in text using a combination of <strong>linguistic features</strong>, <strong>contextual clues</strong>, and, increasingly, <strong>machine learning or deep learning models</strong>. Here's how it works step by step:</p>
+<h4 id="text-preprocessing">1. <strong>Text Preprocessing</strong></h4>
+<p>The input text is first cleaned and tokenized—broken down into words or subwords, so each part can be analyzed individually.</p>
+<h4 id="part-of-speech-pos-tagging">2. <strong>Part-of-Speech (POS) Tagging</strong></h4>
+<p>Each token is labeled with its grammatical role (noun, verb, etc.). Proper nouns (like names and places) are particularly important clues for identifying entities.</p>
+<h4 id="contextual-feature-extraction">3. <strong>Contextual Feature Extraction</strong></h4>
+<p>NER models look at:</p>
+<ul>
+<li><strong>Surrounding words</strong> (context windows)</li>
+<li><strong>Capitalization</strong> (e.g., <em>New York</em> vs. <em>new york</em>)</li>
+<li><strong>Punctuation and word position</strong> (e.g., names often appear after titles like “Dr.” or “Mr.”)</li>
+<li><strong>Prefixes/suffixes</strong> (e.g., “-ville” in place names or “Inc.” for organizations)</li>
+</ul>
+<h4 id="entity-classification">4. <strong>Entity Classification</strong></h4>
+<p>The model assigns labels to tokens (often using IOB format: <em>B-PER</em>, <em>I-PER</em>, <em>O</em>, etc.) based on learned patterns:</p>
+<ul>
+<li><em>“Barack Obama”</em> → <code>B-PER</code> <code>I-PER</code></li>
+<li><em>“New York”</em> → <code>B-LOC</code> <code>I-LOC</code></li>
+<li><em>“January 5, 2023”</em> → <code>B-DATE</code> <code>I-DATE</code> <code>I-DATE</code></li>
+</ul>
+<p>This step is performed using:</p>
+<ul>
+<li><strong>Statistical models</strong> (e.g., CRFs)</li>
+<li><strong>Neural networks</strong> (e.g., BiLSTM + CRF)</li>
+<li><strong>Transformer models</strong> (e.g., BERT, RoBERTa)</li>
+</ul>
+<h4 id="post-processing-grouping">5. <strong>Post-processing &amp; Grouping</strong></h4>
+<p>Finally, tokens with the same entity label are grouped to form full entities, like:</p>
+<ul>
+<li><code>Barack Obama</code></li>
+<li><code>January 5, 2023</code></li>
+<li><code>New York City</code></li>
+</ul>
+<p>NER models identify entities by combining <strong>syntax (grammar)</strong>, <strong>semantics (meaning)</strong>, and <strong>contextual patterns</strong>. Modern approaches use <strong>deep learning</strong> to capture these patterns more accurately than rule-based systems.</p>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>NER is a crucial NLP task that enables machines to extract structured information from text. By recognizing names, locations, dates, and other entities, NER helps automate various processes such as customer service, news analysis, and data retrieval. Understanding its workings and applications provides a strong foundation for working with NLP technologies.
+In the practical activity., we will apply these concepts in practice by using SpaCy to extract named entities from a dataset .</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

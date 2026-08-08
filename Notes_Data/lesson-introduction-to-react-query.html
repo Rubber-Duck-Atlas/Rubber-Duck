@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Introduction To React Query</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-introduction-to-react-query">Lesson: Introduction to React Query</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>React Query is a powerful JavaScript library designed to simplify data fetching, caching, and state management in modern React applications. By providing a declarative API through hooks like <code>useQuery</code> and <code>useMutation</code>, it eliminates the need for boilerplate code and manual synchronization of asynchronous data. This lesson explores the core features of React Query, including automatic caching, background data syncing, optimistic updates, and error handling. Through practical examples and comparisons with traditional data-fetching methods, you’ll learn how React Query enhances developer productivity and application performance.</p>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li>Understand the purpose and benefits of using React Query in React applications.</li>
+<li>Implement data fetching and caching using <code>useQuery</code> and manage mutations with <code>useMutation</code>.</li>
+<li>Configure caching options like <code>cacheTime</code> and <code>staleTime</code> to optimize performance.</li>
+<li>Handle loading states, errors, and retries effectively with minimal boilerplate code.</li>
+<li>Differentiate React Query from manual data-fetching approaches (e.g., <code>fetch</code> or <code>axios</code>) and appreciate its advantages.</li>
+<li>Apply React Query to real-world scenarios such as pagination, optimistic updates, and periodic re-fetching.</li>
+</ol>
+<hr>
+</section><section><h2 id="understanding-react-query">Understanding React Query</h2>
+<p>React Query is a JavaScript library designed to handle the complexities of data fetching and caching in modern React applications. Offering a set of hooks and utilities allows developers to manage remote data effortlessly. With React Query, you can declaratively fetch, cache, and update data without writing boilerplate code for state management or manual synchronization. React Query is more than just a data-fetching library—it’s a complete solution for managing asynchronous data in React applications. Its built-in caching, background syncing, and optimistic updates make it an invaluable tool for developers building modern web apps. By reducing boilerplate code and handling complex state management under the hood, React Query allows you to focus on what truly matters: delivering a great user experience.</p>
+<p><img src="../_assets/lesson-1-react-query.PNG" alt="Frontend"></p>
+<h3 id="features-of-react-query">Features of React Query</h3>
+<ol>
+<li><strong>Declarative Data Fetching</strong>: React Query promotes a declarative approach to data fetching using hooks like <code>useQuery</code> and <code>useMutation</code>. This leads to cleaner, more organized code that’s easier to maintain.</li>
+<li><strong>Automatic Caching</strong>: Built-in caching ensures that query results are stored and reused efficiently. When mutations occur, React Query automatically updates the cache, ensuring your UI remains consistent.</li>
+<li><strong>Background Data Sync</strong>: React Query can refetch data in the background, keeping your data fresh without requiring manual intervention. This is particularly useful for real-time applications.</li>
+<li><strong>Pagination and Infinite Scrolling</strong>: The library provides utilities to handle pagination and infinite scrolling with minimal effort, making it ideal for apps that display large datasets.</li>
+<li><strong>Optimistic Updates</strong>: Optimistic updates allow you to make your app feel faster and more responsive by updating the UI immediately before the server confirms the change.</li>
+</ol>
+<h3 id="getting-started-with-react-query">Getting Started with React Query</h3>
+<p>Let’s dive into a basic example to see how easy it is to get started with React Query. First, install the library using npm:</p>
+<pre><code class="language-bash">npm install @tanstack/react-query
+</code></pre>
+<p>Next, set up the <code>QueryClientProvider</code> to make React Query available throughout your application. You can configure this in your <code>index.tsx</code> file (or <code>index.js</code> if you’re not using TypeScript):</p>
+<pre><code class="language-tsx">import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
+
+// Create a QueryClient instance
+const queryClient = new QueryClient();
+
+root.render(
+  &lt;QueryClientProvider client={queryClient}&gt;
+    &lt;App /&gt;
+  &lt;/QueryClientProvider&gt;
+);
+</code></pre>
+<p>With the provider set up, you can now use React Query hooks in your components. Let’s look at an example in <code>App.tsx</code>:</p>
+<pre><code class="language-tsx">import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+
+function App() {
+  // Fetch user data using useQuery
+  const userData = useQuery(['users'], () =&gt;
+    fetch('https://jsonplaceholder.typicode.com/users').then((response) =&gt; response.json()),
+    {
+      enabled: false, // Disable automatic fetching on mount
+    }
+  );
+
+  return (
+    &lt;div&gt;
+      &lt;button onClick={() =&gt; userData.refetch()}&gt;Get Users&lt;/button&gt;
+      &lt;div&gt;
+        {userData.isFetching &amp;&amp; &lt;div&gt;Fetching user data...&lt;/div&gt;}
+        {userData.isError &amp;&amp; &lt;div&gt;Error fetching data!&lt;/div&gt;}
+        {userData.data?.length &gt; 0 &amp;&amp;
+          userData.data.map((user: any) =&gt; &lt;div key={user.id}&gt;{user.name}&lt;/div&gt;)}
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}
+
+export default App;
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li>The <code>useQuery</code> hook fetches a list of users from the API.</li>
+<li>The <code>enabled: false</code> option prevents the query from running automatically when the component mounts. Instead, the user must click the &quot;Get Users&quot; button to trigger the fetch.</li>
+<li>React Query handles loading (<code>isFetching</code>), error (<code>isError</code>), and data states (<code>data</code>) behind the scenes, eliminating the need for manual state management.</li>
+</ul>
+<h3 id="data-fetching-with-react-query">Data Fetching with React Query</h3>
+<p>React Query simplifies the process of fetching data from APIs by providing hooks like <code>useQuery</code>. Unlike traditional approaches such as <code>useEffect</code>, React Query optimizes data fetching by returning cached data first (if available) before making a network request. It also seamlessly handles loading and error states.</p>
+<p><img src="../_assets/lesson-1-data-fetching.PNG" alt="Frontend"></p>
+<p><strong>Example: Fetching Posts from an API</strong></p>
+<p>Here’s an example of fetching posts using React Query:</p>
+<pre><code class="language-javascript">import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+
+const fetchPosts = async () =&gt; {
+  const { data } = await axios.get('https://jsonplaceholder.typicode.com/posts');
+  return data;
+};
+
+function Posts() {
+  const { data, isLoading, isError, error } = useQuery(['posts'], fetchPosts);
+
+  if (isLoading) return &lt;div&gt;Loading...&lt;/div&gt;;
+  if (isError) return &lt;div&gt;Error! {error.message}&lt;/div&gt;;
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Posts&lt;/h1&gt;
+      &lt;ul&gt;
+        {data.map((post) =&gt; (
+          &lt;li key={post.id}&gt;{post.title}&lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  );
+}
+
+export default Posts;
+</code></pre>
+<p><strong>Features of <code>useQuery</code>:</strong></p>
+<ul>
+<li><strong>Query Key</strong>: A unique identifier (<code>['posts']</code>) used to cache and track the query result.</li>
+<li><strong>Query Function</strong>: The function (<code>fetchPosts</code>) responsible for fetching data.</li>
+<li><strong>State Management</strong>: Automatically handles loading (<code>isLoading</code>), errors (<code>isError</code>), and data (<code>data</code>).</li>
+</ul>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li>The <code>useQuery</code> hook initiates a data fetch using the <code>fetchPosts</code> function.</li>
+<li>While the data is being fetched, the component displays a loading message. If an error occurs, it shows an error message.</li>
+<li>Once the data is successfully fetched, it renders a list of posts.</li>
+</ul>
+<hr>
+</section><section><h2 id="caching-data-with-react-query">Caching Data with React Query</h2>
+<p>Caching is a feature of React Query, enabling efficient storage and reuse of data to minimize redundant network requests and enhance application performance. By intelligently managing cached data, React Query ensures that your application remains responsive and reduces unnecessary server load.</p>
+<p><img src="../_assets/lesson-1-caching.PNG" alt="Frontend"></p>
+<h3 id="caching-methodology-in-react-query">Caching Methodology in React Query</h3>
+<p>React Query employs a robust caching mechanism that balances between serving fresh data and minimizing unnecessary re-fetches. Here’s a detailed breakdown of how it works:</p>
+<p><strong>Initial Request</strong></p>
+<p>When the <code>useQuery</code> hook is invoked, React Query performs the following steps:</p>
+<ul>
+<li>It checks if data corresponding to the provided <code>queryKey</code> exists in the cache.<ul><li>If cached data is found, it is returned immediately, avoiding an additional network request.</li><li>If no cached data is available, React Query executes the <code>queryFn</code> (a function responsible for fetching data) to retrieve the data from the server.</li></ul></li>
+</ul>
+<p><strong>Stale vs Fresh Data</strong></p>
+<p>React Query distinguishes between <strong>fresh</strong> and <strong>stale</strong> data to optimize performance:</p>
+<ul>
+<li><strong>Fresh Data</strong>: Data is considered &quot;fresh&quot; during the <code>staleTime</code> period. During this time, React Query serves the data directly from the cache without triggering a re-fetch.</li>
+<li><strong>Stale Data</strong>: Once the <code>staleTime</code> elapses, the data is marked as &quot;stale.&quot; While stale data can still be served to the user, React Query will attempt to re-fetch it in the background to ensure the data remains up-to-date.</li>
+</ul>
+<p><strong>Cache Time and Stale Time</strong></p>
+<p>Two key configuration options govern React Query's caching behavior:</p>
+<ul>
+<li><strong><code>cacheTime</code></strong>: Defines how long unused or inactive data remains in the cache before being garbage-collected. The default value is <strong>5 minutes</strong>.</li>
+<li><strong><code>staleTime</code></strong>: Specifies the duration after which data is marked as stale but still usable. The default value is <strong>0 seconds</strong>, meaning data is stale immediately after being fetched.</li>
+</ul>
+<h3 id="example-configuring-cache-options">Example: Configuring Cache Options</h3>
+<p>Below is an example demonstrating how to configure caching options using React Query:</p>
+<pre><code class="language-javascript">const { data, isLoading, isError } = useQuery({
+  queryKey: ['books'], // Unique key for the query
+  queryFn: fetchData,  // Function to fetch data
+  cacheTime: 60000,    // Retain unused data in the cache for 60 seconds
+  staleTime: 30000,    // Mark data as stale after 30 seconds
+});
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li><strong><code>cacheTime: 60000</code></strong>: Ensures that the data remains in the cache for <strong>60 seconds</strong> after it is no longer actively used by any component. After this period, the data is removed from the cache.</li>
+<li><strong><code>staleTime: 30000</code></strong>: Specifies that the data should be considered stale after <strong>30 seconds</strong>. Once stale, React Query will attempt to re-fetch the data in the background when the query is active again.</li>
+</ul>
+<hr>
+</section><section><h2 id="re-fetching-data-with-react-query">Re-Fetching Data with React Query</h2>
+<p>Re-fetching ensures that your application stays up-to-date with the latest data from the server. React Query provides several mechanisms for re-fetching:</p>
+<h3 id="background-re-fetching">Background Re-Fetching</h3>
+<p>When data becomes stale, React Query automatically re-fetches it in the background without interrupting the user experience.</p>
+<h3 id="periodic-re-fetching">Periodic Re-Fetching</h3>
+<p>You can configure React Query to periodically re-fetch data using the <code>refetchInterval</code> option:</p>
+<pre><code class="language-javascript">const { data, isLoading, isError } = useQuery({
+  queryKey: ['books'],
+  queryFn: fetchData,
+  refetchInterval: 120000, // Re-fetch every 2 minutes
+});
+</code></pre>
+<p><strong>Explanation</strong>: The <code>refetchInterval</code> ensures that data is re-fetched every 2 minutes, keeping the client synchronized with the server.</p>
+<h3 id="manual-re-fetching">Manual Re-Fetching</h3>
+<p>React Query also allows manual re-fetching through the <code>refetch</code> function:</p>
+<pre><code class="language-javascript">const { data, isLoading, isError, refetch } = useQuery(['books'], fetchData);
+
+return (
+  &lt;div&gt;
+    &lt;button onClick={() =&gt; refetch()}&gt;Refresh Data&lt;/button&gt;
+    {isLoading ? &lt;div&gt;Loading...&lt;/div&gt; : &lt;div&gt;{data}&lt;/div&gt;}
+  &lt;/div&gt;
+);
+</code></pre>
+<p><strong>Explanation</strong>: The <code>refetch</code> function allows users to manually trigger a data fetch, useful for scenarios like refreshing a page or updating specific components.</p>
+</section><section><h2 id="mutations-for-data-updates">Mutations for Data Updates</h2>
+<p>While <code>useQuery</code> focuses on fetching and caching data, <code>useMutation</code> is used for creating, updating, or deleting data. It supports optimistic updates and rollback mechanisms in case of errors.</p>
+<h3 id="example-creating-a-new-post">Example: Creating a New Post</h3>
+<pre><code class="language-javascript">import { useMutation } from '@tanstack/react-query';
+import axios from 'axios';
+
+function Post() {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+
+  const { mutate, isLoading, isError, error } = useMutation(createPost, {
+    retry: 3, // Retry up to 3 times on failure
+  });
+
+  const createPost = async () =&gt; {
+    const response = await axios.post('https://jsonplaceholder.typicode.com/posts', {
+      title,
+      description,
+    });
+    return response.data;
+  };
+
+  return (
+    &lt;div&gt;
+      &lt;input value={title} onChange={(e) =&gt; setTitle(e.target.value)} /&gt;
+      &lt;input value={description} onChange={(e) =&gt; setDescription(e.target.value)} /&gt;
+      &lt;button onClick={() =&gt; mutate({ title, description })}&gt;Create Post&lt;/button&gt;
+      {isLoading &amp;&amp; &lt;div&gt;Saving...&lt;/div&gt;}
+      {isError &amp;&amp; &lt;div&gt;Error: {error.message}&lt;/div&gt;}
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li>The <code>useMutation</code> hook manages the creation of a new post.</li>
+<li>The <code>mutate</code> function triggers the POST request, while <code>isLoading</code> and <code>isError</code> handle loading and error states.</li>
+</ul>
+<hr>
+</section><section><h2 id="difference-between-react-query-and-manual-fetchaxios">Difference Between React Query and Manual <code>fetch</code>/<code>axios</code></h2>
+<p>When working with data fetching in React applications, developers traditionally rely on manual approaches using <code>fetch</code> or <code>axios</code>. While these methods are effective for basic use cases, they often lead to increased complexity and repetitive code when managing asynchronous data operations like caching, re-fetching, and error handling. In contrast, React Query abstracts these complexities into a streamlined API, significantly improving developer productivity and application performance.</p>
+<h3 id="manual-data-fetching-with-fetchaxios">Manual Data Fetching with <code>fetch</code>/<code>axios</code></h3>
+<p><img src="../_assets/lesson-1-fetch-axios.PNG" alt="Frontend"></p>
+<p><strong>Example: Fetching Data Using <code>axios</code></strong></p>
+<pre><code class="language-javascript">import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+function Posts() {
+  const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() =&gt; {
+    const fetchData = async () =&gt; {
+      try {
+        const response = await axios.get('https://jsonplaceholder.typicode.com/posts');
+        setData(response.data);
+        setIsLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (isLoading) return &lt;div&gt;Loading...&lt;/div&gt;;
+  if (error) return &lt;div&gt;Error: {error}&lt;/div&gt;;
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Posts&lt;/h1&gt;
+      &lt;ul&gt;
+        {data.map((post) =&gt; (
+          &lt;li key={post.id}&gt;{post.title}&lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  );
+}
+
+export default Posts;
+</code></pre>
+<p><strong>Characteristics of Manual Data Fetching:</strong></p>
+<ul>
+<li><strong>Boilerplate Code</strong>: Developers must manually handle state management (<code>useState</code>) and side effects (<code>useEffect</code>).</li>
+<li><strong>Error Handling</strong>: Requires explicit error handling logic.</li>
+<li><strong>Caching and Re-fetching</strong>: Developers need to implement custom logic for caching, background updates, and stale data management.</li>
+<li><strong>Reusability</strong>: Code is often tightly coupled to specific components, making it less reusable.</li>
+</ul>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li>The <code>useEffect</code> hook triggers the data fetch when the component mounts.</li>
+<li>The <code>useState</code> hook manages loading, error, and data states.</li>
+<li>This approach requires significant effort to implement advanced features like caching, retries, and background updates.</li>
+</ul>
+<h3 id="data-fetching-with-react-query-1">Data Fetching with React Query</h3>
+<pre><code class="language-javascript">import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+
+const fetchPosts = async () =&gt; {
+  const { data } = await axios.get('https://jsonplaceholder.typicode.com/posts');
+  return data;
+};
+
+function Posts() {
+  const { data, isLoading, isError, error } = useQuery(['posts'], fetchPosts);
+
+  if (isLoading) return &lt;div&gt;Loading...&lt;/div&gt;;
+  if (isError) return &lt;div&gt;Error: {error.message}&lt;/div&gt;;
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Posts&lt;/h1&gt;
+      &lt;ul&gt;
+        {data.map((post) =&gt; (
+          &lt;li key={post.id}&gt;{post.title}&lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  );
+}
+
+export default Posts;
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li>The <code>useQuery</code> hook encapsulates the entire data-fetching lifecycle, including caching and re-fetching.</li>
+<li>Developers only need to define the query key and the fetch function, reducing complexity and improving readability.</li>
+</ul>
+</section><section><h2 id="comparison-of-features">Comparison of Features</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Manual <code>fetch</code>/<code>axios</code></th>
+<th>React Query</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>State Management</strong></td>
+<td>Requires <code>useState</code> and <code>useEffect</code>.</td>
+<td>Built-in state management via <code>useQuery</code>.</td>
+</tr>
+<tr>
+<td><strong>Error Handling</strong></td>
+<td>Requires explicit error handling logic.</td>
+<td>Automatic error handling with <code>isError</code>.</td>
+</tr>
+<tr>
+<td><strong>Caching</strong></td>
+<td>Must be implemented manually.</td>
+<td>Intelligent caching out of the box.</td>
+</tr>
+<tr>
+<td><strong>Re-fetching</strong></td>
+<td>Requires custom logic for background updates.</td>
+<td>Automatic background re-fetching.</td>
+</tr>
+<tr>
+<td><strong>Retry Mechanism</strong></td>
+<td>Requires custom retry logic.</td>
+<td>Configurable retry mechanism (<code>retry: 3</code>).</td>
+</tr>
+<tr>
+<td><strong>Code Complexity</strong></td>
+<td>High due to boilerplate code.</td>
+<td>Minimal boilerplate with a declarative API.</td>
+</tr>
+<tr>
+<td><strong>Performance</strong></td>
+<td>Suboptimal without manual optimizations.</td>
+<td>Optimized for performance with caching.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section><section><h2 id="asynchronous-operations-in-react">Asynchronous Operations in React</h2>
+<p>Asynchronous operations are essential for fetching data from APIs, performing computations, or interacting with external services. In React, these operations are typically handled using <code>async/await</code> or Promises. However, managing the lifecycle of asynchronous operations—such as loading states, error handling, and data updates—can be challenging without proper tools.</p>
+<p>In a React application, asynchronous operations are often required to fetch or update data dynamically. For example:</p>
+<ul>
+<li>Fetching data from a REST API or GraphQL endpoint.</li>
+<li>Handling user-triggered actions like form submissions.</li>
+<li>Performing background computations or integrating with third-party services.</li>
+</ul>
+<p><img src="../_assets/lesson-1-asynch-await.PNG" alt="Frontend"></p>
+<p>While JavaScript's <code>async/await</code> and Promises provide a clean way to handle asynchronous logic, React developers must also manage:</p>
+<ol>
+<li><strong>Loading States</strong>: Indicating to users that data is being fetched.</li>
+<li><strong>Error Handling</strong>: Displaying meaningful error messages when something goes wrong.</li>
+<li><strong>Data Updates</strong>: Ensuring the UI reflects the latest data after an operation completes.</li>
+</ol>
+<p>Without proper management, these tasks can lead to complex and error-prone code.</p>
+<h3 id="challenges-in-managing-asynchronous-operations">Challenges in Managing Asynchronous Operations:</h3>
+<ul>
+<li><strong>Loading States</strong>: Users need feedback while data is being fetched.</li>
+<li><strong>Error Handling</strong>: Gracefully handling errors ensures a better user experience.</li>
+<li><strong>Data Updates</strong>: Keeping the client synchronized with the server requires efficient re-fetching and caching mechanisms.</li>
+</ul>
+<p><strong>Using <code>async/await</code> with <code>useState</code> and <code>useEffect</code></strong></p>
+<p>The most basic approach involves combining <code>async/await</code> with React's state and effect hooks:</p>
+<pre><code class="language-javascript">import { useState, useEffect } from 'react';
+
+function useFetchData(url) {
+  const [data, setData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() =&gt; {
+    const fetchData = async () =&gt; {
+      try {
+        setIsLoading(true);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch data');
+        const result = await response.json();
+        setData(result);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [url]);
+
+  return { data, isLoading, error };
+}
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li>The <code>useFetchData</code> hook encapsulates the logic for fetching data, managing loading states, and handling errors.</li>
+<li>While functional, this approach requires boilerplate code for every asynchronous operation.</li>
+</ul>
+<hr>
+</section><section><h2 id="managing-loading-states">Managing Loading States</h2>
+<p>Loading states inform users that data is being fetched, improving the perceived performance of the application. React Query provides built-in support for managing loading states through the <code>isLoading</code> property returned by the <code>useQuery</code> hook.</p>
+<h3 id="example-managing-loading-states-with-react-query-and-typescript">Example: Managing Loading States with React Query and TypeScript</h3>
+<pre><code class="language-tsx">import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+
+interface Post {
+  id: number;
+  title: string;
+}
+
+const fetchPosts = async (): Promise&lt;Post[]&gt; =&gt; {
+  const { data } = await axios.get('https://jsonplaceholder.typicode.com/posts');
+  return data;
+};
+
+const Posts: React.FC = () =&gt; {
+  const { data, isLoading, isError, error } = useQuery&lt;Post[], Error&gt;(['posts'], fetchPosts);
+
+  if (isLoading) {
+    return &lt;div&gt;Loading...&lt;/div&gt;;
+  }
+
+  if (isError) {
+    return &lt;div&gt;Error: {error.message}&lt;/div&gt;;
+  }
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Posts&lt;/h1&gt;
+      &lt;ul&gt;
+        {data?.map((post) =&gt; (
+          &lt;li key={post.id}&gt;{post.title}&lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  );
+};
+
+export default Posts;
+</code></pre>
+<p><strong>Features:</strong></p>
+<ul>
+<li><strong>Type Safety</strong>: The <code>useQuery</code> hook is typed with <code>Post[]</code> for the data and <code>Error</code> for the error, ensuring type safety throughout the component.</li>
+<li><strong>Loading Indicator</strong>: The <code>isLoading</code> property is used to display a loading message while the data is being fetched.</li>
+</ul>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li>The <code>fetchPosts</code> function fetches data from the API and returns it as an array of <code>Post</code> objects.</li>
+<li>The <code>useQuery</code> hook manages the loading state (<code>isLoading</code>) and error state (<code>isError</code>), allowing the component to render appropriate feedback to the user.</li>
+</ul>
+<hr>
+</section><section><h2 id="error-handling-in-react-typescript">Error Handling in React (TypeScript)</h2>
+<p>Error handling is critical for providing a seamless user experience. React Query simplifies error handling by providing the <code>isError</code> property and the <code>error</code> object, which can be used to display meaningful error messages.</p>
+<h3 id="example-error-handling-with-react-query-and-typescript">Example: Error Handling with React Query and TypeScript</h3>
+<pre><code class="language-tsx">import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+
+interface Book {
+  id: number;
+  title: string;
+  author: string;
+}
+
+const fetchBooks = async (): Promise&lt;Book[]&gt; =&gt; {
+  const { data } = await axios.get('https://api.example.com/books');
+  if (!data) {
+    throw new Error('Failed to fetch books');
+  }
+  return data;
+};
+
+const Books: React.FC = () =&gt; {
+  const { data, isLoading, isError, error } = useQuery&lt;Book[], Error&gt;(['books'], fetchBooks);
+
+  if (isLoading) {
+    return &lt;div&gt;Loading...&lt;/div&gt;;
+  }
+
+  if (isError) {
+    return &lt;div&gt;Error: {error.message}&lt;/div&gt;;
+  }
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Books&lt;/h1&gt;
+      &lt;ul&gt;
+        {data?.map((book) =&gt; (
+          &lt;li key={book.id}&gt;
+            &lt;h2&gt;{book.title}&lt;/h2&gt;
+            &lt;p&gt;{book.author}&lt;/p&gt;
+          &lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  );
+};
+
+export default Books;
+</code></pre>
+<p><strong>Features</strong>:</p>
+<ul>
+<li><strong>Error Object</strong>: The <code>error</code> object provides detailed information about the error, such as the error message.</li>
+<li><strong>Graceful Degradation</strong>: The component gracefully handles errors by displaying an error message instead of crashing.</li>
+</ul>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li>The <code>fetchBooks</code> function throws an error if the API response is invalid, ensuring that the error is propagated to the <code>useQuery</code> hook.</li>
+<li>The <code>isError</code> property is used to conditionally render an error message, improving the user experience.</li>
+</ul>
+<hr>
+</section><section><h2 id="conclusion"><strong>Conclusion</strong></h2>
+<p>React Query revolutionizes the way developers handle asynchronous data in React applications by offering a robust, feature-rich solution that minimizes complexity and maximizes efficiency. Its built-in caching, background syncing, and error-handling capabilities allow developers to focus on delivering a seamless user experience without getting bogged down by repetitive state management tasks. By mastering React Query, you’ll be equipped to build high-performance, responsive applications that stay synchronized with server data effortlessly. Whether you’re fetching, updating, or managing data, React Query provides the tools you need to streamline your workflow and elevate your development process.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

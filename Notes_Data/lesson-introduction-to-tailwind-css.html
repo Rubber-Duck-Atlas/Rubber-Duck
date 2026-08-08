@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Introduction To Tailwind Css</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-introduction-to-tailwind-css">Lesson: Introduction to Tailwind CSS</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Tailwind CSS represents a modern, utility-first approach to frontend development, enabling developers to build fully customized user interfaces efficiently. Unlike traditional CSS frameworks that rely on pre-designed components, Tailwind provides granular control over styling through small, reusable utility classes applied directly within HTML or JSX. This lesson explores the utility-first methodology, its advantages, and how it integrates seamlessly with React for streamlined workflows.</p>
+<p>Additionally, we cover the setup process for Tailwind CSS with React, TypeScript, and Vite, as well as strategies for creating reusable components and custom classes using <code>@apply</code>. By mastering these concepts, developers can enhance productivity, maintain consistency, and create scalable web applications.</p>
+<h3 id="learning-outcomes">Learning Outcomes</h3>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li>Explain the philosophy behind utility-first CSS and how it differs from traditional CSS workflows.</li>
+<li>Configure Tailwind CSS with React, TypeScript, and Vite for efficient frontend development.</li>
+<li>Use Tailwind’s utility classes to style elements directly in HTML or JSX, reducing the need for custom CSS files.</li>
+<li>Create modular, reusable components in React by combining Tailwind’s utility classes with dynamic props and libraries like <code>clsx</code>.</li>
+<li>Centralize and optimize styles using Tailwind’s <code>@apply</code> directive to define reusable classes in a global stylesheet.</li>
+<li>Leverage Tailwind’s customization options, responsive design utilities, and state variants to accelerate development and ensure consistency.</li>
+</ol>
+<hr>
+</section><section><h2 id="tailwind-css-for-frontend-development">Tailwind CSS for Frontend Development</h2>
+<p>Tailwind CSS represents a modern approach to frontend development, offering a utility-first framework that empowers developers to build fully customized user interfaces with minimal effort. Unlike traditional frameworks that rely on pre-designed components, Tailwind CSS provides granular control over styling by applying utility classes directly within HTML or JSX. This methodology eliminates the need for custom CSS files or reliance on CSS-in-JS solutions, enabling developers to focus on functionality while maintaining complete design flexibility.</p>
+<p><img src="../_assets/lesson-2-tailwind-css-1.PNG" alt="Frontend"></p>
+</section><section><h2 id="integrating-tailwind-css-with-react"><strong>Integrating Tailwind CSS with React</strong></h2>
+<p>One of Tailwind CSS’s standout qualities lies in its seamless integration with component-based frameworks like React. By styling components inline with utility classes, developers eliminate the need to switch between multiple files (HTML, CSS, JS). This accelerates development and facilitates iterative design processes.</p>
+<p>A guiding principle when building React components with Tailwind is to delay abstraction. Creating abstractions prematurely can lead to rigid, hard-to-maintain components. Begin by writing straightforward markup at the page level. As the project evolves, reusable components can be extracted only when necessary. Tailwind CSS supports this workflow by enabling simultaneous development of structure and style within a single file.</p>
+<p><strong>Example: Building a Hero Section</strong></p>
+<pre><code class="language-jsx">function HeroSection() {
+  return (
+    &lt;div className=&quot;text-center&quot;&gt;
+      &lt;h1 className=&quot;text-4xl font-bold mb-4&quot;&gt;Welcome to Our Platform&lt;/h1&gt;
+      &lt;a href=&quot;#&quot; 
+         className=&quot;text-white bg-indigo-500 py-3 px-8 rounded-full hover:bg-indigo-600&quot;&gt;
+        Get Started
+      &lt;/a&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<h3 id="setting-up-react-typescript-and-tailwind-css-with-vite">Setting Up React, TypeScript, and Tailwind CSS with Vite</h3>
+<p>To begin working with Tailwind CSS, developers must set up a modern development environment. The following steps outline the process of configuring React, TypeScript, and Tailwind CSS using Vite as the build tool.</p>
+<p><img src="../_assets/lesson-2-setting-vite-tailwind.PNG" alt="Frontend"></p>
+<p><strong>Prerequisites</strong></p>
+<p>Ensure the following tools are installed:</p>
+<ul>
+<li><strong>Node.js</strong>: Download from <a href="https://nodejs.org/">nodejs.org</a>.</li>
+<li><strong>VSCode</strong>: Obtain from <a href="https://code.visualstudio.com/">code.visualstudio.com</a>.</li>
+</ul>
+<p>Verify the installation by executing the following commands in your terminal:</p>
+<pre><code class="language-bash">node -v
+npm -v
+</code></pre>
+<h3 id="initialize-the-project-with-vite">Initialize the Project with Vite</h3>
+<p>Vite is a contemporary build tool designed to optimize the development experience. It offers rapid server startup and efficient hot module replacement (HMR), making it ideal for modern JavaScript frameworks like React.</p>
+<h3 id="procedure-for-project-creation">Procedure for Project Creation</h3>
+<p>Open the terminal and navigate to the desired directory for your project.</p>
+<p>Execute the following command to initialize a new Vite project:</p>
+<pre><code class="language-bash">npm create vite@latest my-react-app -- --template react-ts
+</code></pre>
+<ul>
+<li>Replace <code>my-react-app</code> with the intended name of your project.</li>
+<li>The <code>--template react-ts</code> flag specifies the use of React with TypeScript.</li>
+</ul>
+<p>Once the command completes, confirm the selections prompted by Vite:</p>
+<ul>
+<li>Framework: <strong>React</strong></li>
+<li>Variant: <strong>TypeScript</strong></li>
+</ul>
+<p>Navigate into the newly created project directory:</p>
+<pre><code class="language-bash">cd my-react-app
+</code></pre>
+<p>Install the required dependencies:</p>
+<pre><code class="language-bash">npm install
+</code></pre>
+<p>Start the development server to validate the setup:</p>
+<pre><code class="language-bash">npm run dev
+</code></pre>
+<p>Access the provided URL (e.g., <code>http://localhost:5173</code>) in your browser. The default Vite + React application should appear.</p>
+</section><section><h2 id="install-tailwind-css-and-associated-dependencies">Install Tailwind CSS and Associated Dependencies</h2>
+<h3 id="introduction-to-tailwind-css">Introduction to Tailwind CSS</h3>
+<p>Tailwind CSS is a utility-first framework that enables developers to apply styles directly within HTML or JSX. This approach eliminates the need for custom CSS files and enhances productivity.</p>
+<h3 id="installation-process">Installation Process</h3>
+<p>Execute the following command to install Tailwind CSS, PostCSS, and Autoprefixer:</p>
+<pre><code class="language-bash">npm install -D tailwindcss postcss autoprefixer
+</code></pre>
+<ul>
+<li><strong>Tailwind CSS</strong>: The core library for styling.</li>
+<li><strong>PostCSS</strong>: A tool used to transform CSS through JavaScript plugins. Tailwind relies on PostCSS for processing styles.</li>
+<li><strong>Autoprefixer</strong>: A plugin that adds vendor prefixes to CSS rules for improved browser compatibility.</li>
+</ul>
+<p>Verify that these dependencies are listed under <code>devDependencies</code> in your <code>package.json</code>.</p>
+<h3 id="generate-configuration-files-for-tailwind-css">Generate Configuration Files for Tailwind CSS</h3>
+<p><strong>Generating Configuration Files</strong></p>
+<p>Run the following command to create the necessary configuration files:</p>
+<pre><code class="language-bash">npx tailwindcss init -p
+</code></pre>
+<p>This command generates two files:</p>
+<ol>
+<li><strong><code>tailwind.config.cjs</code></strong>: The primary configuration file for Tailwind CSS.</li>
+<li><strong><code>postcss.config.cjs</code></strong>: The configuration file for PostCSS.</li>
+</ol>
+<h3 id="configure-source-paths-for-tailwind-css">Configure Source Paths for Tailwind CSS</h3>
+<p><strong>Updating <code>tailwind.config.cjs</code></strong></p>
+<p>Open the <code>tailwind.config.cjs</code> file and replace its content with the following configuration:</p>
+<pre><code class="language-javascript">module.exports = {
+  content: [
+    &quot;./index.html&quot;,
+    &quot;./src/**/*.{js,ts,jsx,tsx}&quot;,
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+</code></pre>
+<p><strong>Explanation of Configuration</strong></p>
+<ul>
+<li><strong><code>content</code></strong>: Specifies the paths to all template files containing Tailwind CSS classes. This ensures unused styles are purged during the build process.<ul><li><code>&quot;./index.html&quot;</code>: Includes the root HTML file.</li><li><code>&quot;./src/**/*.{js,ts,jsx,tsx}&quot;</code>: Includes all JavaScript, TypeScript, JSX, and TSX files within the <code>src</code> directory.</li></ul></li>
+<li><strong><code>theme.extend</code></strong>: Provides an option to customize Tailwind's default theme (optional at this stage).</li>
+<li><strong><code>plugins</code></strong>: Allows integration of third-party plugins (optional).</li>
+</ul>
+<h3 id="integrate-tailwind-directives-into-your-css">Integrate Tailwind Directives into Your CSS</h3>
+<p><strong>Updating <code>index.css</code></strong></p>
+<p>Navigate to the <code>src</code> directory and open the <code>index.css</code> file. Replace its content with the following Tailwind directives:</p>
+<pre><code class="language-css">@tailwind base;
+@tailwind components;
+@tailwind utilities;
+</code></pre>
+<p><strong>Breakdown of Directives</strong></p>
+<ul>
+<li><strong><code>@tailwind base</code></strong>: Injects Tailwind's foundational styles, including resets and normalization.</li>
+<li><strong><code>@tailwind components</code></strong>: Adds component-level styles (e.g., buttons, forms).</li>
+<li><strong><code>@tailwind utilities</code></strong>: Includes utility classes for styling elements (e.g., <code>text-center</code>, <code>bg-blue-500</code>).</li>
+</ul>
+<p>At this stage, the <code>App.css</code> file can be removed as it is no longer required.</p>
+<h3 id="apply-tailwind-css-classes">Apply Tailwind CSS Classes</h3>
+<p><strong>Updating <code>App.tsx</code></strong></p>
+<p>Open the <code>App.tsx</code> file in the <code>src</code> directory and replace its content with the following code:</p>
+<pre><code class="language-tsx">import React from 'react';
+
+function App() {
+  return (
+    &lt;div className=&quot;min-h-screen bg-gray-100 flex items-center justify-center&quot;&gt;
+      &lt;h1 className=&quot;text-4xl font-bold text-blue-500&quot;&gt;Hello, Tailwind CSS!&lt;/h1&gt;
+    &lt;/div&gt;
+  );
+}
+
+export default App;
+</code></pre>
+<p><strong>Explanation of Styling</strong></p>
+<p><strong><code>className</code></strong>: Applies Tailwind CSS classes to style the elements.</p>
+<ul>
+<li><code>min-h-screen</code>: Ensures the container spans the full viewport height.</li>
+<li><code>bg-gray-100</code>: Sets the background color to light gray.</li>
+<li><code>flex items-center justify-center</code>: Centers the content both vertically and horizontally.</li>
+<li><code>text-4xl font-bold text-blue-500</code>: Styles the heading with large size, bold font weight, and blue color.</li>
+</ul>
+<hr>
+</section><section><h2 id="understanding-the-philosophy-behind-utility-first-css">Understanding the Philosophy Behind Utility-First CSS</h2>
+<p>In traditional CSS workflows, developers create custom classes to define styles for specific elements. While functional, this method often leads to bloated CSS files and inconsistencies as projects grow in complexity. Utility-first CSS addresses these challenges by providing small, reusable utility classes that directly apply styles to HTML elements. These classes are predefined and follow a consistent naming convention, enabling developers to construct designs without writing custom CSS.</p>
+<p><img src="../_assets/lesson-2-utility-first.PNG" alt="Frontend"></p>
+<p>This approach eliminates redundancy and promotes modularity, allowing developers to build complex designs by combining utility classes. By adhering to a standardized set of utility classes, designs remain consistent across applications, ensuring uniformity in visual elements.</p>
+<h3 id="exploring-traditional-css-workflows">Exploring Traditional CSS Workflows</h3>
+<p>CSS is a language used to style HTML elements on a web page. Developers typically write custom CSS rules in separate files or within the HTML itself. For example:</p>
+<pre><code class="language-css">/* Traditional CSS */
+.button {
+    background-color: red;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+}
+</code></pre>
+<p>This class is then applied to an HTML element:</p>
+<pre><code class="language-html">&lt;button class=&quot;button&quot;&gt;Click Me&lt;/button&gt;
+</code></pre>
+<p>While functional, this approach can become cumbersome as the project scales. Managing hundreds of custom classes across multiple files becomes inefficient, leading to redundancy and inconsistency.</p>
+<h3 id="utility-first-css-approach">Utility-First CSS Approach</h3>
+<p>Utility-first CSS eliminates the need for custom classes by providing a library of predefined utility classes. These classes are designed to handle common styling tasks such as colors, spacing, typography, and layout. Instead of creating a custom <code>.button</code> class, you can achieve the same result using utility classes:</p>
+<pre><code class="language-html">&lt;button class=&quot;bg-red-500 text-white p-4 rounded&quot;&gt;Click Me&lt;/button&gt;
+</code></pre>
+<p><strong>Breakdown of Classes:</strong></p>
+<ul>
+<li><code>bg-red-500</code>: Sets the background color to red.</li>
+<li><code>text-white</code>: Makes the text white.</li>
+<li><code>p-4</code>: Adds padding of 1rem (16px).</li>
+<li><code>rounded</code>: Applies a border radius.</li>
+</ul>
+</section><section><h2 id="advantages-of-the-utility-first-css-methodology">Advantages of the Utility-First CSS Methodology</h2>
+<h3 id="speed-and-efficiency">Speed and Efficiency</h3>
+<p>Utility-first CSS accelerates development by enabling rapid prototyping. Developers can style elements directly in the HTML without switching between files, reducing context-switching and saving time.</p>
+<h3 id="consistency">Consistency</h3>
+<p>By using a standardized set of utility classes, designs remain consistent across the application. This minimizes discrepancies and ensures uniformity in visual elements.</p>
+<h3 id="maintainability">Maintainability</h3>
+<p>Utility-first CSS reduces the need for large CSS files filled with custom rules. Styles can be updated or modified by simply adding or removing utility classes in the HTML, making the codebase easier to manage.</p>
+<h3 id="flexibility">Flexibility</h3>
+<p>The modular nature of utility classes allows developers to experiment with designs effortlessly. Styles can be adjusted dynamically by modifying the class attributes, facilitating iterative development.</p>
+<h3 id="utility-first-css-operation">Utility-First CSS Operation</h3>
+<p>Utility-first CSS frameworks provide a comprehensive library of classes covering various design aspects, including colors, spacing, typography, and layout. Below are examples of how these classes work:</p>
+<h3 id="colors"><strong>Colors</strong></h3>
+<p>Utility classes for colors simplify the process of applying consistent color schemes:</p>
+<ul>
+<li><code>text-blue-500</code>: Sets the text color to blue.</li>
+<li><code>bg-green-200</code>: Sets the background color to light green.</li>
+</ul>
+<h3 id="spacing"><strong>Spacing</strong></h3>
+<p>Spacing utilities allow precise control over margins and padding:</p>
+<ul>
+<li><code>m-4</code>: Adds a margin of 1rem (16px).</li>
+<li><code>p-2</code>: Adds padding of 0.5rem (8px).</li>
+</ul>
+<h3 id="typography"><strong>Typography</strong></h3>
+<p>Typography utilities handle font size, weight, and alignment:</p>
+<ul>
+<li><code>text-xl</code>: Sets the text size to extra-large.</li>
+<li><code>font-bold</code>: Makes the text bold.</li>
+</ul>
+<h3 id="layout"><strong>Layout</strong></h3>
+<p>Layout utilities assist with positioning and display properties:</p>
+<ul>
+<li><code>flex</code>: Applies flexbox to the element.</li>
+<li><code>grid</code>: Enables grid layout.</li>
+</ul>
+<p>By combining these utility classes, developers can construct intricate designs without writing custom CSS. For example:</p>
+<pre><code class="language-html">&lt;div class=&quot;max-w-sm rounded overflow-hidden shadow-lg&quot;&gt;
+    &lt;img class=&quot;w-full&quot; src=&quot;image.jpg&quot; alt=&quot;Image&quot;&gt;
+    &lt;div class=&quot;px-6 py-4&quot;&gt;
+        &lt;div class=&quot;font-bold text-xl mb-2&quot;&gt;Card Title&lt;/div&gt;
+        &lt;p class=&quot;text-gray-700 text-base&quot;&gt;Card description goes here.&lt;/p&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+<p>This card component uses utility classes to style the container, image, title, and description—eliminating the need for custom CSS rules.</p>
+</section><section><h2 id="tailwind-css-a-leading-utility-first-framework">Tailwind CSS: A Leading Utility-First Framework</h2>
+<p>Tailwind CSS is one of the most widely adopted utility-first CSS frameworks. It provides a rich set of utility classes that cover nearly every aspect of web design while offering extensive customization options.</p>
+<h3 id="customization"><strong>Customization</strong></h3>
+<p>Tailwind is highly configurable. Developers can modify the default configuration file (<code>tailwind.config.cjs</code>) to define custom colors, spacing values, breakpoints, and more. This ensures the framework aligns with the project's design system.</p>
+<h3 id="responsive-design"><strong>Responsive Design</strong></h3>
+<p>Tailwind makes responsive design seamless by providing responsive variants such as <code>sm:</code>, <code>md:</code>, <code>lg:</code>, and <code>xl:</code>. For example:</p>
+<pre><code class="language-html">&lt;div class=&quot;hidden md:flex space-x-4&quot;&gt;
+    &lt;a href=&quot;#&quot; class=&quot;text-gray-300 hover:text-white&quot;&gt;Home&lt;/a&gt;
+    &lt;a href=&quot;#&quot; class=&quot;text-gray-300 hover:text-white&quot;&gt;About&lt;/a&gt;
+&lt;/div&gt;
+</code></pre>
+<p>Here, the <code>hidden md:flex</code> class ensures the links are hidden on smaller screens and displayed as a flex container on medium and larger screens.</p>
+<h3 id="state-variants"><strong>State Variants</strong></h3>
+<p>Tailwind includes state variants for styling elements based on interactions such as hover, focus, and active states. For instance:</p>
+<ul>
+<li><code>hover:bg-blue-700</code>: Changes the background color on hover.</li>
+</ul>
+<h3 id="plugins"><strong>Plugins</strong></h3>
+<p>Tailwind's plugin ecosystem extends its functionality. Developers can integrate plugins for animations, forms, typography, and more, enhancing the framework's capabilities.</p>
+<h3 id="example-responsive-navigation-bar-with-tailwind-css"><strong>Example: Responsive Navigation Bar with Tailwind CSS</strong></h3>
+<p>Below is an example of a responsive navigation bar built using Tailwind CSS:</p>
+<pre><code class="language-html">&lt;nav class=&quot;bg-gray-800 p-4&quot;&gt;
+    &lt;div class=&quot;container mx-auto flex justify-between items-center&quot;&gt;
+        &lt;div class=&quot;text-white text-lg font-bold&quot;&gt;Brand&lt;/div&gt;
+        &lt;div class=&quot;hidden md:flex space-x-4&quot;&gt;
+            &lt;a href=&quot;#&quot; class=&quot;text-gray-300 hover:text-white&quot;&gt;Home&lt;/a&gt;
+            &lt;a href=&quot;#&quot; class=&quot;text-gray-300 hover:text-white&quot;&gt;About&lt;/a&gt;
+            &lt;a href=&quot;#&quot; class=&quot;text-gray-300 hover:text-white&quot;&gt;Services&lt;/a&gt;
+            &lt;a href=&quot;#&quot; class=&quot;text-gray-300 hover:text-white&quot;&gt;Contact&lt;/a&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;md:hidden&quot;&gt;
+            &lt;button class=&quot;text-gray-300 focus:outline-none&quot;&gt;
+                &lt;svg class=&quot;w-6 h-6&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; viewBox=&quot;0 0 24 24&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;&gt;
+                    &lt;path stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; stroke-width=&quot;2&quot; d=&quot;M4 6h16M4 12h16m-7 6h7&quot;&gt;&lt;/path&gt;
+                &lt;/svg&gt;
+            &lt;/button&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/nav&gt;
+</code></pre>
+<p><strong>Breakdown of the Example:</strong></p>
+<ul>
+<li><strong><code>bg-gray-800 p-4</code></strong>: Sets the background color to dark gray and adds padding.</li>
+<li><strong><code>container mx-auto</code></strong>: Centers the content horizontally with automatic margins.</li>
+<li><strong><code>flex justify-between items-center</code></strong>: Aligns items using flexbox.</li>
+<li><strong><code>hidden md:flex</code></strong>: Hides the navigation links on smaller screens and displays them as a flex container on medium and larger screens.</li>
+<li><strong><code>hover:text-white</code></strong>: Changes the text color to white on hover.</li>
+</ul>
+<hr>
+</section><section><h2 id="building-reusable-components-with-tailwind-css">Building Reusable Components with Tailwind CSS</h2>
+<p>Tailwind CSS is a utility-first framework that empowers developers to rapidly construct custom user interfaces. By integrating Tailwind's utility classes with React, it becomes possible to design modular, reusable components that streamline development and ensure consistency throughout a project.</p>
+<p><img src="../_assets/lesson-2-building-reusable-comp.PNG" alt="Frontend"></p>
+<h3 id="importance-of-modular-components">Importance of Modular Components</h3>
+<p>Modular components play a critical role in web development by promoting uniformity, reducing duplication, and accelerating the development process. Encapsulating styles and behaviors into reusable units simplifies maintenance and ensures a cohesive design language across the application. This approach minimizes the need to repeatedly apply utility classes, thereby enhancing productivity and scalability.</p>
+</section><section><h2 id="constructing-a-reusable-text-component">Constructing a Reusable Text Component</h2>
+<p><img src="../_assets/lesson-2-creating-reusable-react-component.PNG" alt="Frontend"></p>
+<h3 id="step-1-defining-the-text-component">Step 1: Defining the Text Component</h3>
+<p>A reusable <code>Text</code> component can be designed to accept customizable properties such as size, color variant, and HTML tag type. Below is an example implementation in TypeScript:</p>
+<pre><code class="language-typescript">import React from 'react';
+import { clsx } from 'clsx';
+
+interface TextProps {
+  size?: &quot;sm&quot; | &quot;base&quot; | &quot;lg&quot; | &quot;xl&quot;;
+  variant?: &quot;gray&quot; | &quot;white&quot; | &quot;dark&quot; | &quot;red&quot;;
+  as?: &quot;p&quot; | &quot;span&quot; | &quot;h1&quot; | &quot;h2&quot; | &quot;h3&quot; | &quot;h4&quot; | &quot;h5&quot; | &quot;h6&quot;;
+  className?: string;
+  style?: React.CSSProperties;
+  children?: React.ReactNode;
+}
+
+const Text = ({
+  size = &quot;base&quot;,
+  variant = &quot;gray&quot;,
+  as = &quot;p&quot;,
+  className,
+  style,
+  children
+}: TextProps) =&gt; {
+  const Tag = as;
+
+  const sizes = {
+    sm: &quot;text-sm leading-normal&quot;,
+    base: &quot;text-base leading-normal&quot;,
+    lg: &quot;text-lg md:text-2xl leading-relaxed&quot;,
+    xl: &quot;text-xl md:text-3xl leading-relaxed&quot;
+  };
+
+  const variants = {
+    gray: &quot;text-gray-600&quot;,
+    white: &quot;text-white&quot;,
+    dark: &quot;text-gray-900&quot;,
+    red: &quot;text-red-900&quot;
+  };
+
+  return (
+    &lt;Tag
+      className={clsx(sizes[size], variants[variant], className)}
+      style={style}
+    &gt;
+      {children}
+    &lt;/Tag&gt;
+  );
+};
+
+export default Text;
+</code></pre>
+<p><strong>Code Explanation</strong></p>
+<ul>
+<li><strong>Props</strong>: The <code>Text</code> component accepts several props, including <code>size</code>, <code>variant</code>, <code>as</code>, <code>className</code>, and <code>style</code>. These allow for customization of font size, color, HTML tag, and additional styles.</li>
+<li><strong>Dynamic Tag Rendering</strong>: The <code>as</code> prop determines the HTML element rendered (e.g., <code>&lt;p&gt;</code>, <code>&lt;h1&gt;</code>), providing flexibility for different use cases.</li>
+<li><strong>Utility Mapping</strong>: The <code>sizes</code> and <code>variants</code> objects map predefined values to corresponding Tailwind CSS classes, enabling dynamic class assignment based on props.</li>
+<li><strong>Class Combination</strong>: The <code>clsx</code> library combines multiple class names conditionally, ensuring proper styling without redundancy.</li>
+</ul>
+<h3 id="step-2-utilizing-the-text-component">Step 2: Utilizing the Text Component</h3>
+<p>The <code>Text</code> component can be seamlessly integrated into your project. Here’s an example:</p>
+<pre><code class="language-typescript">import React from 'react';
+import Text from './Text';
+
+const App = () =&gt; {
+  return (
+    &lt;div&gt;
+      &lt;Text as=&quot;h1&quot; size=&quot;xl&quot; variant=&quot;dark&quot;&gt;Hello World!&lt;/Text&gt;
+      &lt;Text as=&quot;p&quot; size=&quot;base&quot; variant=&quot;gray&quot;&gt;This is a reusable text component.&lt;/Text&gt;
+    &lt;/div&gt;
+  );
+};
+
+export default App;
+</code></pre>
+<p><strong>Usage Breakdown</strong></p>
+<ul>
+<li>The <code>as</code> prop specifies the HTML tag (<code>&lt;h1&gt;</code> or <code>&lt;p&gt;</code>).</li>
+<li>The <code>size</code> and <code>variant</code> props control the font size and color, respectively.</li>
+<li>This modular structure eliminates the need to manually write utility classes for each text element.</li>
+</ul>
+</section><section><h2 id="crafting-custom-classes-with-apply">Crafting Custom Classes with <code>@apply</code></h2>
+<p>While utility classes are versatile, defining reusable styles with <code>@apply</code> can further optimize workflows. This method centralizes styles, making them easier to manage and reuse.</p>
+<h3 id="step-1-defining-custom-classes-in-globals.css">Step 1: Defining Custom Classes in <code>globals.css</code></h3>
+<p>Custom classes can be created using the <code>@layer components</code> directive in your global stylesheet. Below is an example:</p>
+<pre><code class="language-css">@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .h1 {
+    @apply text-4xl font-bold text-gray-900;
+  }
+
+  .h2 {
+    @apply text-3xl font-semibold text-gray-800;
+  }
+
+  .p {
+    @apply text-lg text-gray-600;
+  }
+
+  .btn {
+    @apply px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition;
+  }
+
+  .btn-outline {
+    @apply px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition;
+  }
+}
+</code></pre>
+<p><strong>Explanation of Custom Classes</strong></p>
+<ul>
+<li><strong>Headings</strong>: The <code>.h1</code> and <code>.h2</code> classes define consistent styles for primary and secondary headings.</li>
+<li><strong>Paragraphs</strong>: The <code>.p</code> class standardizes paragraph text styles.</li>
+<li><strong>Buttons</strong>: The <code>.btn</code> and <code>.btn-outline</code> classes encapsulate button designs, including hover effects and transitions.</li>
+</ul>
+<h3 id="step-2-applying-custom-classes-in-components">Step 2: Applying Custom Classes in Components</h3>
+<p>Once defined, these classes can be applied directly in your HTML or JSX:</p>
+<pre><code class="language-html">&lt;h1 class=&quot;h1&quot;&gt;Main Heading&lt;/h1&gt;
+&lt;h2 class=&quot;h2&quot;&gt;Subheading&lt;/h2&gt;
+&lt;p class=&quot;p&quot;&gt;This is a paragraph using Tailwind custom classes.&lt;/p&gt;
+&lt;button class=&quot;btn&quot;&gt;Primary Button&lt;/button&gt;
+&lt;button class=&quot;btn-outline&quot;&gt;Outline Button&lt;/button&gt;
+</code></pre>
+<p><strong>Benefits of Using <code>@apply</code></strong></p>
+<ul>
+<li><strong>Centralization</strong>: Styles are defined in one location, simplifying updates and modifications.</li>
+<li><strong>Readability</strong>: Reduces clutter in JSX or HTML by abstracting complex utility classes into concise class names.</li>
+<li><strong>Reusability</strong>: Promotes consistent styling across the application.</li>
+</ul>
+<h3 id="advantages-of-combining-apply-and-reusable-components">Advantages of Combining <code>@apply</code> and Reusable Components</h3>
+<p>The integration of <code>@apply</code> with reusable components offers several advantages:</p>
+<ol>
+<li><strong>Uniformity</strong>: Ensures consistent application of styles throughout the project.</li>
+<li><strong>Efficiency</strong>: Minimizes repetitive coding by leveraging predefined styles and components.</li>
+<li><strong>Maintainability</strong>: Centralizes styles and logic, making future updates straightforward.</li>
+<li><strong>Clarity</strong>: Enhances code readability by reducing verbosity and organizing styles logically.</li>
+</ol>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>Tailwind CSS revolutionizes frontend development by offering a utility-first framework that prioritizes flexibility, consistency, and efficiency. Its ability to integrate seamlessly with modern tools like React, TypeScript, and Vite makes it an ideal choice for building scalable and maintainable applications. By adopting reusable components and custom classes with <code>@apply</code>, developers can centralize styles, reduce redundancy, and streamline their workflows. This lesson underscores the importance of embracing utility-first CSS methodologies to achieve both creative freedom and structured design systems, empowering developers to deliver high-quality, responsive, and accessible web experiences.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

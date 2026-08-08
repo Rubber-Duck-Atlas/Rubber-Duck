@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Implementing Transformer Model</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-implementing-a-transformer-model">Lesson: Implementing a Transformer Model</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In the previous lesson, we explored the architecture of the Transformer and understood its key innovations: self-attention, multi-head attention, positional encodings, and feed-forward networks. These components enable the Transformer to process sequences in parallel and capture long-range dependencies effectively.</p>
+<p>In this lesson, we transition from theory to practice. You will implement a <strong>simplified Transformer model</strong> using TensorFlow/Keras and apply it to a <strong>text classification task</strong>. This hands-on experience will solidify your understanding of how Transformers operate and how they can be trained end-to-end for downstream NLP problems.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Construct</strong> a basic Transformer encoder using TensorFlow/Keras.</li>
+<li><strong>Apply</strong> the Transformer model to a text classification task.</li>
+<li><strong>Train and evaluate</strong> the model on a dataset such as IMDb movie reviews.</li>
+</ol>
+<hr>
+</section><section><h2 id="the-dataset-imdb-sentiment-classification"><strong>The Dataset: IMDb Sentiment Classification</strong></h2>
+<p>This lesson focuses on implementing a Transformer model from scratch for a real-world NLP task. Rather than developing the model in isolation, we begin with a concrete application, sentiment classification. This ensures that each component of the architecture is introduced in response to practical requirements and tested on realistic data. To anchor our implementation, we use the IMDb movie review dataset, a widely recognized benchmark in NLP. It offers a straightforward binary classification task: given a movie review in natural language, the model must predict whether the sentiment is positive or negative.</p>
+<h3 id="dataset-overview">Dataset Overview</h3>
+<p>The IMDb dataset consists of 50,000 movie reviews, split evenly into training and test sets. Each review is paired with a binary sentiment label: <code>1</code> for positive, <code>0</code> for negative. The reviews vary in length and style, including informal expressions, sarcasm, and complex sentence structures. This variability makes the dataset especially suitable for evaluating a model's ability to capture long-range and subtle dependencies—strengths for which Transformers were designed.</p>
+<h3 id="why-imdb">Why IMDb?</h3>
+<p>This dataset is ideal for educational and experimental purposes. Its size is sufficient to train deep models meaningfully while remaining tractable on standard hardware. The binary classification setup allows us to clearly evaluate the model’s performance, and the linguistic variability of the reviews makes it a good test case for attention-based architectures.</p>
+<h3 id="loading-the-data">Loading the Data</h3>
+<p>We use TensorFlow Datasets (TFDS) to streamline the loading process. This utility handles downloading, formatting, and parsing, and returns the data in a ready-to-use format:</p>
+<pre><code class="language-python">import tensorflow_datasets as tfds
+
+# Load IMDb dataset with labeled (text, label) pairs
+(train_data, test_data), ds_info = tfds.load(
+    'imdb_reviews',
+    split=['train', 'test'],
+    as_supervised=True,
+    with_info=True
+)
+</code></pre>
+<p>The <code>train_data</code> and <code>test_data</code> objects are TensorFlow <code>tf.data.Dataset</code> instances containing review-text and label pairs. This structure is convenient for preprocessing and efficient batching during training. With the dataset loaded, we now prepare the text for input into the Transformer model. This involves tokenization, numerical encoding, and padding to ensure consistent input dimensions.</p>
+<hr>
+</section><section><h2 id="step-1-text-preprocessing-and-tokenization">Step 1: Text Preprocessing and Tokenization</h2>
+<p>Having loaded the IMDb dataset, the next step is to transform the raw text reviews into numerical representations that can be processed by our Transformer model. Neural networks including Transformers cannot operate directly on raw text. Instead, they require inputs to be formatted as sequences of integers that represent tokens from a predefined vocabulary.</p>
+<h3 id="role-of-preprocessing-in-transformer-based-models">Role of Preprocessing in Transformer-Based Models</h3>
+<p>Preprocessing is integral to the design of Transformer-based models. The Transformer architecture requires its inputs to be:</p>
+<ul>
+<li><strong>Tokenized</strong>: Each word or subword must be mapped to an integer ID.</li>
+<li><strong>Fixed-length</strong>: Inputs must be padded or truncated to a uniform length to enable parallel processing and attention matrix computation.</li>
+<li><strong>Vocabulary-defined</strong>: A bounded vocabulary ensures computational tractability and enables efficient embedding lookup.</li>
+</ul>
+<p>This step ensures that textual reviews are consistently formatted, numerically encoded, and structurally aligned with the subsequent embedding and attention layers of the Transformer.</p>
+<h3 id="implementing-text-vectorization">Implementing Text Vectorization</h3>
+<p>We use TensorFlow’s <code>TextVectorization</code> layer to tokenize and pad the IMDb review texts:</p>
+<pre><code class="language-python">from tensorflow.keras.layers import TextVectorization
+
+# Set maximum sequence length and vocabulary size
+max_len = 200
+vocab_size = 10000
+
+# Initialize TextVectorization layer
+vectorize_layer = TextVectorization(
+    max_tokens=vocab_size,
+    output_mode='int',
+    output_sequence_length=max_len
+)
+</code></pre>
+<p>Next, we extract the text component from the training data to allow the vectorizer to learn the vocabulary:</p>
+<pre><code class="language-python"># Extract text for vocabulary adaptation
+train_text = train_data.map(lambda x, y: x)
+vectorize_layer.adapt(train_text)
+</code></pre>
+<p>We then apply the vectorization transformation to both the training and test sets:</p>
+<pre><code class="language-python"># Define vectorization function
+def vectorize_text(text, label):
+    return vectorize_layer(text), label
+
+# Apply vectorization and batching
+train_data = train_data.map(vectorize_text).batch(32).prefetch(1)
+test_data = test_data.map(vectorize_text).batch(32).prefetch(1)
+</code></pre>
+<p>After this step, all inputs are standardized, tokenized, and numerically encoded, ready for integration into the Transformer model.</p>
+<hr>
+</section><section><h2 id="step-2-define-the-transformer-encoder-block"><strong>Step 2: Define the Transformer Encoder Block</strong></h2>
+<p>Now that the textual data has been preprocessed and numerically encoded, we begin constructing the core components of the Transformer architecture. The first major building block is the Transformer Encoder, which applies self-attention and feed-forward transformations to learn rich contextual representations of the input sequence. In this step, we define a reusable encoder block that mirrors the architecture introduced in the original Transformer paper by Vaswani et al. (2017). This block combines multi-head self-attention, a position-wise feed-forward network, and residual connections with layer normalization.</p>
+<h3 id="implementation-of-the-encoder-block">Implementation of the Encoder Block</h3>
+<p>The following class defines a single encoder block:</p>
+<pre><code class="language-python">from tensorflow.keras.layers import LayerNormalization, Dropout, Dense, Embedding, Input, Layer
+from tensorflow.keras.models import Model
+import tensorflow as tf
+
+class TransformerEncoderBlock(Layer):
+    def __init__(self, embed_dim, num_heads, ff_dim, dropout_rate=0.1):
+        super().__init__()
+        # Multi-head self-attention layer
+        self.att = tf.keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
+
+        # Position-wise feed-forward network
+        self.ffn = tf.keras.Sequential([
+            Dense(ff_dim, activation=&quot;relu&quot;),
+            Dense(embed_dim),
+        ])
+
+        # Layer normalization components
+        self.layernorm1 = LayerNormalization(epsilon=1e-6)
+        self.layernorm2 = LayerNormalization(epsilon=1e-6)
+
+        # Dropout layers for regularization
+        self.dropout1 = Dropout(dropout_rate)
+        self.dropout2 = Dropout(dropout_rate)
+
+    def call(self, inputs, training=False):
+        # Self-attention mechanism
+        attn_output = self.att(inputs, inputs)
+        attn_output = self.dropout1(attn_output, training=training)
+
+        # Residual connection + Layer normalization
+        out1 = self.layernorm1(inputs + attn_output)
+
+        # Feed-forward transformation
+        ffn_output = self.ffn(out1)
+        ffn_output = self.dropout2(ffn_output, training=training)
+
+        # Final residual connection + Layer normalization
+        return self.layernorm2(out1 + ffn_output)
+</code></pre>
+<h3 id="explanation-of-components">Explanation of Components</h3>
+<ul>
+<li><strong>MultiHeadAttention</strong> allows the model to jointly attend to information from different representation subspaces.</li>
+<li><strong>Feed-Forward Network (FFN)</strong> increases the capacity of the model to learn non-linear transformations.</li>
+<li><strong>Dropout</strong> helps prevent overfitting during training.</li>
+<li><strong>Residual Connections + LayerNorm</strong> help stabilize gradients and facilitate deep learning.</li>
+</ul>
+<p>This block can be stacked multiple times to form the full Transformer encoder stack.</p>
+<hr>
+</section><section><h2 id="step-3-add-positional-encoding"><strong>Step 3: Add Positional Encoding</strong></h2>
+<p>Having defined the Transformer encoder block which learns contextual representations through attention and feed-forward layers, we now address a fundamental limitation: Transformers do not inherently understand the order of tokens. Unlike RNNs, which process inputs sequentially and retain order through recurrence, Transformers operate on the entire input sequence simultaneously. To resolve this, we inject positional information into the model using positional embeddings. These embeddings are added to the token embeddings to provide the model with a sense of word order essential for understanding grammar, context, and meaning in sequences.</p>
+<h3 id="implementation-token-and-position-embedding-layer">Implementation: Token and Position Embedding Layer</h3>
+<p>The following custom layer learns both token embeddings and trainable positional embeddings:</p>
+<pre><code class="language-python">class TokenAndPositionEmbedding(Layer):
+    def __init__(self, maxlen, vocab_size, embed_dim):
+        super().__init__()
+        # Token embedding maps each word index to a dense vector
+        self.token_emb = Embedding(input_dim=vocab_size, output_dim=embed_dim)
+        # Position embedding provides trainable embeddings for each position index
+        self.pos_emb = Embedding(input_dim=maxlen, output_dim=embed_dim)
+
+    def call(self, x):
+        # Get sequence length dynamically from the input tensor
+        maxlen = tf.shape(x)[-1]
+        # Generate position indices: [0, 1, 2, ..., maxlen - 1]
+        positions = tf.range(start=0, limit=maxlen, delta=1)
+        # Look up positional embeddings for these indices
+        positions = self.pos_emb(positions)
+        # Look up token embeddings for input tokens
+        x = self.token_emb(x)
+        # Combine token and positional information
+        return x + positions
+</code></pre>
+<h3 id="why-positional-encoding-is-necessary">Why Positional Encoding is Necessary</h3>
+<p>Without position information, a Transformer cannot differentiate between sequences like:</p>
+<ul>
+<li>“The movie was amazing”</li>
+<li>“Amazing was the movie”</li>
+</ul>
+<p>Even though the words are the same, the meanings differ due to word order. Positional embeddings solve this problem by giving the model access to order-sensitive features.</p>
+<hr>
+</section><section><h2 id="step-4-build-the-full-transformer-model-for-classification"><strong>Step 4: Build the Full Transformer Model for Classification</strong></h2>
+<p>Now that we’ve constructed all the essential building blocks—the Transformer encoder, positional encoding, and token embeddings—we are ready to integrate them into a complete model. This final architecture transforms input sequences of text into sentiment predictions using the power of self-attention and learned contextual representations. By stacking these components and applying appropriate pooling and dense layers, we form a Transformer-based classifier optimized for binary sentiment analysis on the IMDb dataset.</p>
+<h3 id="implementation">Implementation</h3>
+<pre><code class="language-python">import tensorflow as tf
+from tensorflow.keras.layers import Input, Dropout, Dense, GlobalAveragePooling1D
+from tensorflow.keras.models import Model
+
+# Define core hyperparameters
+embed_dim = 64       # Embedding dimension
+num_heads = 2        # Number of attention heads
+ff_dim = 128         # Feed-forward network dimension
+maxlen = 200         # Max sequence length
+
+# Input layer
+inputs = Input(shape=(maxlen,))
+
+# Token and position embeddings
+embedding_layer = TokenAndPositionEmbedding(maxlen, vocab_size, embed_dim)
+x = embedding_layer(inputs)
+
+# Transformer encoder block
+x = TransformerEncoderBlock(embed_dim, num_heads, ff_dim)(x)
+
+# Global average pooling: reduces the sequence to a fixed-length vector
+x = GlobalAveragePooling1D()(x)
+x = Dropout(0.1)(x)
+
+# Fully connected layer with ReLU activation
+x = Dense(32, activation=&quot;relu&quot;)(x)
+x = Dropout(0.1)(x)
+
+# Final output layer with sigmoid activation (binary classification)
+outputs = Dense(1, activation=&quot;sigmoid&quot;)(x)
+
+# Assemble and compile the model
+model = Model(inputs=inputs, outputs=outputs)
+model.compile(optimizer=&quot;adam&quot;, loss=&quot;binary_crossentropy&quot;, metrics=[&quot;accuracy&quot;])
+
+# Display model summary
+model.summary()
+</code></pre>
+<h3 id="expected-model-summary">Expected Model Summary</h3>
+<pre><code>Model: &quot;functional_1&quot;
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ Layer (type)                    ┃ Output Shape           ┃       Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ input_layer_1 (InputLayer)      │ (None, 200)            │             0 │
+│ token_and_position_embedding_1  │ (None, 200, 64)        │       652,800 │
+│ transformer_encoder_block_1     │ (None, 200, 64)        │        50,048 │
+│ global_average_pooling1d        │ (None, 64)             │             0 │
+│ dropout_5 (Dropout)             │ (None, 64)             │             0 │
+│ dense_4 (Dense)                 │ (None, 32)             │         2,080 │
+│ dropout_6 (Dropout)             │ (None, 32)             │             0 │
+│ dense_5 (Dense)                 │ (None, 1)              │            33 │
+└─────────────────────────────────┴────────────────────────┴───────────────┘
+Total params: 704,961 (≈ 2.69 MB)
+Trainable params: 704,961
+Non-trainable params: 0
+</code></pre>
+<hr>
+</section><section><h2 id="step-5-train-and-evaluate-the-model"><strong>Step 5: Train and Evaluate the Model</strong></h2>
+<p>With the Transformer-based classifier fully assembled and compiled, we now proceed to train the model on real-world data. This step evaluates how well the architecture captures semantic and syntactic patterns in natural language by learning from thousands of labeled reviews. The goal is to fine-tune the model parameters via supervised learning and validate its generalization ability on unseen IMDb reviews. Leveraging the Transformer’s efficient self-attention mechanism, training is both scalable and effective.</p>
+<h3 id="training-procedure">Training Procedure</h3>
+<pre><code class="language-python"># Train the Transformer model
+history = model.fit(
+    train_data,               # Preprocessed and batched training dataset
+    validation_data=test_data,  # Validation dataset for monitoring accuracy
+    epochs=3                  # Number of training epochs
+)
+</code></pre>
+<h3 id="expected-outcome">Expected Outcome</h3>
+<ul>
+<li>The validation <strong>accuracy</strong> is expected to converge to around <strong>88%–90%</strong> within just a few epochs.</li>
+<li>Thanks to the model’s parallelizable attention-based architecture, training is efficient and does not require sequential data processing as in RNNs.</li>
+</ul>
+<p>After training, we can optionally visualize learning curves or test the model on custom input to see how well it generalizes. This completes the practical implementation of a Transformer-based sentiment classifier from scratch.</p>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>In this lesson, you built a Transformer-based text classification model using TensorFlow and Keras. You defined custom encoder blocks with multi-head attention, added positional encodings, and applied them to the IMDb movie review sentiment analysis task. This practical implementation demonstrates how Transformers operate in real NLP pipelines and how their architectural components map to code. You are now ready to work with pretrained models like BERT, GPT, and T5, which build on this same structure. In the next lesson, we will explore how to fine-tune pretrained Transformers using Hugging Face for tasks such as classification, summarization, and question answering.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

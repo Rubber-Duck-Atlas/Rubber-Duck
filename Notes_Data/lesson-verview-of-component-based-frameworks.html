@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Verview Of Component Based Frameworks</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-overview-of-component-based-frameworks">Lesson: Overview of Component-Based Frameworks</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Component-based programming is a modern approach to building user interfaces (UIs) by breaking them down into reusable, self-contained pieces called components. These components combine HTML (structure), CSS (styling), and JavaScript (behavior) to create modular and maintainable code. This lesson introduces the concept of components, explores different types (such as presentational, container, and higher-order components), and compares how popular frameworks like React, Vue, and Angular handle component-based development.</p>
+</section><section><h2 id="learning-outcomes">Learning outcomes</h2>
+<ol>
+<li>Learn what components are and how they structure UI development.</li>
+<li>Differentiate between presentational, container, higher-order (HOCs), and compound components.</li>
+<li>Recognize how React, Vue, and Angular implement component-based architecture.</li>
+<li>Discover the advantages of component-driven development, including reusability, maintainability, and scalability.</li>
+<li>Gain foundational knowledge to start building modular frontend applications.</li>
+</ol>
+<hr>
+</section><section><h2 id="components-of-frontend-development"><strong>Components of Frontend Development</strong></h2>
+<p>Component-based programming is a cornerstone of modern frontend development. It is an architectural paradigm that emphasizes breaking down the user interface (UI) into reusable, modular pieces called components. These components encapsulate both the structure and behavior of parts of the UI, making code easier to maintain, test, and scale. Let’s explore this concept in detail.</p>
+<p>In frontend development, a component refers to a self-contained, reusable piece of UI that represents a specific part of an application. Components can range from simple elements like buttons or input fields to more complex structures like forms, modals, or entire pages.</p>
+<p>Each component typically consists of three core technologies:</p>
+<p><img src="../_assets/lesson-1-frontend-component.PNG" alt="Frontend"></p>
+<ul>
+<li><strong>HTML</strong>: Defines the structure of the component.</li>
+<li><strong>CSS</strong>: Controls the appearance and styling of the component.</li>
+<li><strong>JavaScript</strong>: Handles interactivity, state management, and behavior.</li>
+</ul>
+<p>For example:</p>
+<p>A <strong>Button Component</strong> may include:</p>
+<ul>
+<li><strong>HTML</strong>: <code>&lt;button&gt;Submit&lt;/button&gt;</code></li>
+<li><strong>CSS</strong>: Styles for color, size, hover effects, etc.</li>
+<li><strong>JavaScript</strong>: Event listeners for click actions.</li>
+</ul>
+<hr>
+</section><section><h2 id="types-of-components"><strong>Types of Components</strong></h2>
+<p>In modern frontend development—especially when working with libraries like React components are the building blocks of your UI. While all components share a common goal (rendering UI), they can be classified based on their role and responsibility within an application.</p>
+<h3 id="presentational-components"><strong>Presentational Components</strong></h3>
+<p>Presentational components are focused on <strong>how things look</strong>. Their primary responsibility is to render UI elements based on the data they receive. These components are often referred to as &quot;dumb&quot; or &quot;stateless&quot; because they don’t manage any state or logic themselves. Instead, they rely entirely on props passed to them from parent components.</p>
+<p><strong>Characteristics:</strong></p>
+<ul>
+<li>No State Management: They don’t maintain their own state.</li>
+<li>Reusability: Since they only handle presentation, they can be reused in different contexts.</li>
+<li>Props-Driven: They receive all necessary data and callbacks via props.</li>
+<li>Styling-Focused: Often used for styling, layout, and visual representation.</li>
+</ul>
+<p><strong>Example</strong>:</p>
+<p>Consider a <code>Card</code> component that displays user information. The <code>Card</code> component doesn’t fetch or manage any data; it simply renders what’s passed to it.</p>
+<pre><code class="language-jsx">function Card({ title, description }) {
+  return (
+    &lt;div className=&quot;card&quot;&gt;
+      &lt;h2&gt;{title}&lt;/h2&gt;
+      &lt;p&gt;{description}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<p>Here, the <code>Card</code> component is purely presentational. It takes <code>title</code> and <code>description</code> as props and displays them. You can reuse this component elsewhere by passing different props without worrying about internal logic.</p>
+<p><strong>When to Use Presentational Components:</strong></p>
+<ul>
+<li>When you need reusable UI elements (e.g., buttons, cards, forms).</li>
+<li>When the focus is solely on how the UI looks, not how it works.</li>
+</ul>
+<hr>
+<h3 id="container-components"><strong>Container Components</strong></h3>
+<p>Container components are focused on <strong>how things work</strong>. They manage state, interact with APIs, and pass data and behavior down to presentational components. These components are often referred to as &quot;smart&quot; components because they encapsulate the logic and orchestrate the flow of data.</p>
+<p><strong>Specifications</strong>:</p>
+<ul>
+<li>State Management: They handle complex state logic.</li>
+<li>Data Fetching: They fetch data from APIs or other sources.</li>
+<li>Parental Role: They act as parents to presentational components, passing data and callbacks as props.</li>
+<li>Logic-Focused: They focus on functionality rather than appearance.</li>
+</ul>
+<p><strong>Example</strong>:</p>
+<p>Let’s create a <code>UserList</code> container component that fetches user data and passes it to a <code>UserCard</code> presentational component.</p>
+<pre><code class="language-jsx">import React, { useState, useEffect } from 'react';
+import UserCard from './UserCard';
+
+function UserList() {
+  const [users, setUsers] = useState([]);
+
+  // Fetch user data when the component mounts
+  useEffect(() =&gt; {
+    fetch('https://api.example.com/users')
+      .then(response =&gt; response.json())
+      .then(data =&gt; setUsers(data));
+  }, []);
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;User List&lt;/h1&gt;
+      {users.map(user =&gt; (
+        &lt;UserCard key={user.id} name={user.name} email={user.email} /&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<p>In this example:</p>
+<ul>
+<li>The <code>UserList</code> component is a container component because it fetches data and manages state.</li>
+<li>It passes the fetched data (<code>name</code> and <code>email</code>) to the <code>UserCard</code> presentational component via props.</li>
+</ul>
+<p><strong>When to Use Container Components</strong>:</p>
+<ul>
+<li>When you need to manage state or fetch data.</li>
+<li>When you want to separate concerns between logic and presentation.</li>
+</ul>
+<hr>
+<h3 id="higher-order-components-hocs"><strong>Higher-Order Components (HOCs)</strong></h3>
+<p>A Higher-Order Component (HOC) is a function that takes a component and returns a new enhanced component. HOCs are used to add reusable functionality to components without modifying their original code. They are particularly useful for cross-cutting concerns like logging, authentication, or adding common props.</p>
+<p><strong>Characteristics</strong>:</p>
+<ul>
+<li>Functionality Injection: HOCs add extra features to components.</li>
+<li>Reusability: The same HOC can be applied to multiple components.</li>
+<li>Separation of Concerns: Keeps business logic separate from the UI.</li>
+</ul>
+<p><strong>Example</strong>:</p>
+<p>Let’s create an HOC called <code>withLogger</code> that logs whenever a component is rendered.</p>
+<pre><code class="language-jsx">function withLogger(WrappedComponent) {
+  return function EnhancedComponent(props) {
+    console.log(`Rendering ${WrappedComponent.name}`);
+    return &lt;WrappedComponent {...props} /&gt;;
+  };
+}
+
+// Using the HOC
+function Button({ label }) {
+  return &lt;button&gt;{label}&lt;/button&gt;;
+}
+
+const LoggedButton = withLogger(Button);
+
+// Usage
+&lt;LoggedButton label=&quot;Click Me&quot; /&gt;;
+</code></pre>
+<p>In this example:</p>
+<ul>
+<li>The <code>withLogger</code> HOC wraps the <code>Button</code> component.</li>
+<li>Whenever the <code>LoggedButton</code> is rendered, it logs a message to the console.</li>
+</ul>
+<p><strong>When to Use HOCs</strong>:</p>
+<ul>
+<li>When you want to reuse logic across multiple components.</li>
+<li>For cross-cutting concerns like authentication, logging, or error handling.</li>
+</ul>
+<hr>
+</section><section><h2 id="compound-components"><strong>Compound Components</strong></h2>
+<p>Compound components are a pattern where multiple components work together to achieve a specific functionality. This pattern allows components to share implicit state while maintaining a clean API. Compound components are often used for complex UI elements like dropdowns, accordions, or modals.</p>
+<p><strong>Key Characteristics</strong>:</p>
+<ul>
+<li>Shared State: Sub-components implicitly share state with the parent.</li>
+<li>Clean API: Developers interact with the parent component, and the sub-components handle specific parts of the UI.</li>
+<li>Flexibility: Allows developers to customize the structure of the UI.</li>
+</ul>
+<p><strong>Example</strong>:</p>
+<p>Let’s build a <code>Dropdown</code> compound component with sub-components like <code>Dropdown.Item</code> and <code>Dropdown.Menu</code>.</p>
+<pre><code class="language-jsx">function Dropdown({ children }) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    &lt;div&gt;
+      &lt;button onClick={() =&gt; setIsOpen(!isOpen)}&gt;Toggle Menu&lt;/button&gt;
+      {isOpen &amp;&amp; &lt;div className=&quot;dropdown-menu&quot;&gt;{children}&lt;/div&gt;}
+    &lt;/div&gt;
+  );
+}
+
+Dropdown.Item = function Item({ children }) {
+  return &lt;div className=&quot;dropdown-item&quot;&gt;{children}&lt;/div&gt;;
+};
+
+Dropdown.Menu = function Menu({ children }) {
+  return &lt;div className=&quot;dropdown-menu&quot;&gt;{children}&lt;/div&gt;;
+};
+
+// Usage
+&lt;Dropdown&gt;
+  &lt;Dropdown.Item&gt;Option 1&lt;/Dropdown.Item&gt;
+  &lt;Dropdown.Item&gt;Option 2&lt;/Dropdown.Item&gt;
+  &lt;Dropdown.Menu&gt;
+    &lt;Dropdown.Item&gt;Sub Option 1&lt;/Dropdown.Item&gt;
+  &lt;/Dropdown.Menu&gt;
+&lt;/Dropdown&gt;;
+</code></pre>
+<p>In this example:</p>
+<ul>
+<li>The <code>Dropdown</code> component manages the state (<code>isOpen</code>) and toggles the menu.</li>
+<li>The <code>Dropdown.Item</code> and <code>Dropdown.Menu</code> components are sub-components that work together to create a cohesive dropdown UI.</li>
+</ul>
+<p><strong>When to Use Compound Components</strong>:</p>
+<ul>
+<li>When you need a group of components to work together seamlessly.</li>
+<li>For complex UI elements like tabs, dropdowns, or accordions.</li>
+</ul>
+<hr>
+</section><section><h2 id="methodologies-of-react-vue-and-angular-to-handle-component-based-development"><strong>Methodologies of React, Vue, and Angular to Handle Component-Based Development</strong></h2>
+<h3 id="react"><strong>React</strong></h3>
+<p>React is a JavaScript library developed by Facebook that pioneered the modern component-based approach to building UIs.</p>
+<p><img src="../_assets/lesson-1-frontend-react.PNG" alt="Frontend"></p>
+<ul>
+<li><strong>Component Structure</strong>: React components are written as functions or classes. Functional components are preferred in modern React due to their simplicity and compatibility with hooks.</li>
+<li><strong>JSX</strong>: React uses JSX, a syntax extension that allows you to write HTML-like code within JavaScript.</li>
+<li><strong>State Management</strong>: React provides a <code>useState</code> hook for managing local component state. Context API and third-party libraries like Redux can be used for global state management.</li>
+<li><strong>Props</strong>: Data is passed to components via <code>props</code>, which are immutable.</li>
+<li><strong>Lifecycle Methods</strong>: Class components use lifecycle methods like <code>componentDidMount</code> and <code>componentDidUpdate</code>. Functional components use hooks like <code>useEffect</code> for side effects.</li>
+</ul>
+<hr>
+<h3 id="vue"><strong>Vue</strong></h3>
+<p>Vue is a progressive JavaScript framework that also follows the component-based architecture.</p>
+<p><img src="../_assets/lesson-1-frontend-vue.PNG" alt="Frontend"></p>
+<ul>
+<li><strong>Component Structure</strong>: Vue components are defined using a <code>template</code> for the HTML, <code>script</code> for logic, and <code>style</code> for CSS.</li>
+<li><strong>Reactivity</strong>: Vue automatically tracks dependencies and updates the DOM when the state changes.</li>
+<li><strong>Directives</strong>: Vue uses directives like <code>v-bind</code>, <code>v-on</code>, and <code>v-if</code> to handle dynamic behavior.</li>
+</ul>
+<hr>
+<h3 id="angular"><strong>Angular</strong></h3>
+<p>Angular is a full-fledged framework developed by Google that enforces a strict component-based architecture.</p>
+<p><img src="../_assets/lesson-1-frontend-angular.PNG" alt="Frontend"></p>
+<ul>
+<li><strong>Component Structure</strong>: Angular components are TypeScript classes decorated with <code>@Component</code>.</li>
+<li><strong>Two-Way Data Binding</strong>: Angular provides two-way data binding using <code>[(ngModel)]</code>.</li>
+<li><strong>Dependency Injection</strong>: Angular has a powerful dependency injection system for managing services and shared logic.</li>
+<li><strong>Modules</strong>: Components are organized into modules, which help manage dependencies and lazy load parts of the application.</li>
+</ul>
+<hr>
+</section><section><h2 id="component-driven-development">Component-Driven Development</h2>
+<p>Component-Driven Development (CDD) is a development methodology that anchors the build process around components. It is a process that builds UIs from the “bottom up” by starting at the level of components and ending at the level of pages or screens.</p>
+<h3 id="benefits-of-component-driven-ui-development"><strong>Benefits of Component-Driven UI Development</strong></h3>
+<p><strong>1. Reusability</strong>: Components are designed to be modular and self-contained, which means they can be reused across different parts of an application or even in entirely different projects.</p>
+<p><strong>2. Maintainability</strong>: Component-driven development promotes maintainability by encapsulating functionality within individual components. Each component is responsible for its own logic and rendering, making it easier to debug, test, and update.</p>
+<p><strong>3. Scalability</strong>: Scalability refers to the ability of an application to grow without becoming unmanageable. Component-driven development achieves this by isolating complexity into smaller, independent components.</p>
+<p><strong>4. Consistency</strong>: Consistency ensures that the application has a uniform look and feel. By reusing components, you avoid discrepancies in design and behavior across different parts of the application.</p>
+<p><strong>5. Performance</strong>: Frameworks like React and Vue optimize rendering by updating only the components whose state or props have changed. This leads to better performance compared to re-rendering the entire application.</p>
+<hr>
+</section><section><h2 id="conclusion"><strong>Conclusion</strong></h2>
+<p>Component-based programming is a powerful paradigm that simplifies frontend development by promoting reusability, maintainability, and scalability. Frameworks like React, Vue, and Angular provide robust tools for building component-driven applications, each with its own strengths and conventions. As you progress, integrating these components with backend APIs will unlock the full potential of modern web development.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

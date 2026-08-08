@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Introduction To Frontend Testing</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-introduction-to-frontend-testing">Lesson: Introduction to Frontend Testing</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Testing is critical to web development, ensuring that applications are reliable, maintainable, and performant. This lesson explores the use of <strong>Vitest</strong>, <strong>React Testing Library</strong>, and <strong>Mock Service Worker (MSW)</strong> to create a robust testing workflow for React applications. These tools work together to provide fast, user-centric, and flexible testing solutions. By leveraging Vitest's speed and Jest-like syntax, React Testing Library's focus on real user interactions, and MSW's ability to mock API responses, developers can build comprehensive tests that ensure application reliability across different environments.</p>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li>Understand the roles of <strong>Vitest</strong>, <strong>React Testing Library</strong>, and <strong>Mock Service Worker (MSW)</strong> in a testing workflow.</li>
+<li>Configure Vitest for a Vite-based project and write unit tests using its Jest-compatible API.</li>
+<li>Use React Testing Library to test React components by simulating real user interactions and querying the DOM effectively.</li>
+<li>Set up and integrate Mock Service Worker (MSW) to intercept and mock API requests during development and testing.</li>
+<li>Write unit tests for React components that handle asynchronous operations like API calls and state updates.</li>
+<li>Run and debug tests using Vitest and interpret the results to ensure component reliability.</li>
+<li>Apply reusable mocks and lifecycle hooks to streamline testing and development workflows.</li>
+</ol>
+<hr>
+</section><section><h2 id="overview-of-testing-tools">Overview of Testing Tools</h2>
+<p>Web development workflows rely heavily on robust testing tools to ensure the reliability, maintainability, and performance of applications. In the context of React development, tools like <strong>Vitest</strong>, <strong>React Testing Library</strong>, and <strong>Mock Service Worker (MSW)</strong> play a pivotal role in creating efficient and user-centric tests. Each tool serves a distinct purpose, complementing the others to form a comprehensive testing strategy.</p>
+<p><img src="../_assets/lesson-2-testing-tools.PNG" alt="Frontend"></p>
+<h3 id="vitest">Vitest</h3>
+<p><strong>Vitest</strong> is a modern, fast, and lightweight unit testing framework designed specifically for projects built with <strong>Vite</strong>. It leverages Vite's native ES module support, making it an ideal choice for testing JavaScript and TypeScript applications. With its blazing speed and compatibility with Jest-like syntax, Vitest has quickly become a popular choice for developers seeking a modern testing solution.</p>
+<p><img src="../_assets/lesson-2-vitest.PNG" alt="Frontend"></p>
+<p><strong>Importance of Vitest</strong></p>
+<ul>
+<li><strong>Speed</strong>: Vitest runs tests in parallel, leveraging Vite's fast build system to significantly reduce test execution time.</li>
+<li><strong>Seamless Integration</strong>: Designed to work seamlessly with Vite, it supports both JavaScript and TypeScript out of the box.</li>
+<li><strong>Rich Feature Set</strong>: Includes features such as watch mode, code coverage, snapshot testing, and more, ensuring a comprehensive testing experience.</li>
+</ul>
+<p><strong>Features</strong>:</p>
+<ul>
+<li><strong>ESM-first Design</strong>: Optimized for modern JavaScript and TypeScript workflows, ensuring compatibility with ES modules.</li>
+<li><strong>Jest-compatible API</strong>: Developers familiar with Jest can transition effortlessly, thanks to its similar syntax and functionality.</li>
+<li><strong>Built-in Test Runner</strong>: Simplifies test setup and execution without requiring additional configuration.</li>
+</ul>
+<p><strong>Example</strong> Configuration</p>
+<p>Below is an example of how to configure Vitest in a Vite-based project:</p>
+<pre><code class="language-typescript">// vite.config.ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    globals: true, // Enables global variables like `describe`, `test`, and `expect`
+    environment: 'jsdom', // Simulates a browser-like environment for DOM testing
+    setupFiles: './src/setupTests.ts', // Specifies a file to run before tests (e.g., MSW setup)
+  },
+});
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li><strong>globals</strong>: Provides access to global testing utilities like <code>describe</code>, <code>test</code>, and <code>expect</code> without importing them explicitly.</li>
+<li><strong>environment</strong>: Configures the testing environment to <code>jsdom</code>, which mimics a browser environment for DOM-related tests.</li>
+<li><strong>setupFiles</strong>: Allows you to specify a file that runs before tests, useful for setting up tools like Mock Service Worker (MSW) or other utilities.</li>
+</ul>
+<h3 id="react-testing-library">React Testing Library</h3>
+<p><strong>React Testing Library</strong> is part of the broader <strong>Testing Library</strong> family and focuses on testing React components in a way that simulates real user interactions. Its philosophy centers around testing the application as users would interact with it, rather than focusing on implementation details. This approach ensures that tests remain resilient even when internal component logic changes.</p>
+<p><img src="../_assets/lesson-2-react-testing-lib.PNG" alt="Frontend"></p>
+<p><strong>Importance of React Testing Library</strong></p>
+<ul>
+<li><strong>User-Centric Testing</strong>: Encourages writing tests that mimic how users interact with the application, ensuring the tests are meaningful and reliable.</li>
+<li><strong>Minimal Abstraction</strong>: Tests are written against the DOM rather than component internals, reducing brittleness caused by implementation changes.</li>
+<li><strong>Integration with React</strong>: Works seamlessly with React components, hooks, and state management libraries.</li>
+</ul>
+<p><strong>Features:</strong></p>
+<ul>
+<li><strong>Querying Utilities</strong>: Methods like <code>getByTestId</code>, <code>findByText</code>, <code>queryByText</code>, etc., allow you to locate elements in the DOM based on their attributes, text content, or roles.</li>
+<li><strong>Asynchronous Support</strong>: Handles asynchronous operations—such as API calls or state updates—gracefully using utilities like <code>waitFor</code> and <code>findBy*</code>.</li>
+<li><strong>Extensibility</strong>: Integrates well with other tools like Vitest and Mock Service Worker, enabling end-to-end testing workflows.</li>
+</ul>
+<p><strong>Example Test</strong></p>
+<p>Here’s an example of how to write tests for a React component using React Testing Library and Vitest:</p>
+<pre><code class="language-typescript">// Profile.test.tsx
+import { render, screen, waitFor } from '@testing-library/react';
+import { describe, test, expect } from 'vitest';
+import Profile from './Profile';
+
+describe('Profile Component', () =&gt; {
+  test('renders without crashing', () =&gt; {
+    render(&lt;Profile /&gt;);
+    expect(screen.getByTestId('user-offline')).toBeInTheDocument();
+  });
+
+  test('displays &quot;User is active&quot; when API returns ACTIVE', async () =&gt; {
+    render(&lt;Profile /&gt;);
+    await waitFor(() =&gt; {
+      expect(screen.getByTestId('user-active')).toBeInTheDocument();
+    });
+  });
+});
+</code></pre>
+<p><strong>Breakdown</strong>:</p>
+<ul>
+<li><strong>render</strong>: Renders the <code>Profile</code> component into the DOM for testing.</li>
+<li><strong>screen.getByTestId</strong>: Locates an element in the DOM using the <code>data-testid</code> attribute.</li>
+<li><strong>waitFor</strong>: Waits for asynchronous operations (e.g., API calls) to complete before performing assertions.</li>
+<li><strong>expect</strong>: Asserts that the expected conditions are met, ensuring the component behaves as intended.</li>
+</ul>
+<h3 id="mock-service-worker-msw">Mock Service Worker (MSW)</h3>
+<p>Mock Service Worker (MSW) is an API mocking library that intercepts network requests at the browser or Node.js level. It allows developers to simulate server responses without modifying application code.</p>
+<p><img src="../_assets/lesson-2-MSW.PNG" alt="Frontend"></p>
+<p><strong>Importance of MSW</strong></p>
+<ul>
+<li><strong>Development Flexibility</strong>: Frontend developers can continue working even if backend APIs are unavailable or unstable.</li>
+<li><strong>Reusable Mocks</strong>: Centralized mock definitions can be reused across development and testing environments.</li>
+<li><strong>Network-Level Interception</strong>: Works independently of the HTTP client (e.g., Axios, Fetch), ensuring consistency.</li>
+</ul>
+<p><strong>Features:</strong></p>
+<ul>
+<li><strong>Service Worker-Based</strong>: Uses browser service workers to intercept requests, providing a realistic simulation of network behavior.</li>
+<li><strong>Separation of Concerns</strong>: Keeps mock logic isolated from application logic.</li>
+<li><strong>Cross-Environment Support</strong>: Works in both browser (development) and Node.js (testing) environments.</li>
+</ul>
+<h3 id="setup-and-configuration">Setup and Configuration:</h3>
+<p><strong>1. Install Dependencies</strong></p>
+<p>First, install the necessary dependencies:</p>
+<pre><code class="language-bash">npm install msw --save-dev
+npm install axios --save
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li><code>msw</code>: Mock Service Worker is used to intercept and mock HTTP requests.</li>
+<li><code>axios</code>: A popular HTTP client for making API requests in JavaScript/TypeScript applications.</li>
+</ul>
+<p><strong>2. Create Handlers</strong></p>
+<p>Define the API endpoints and their mocked responses using MSW's <code>http</code> and <code>HttpResponse</code> utilities.</p>
+<pre><code class="language-typescript">// handlers.ts
+import { http, HttpResponse } from 'msw';
+import { STATUS } from '../consts';
+
+export const handlers = [
+  http.get('http://localhost:8000/api/getStatus', () =&gt; {
+    return HttpResponse.json({ isActive: STATUS.ACTIVE });
+  }),
+];
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li><strong><code>http.get</code></strong>: Defines a GET request handler for the specified endpoint (<code>http://localhost:8000/api/getStatus</code>).</li>
+<li><strong><code>HttpResponse.json</code></strong>: Returns a JSON response with the mocked data (<code>{ isActive: STATUS.ACTIVE }</code>).</li>
+<li><strong><code>STATUS.ACTIVE</code></strong>: A constant value imported from <code>../consts</code>, representing the mocked status.</li>
+</ul>
+<p>This setup allows you to simulate API responses without requiring a real backend.</p>
+<p><strong>3. Initialize Worker</strong></p>
+<p>Depending on the environment (development or testing), initialize the worker differently.</p>
+<p><strong>For Development</strong>:</p>
+<pre><code class="language-typescript">// worker.ts
+import { setupWorker } from 'msw/browser';
+import { handlers } from './handlers';
+
+export const serviceWorker = setupWorker(...handlers);
+</code></pre>
+<p><strong>For Testing</strong>:</p>
+<pre><code class="language-typescript">// worker.ts
+import { setupServer } from 'msw/node';
+import { handlers } from './handlers';
+
+export const serviceWorker = setupServer(...handlers);
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li><strong>Development Environment</strong>:<ul><li><code>setupWorker</code>: Initializes a service worker that intercepts network requests in the browser.</li><li>The <code>...handlers</code> syntax spreads the array of handlers into individual arguments for <code>setupWorker</code>.</li></ul></li>
+<li><strong>Testing Environment</strong>: <code>setupServer</code>: Sets up a server for testing purposes, which intercepts requests in Node.js environments like Vitest.</li>
+</ul>
+<p><strong>4. Integrate with Application</strong></p>
+<p>Enable MSW in your application by starting the service worker conditionally based on an environment variable.</p>
+<pre><code class="language-typescript">// index.tsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import { serviceWorker } from './msw/worker';
+
+async function enableMocking() {
+  if (!Boolean(import.meta.env.VITE_ENABLE_MSW)) {
+    return;
+  }
+  await serviceWorker.start();
+}
+
+enableMocking().then(() =&gt; {
+  const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
+  root.render(
+    &lt;React.StrictMode&gt;
+      &lt;App /&gt;
+    &lt;/React.StrictMode&gt;
+  );
+});
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li><strong><code>VITE_ENABLE_MSW</code></strong>: An environment variable that determines whether MSW should be enabled. This allows you to toggle mocking on or off.</li>
+<li><strong><code>serviceWorker.start()</code></strong>: Starts the MSW service worker to intercept network requests.</li>
+<li><strong>Conditional Mocking</strong>: If <code>VITE_ENABLE_MSW</code> is not set to <code>true</code>, the service worker will not start, ensuring flexibility in different environments (e.g., production).</li>
+</ul>
+<hr>
+</section><section><h2 id="unit-tests-for-react-components">Unit Tests for React Components</h2>
+<p>Unit testing is a cornerstone of software development, ensuring that individual components function correctly in isolation.</p>
+<h3 id="setting-up-the-testing-environment">1. <strong>Setting Up the Testing Environment</strong></h3>
+<p>Before diving into writing unit tests, it's crucial to configure the testing environment. This involves setting up <strong>Vitest</strong> as the test runner, integrating <strong>React Testing Library</strong> for DOM testing, and configuring <strong>MSW</strong> to mock API requests.</p>
+<p><strong>Install Dependencies</strong></p>
+<p>Install the required dependencies for testing:</p>
+<pre><code class="language-bash">npm install vitest @testing-library/react @testing-library/jest-dom msw --save-dev
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li><code>vitest</code>: A fast and lightweight test runner designed for Vite-based projects.</li>
+<li><code>@testing-library/react</code>: A library for testing React components by simulating real user interactions.</li>
+<li><code>@testing-library/jest-dom</code>: Extends Jest matchers with additional DOM-specific assertions.</li>
+<li><code>msw</code>: Mock Service Worker for intercepting and mocking API requests at the network level.</li>
+</ul>
+<p><strong>Configure Vitest</strong></p>
+<p>Update your <code>vite.config.ts</code> file to include Vitest settings:</p>
+<pre><code class="language-typescript">import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    globals: true, // Enables global variables like `describe`, `test`, and `expect`
+    environment: 'jsdom', // Simulates a browser-like environment for DOM testing
+    setupFiles: './src/setupTests.ts', // Specifies a file to run before tests
+  },
+});
+</code></pre>
+<p><strong>Key Configuration Options</strong>:</p>
+<ul>
+<li><strong>globals</strong>: Provides access to global testing utilities without importing them explicitly.</li>
+<li><strong>environment</strong>: Sets the testing environment to <code>jsdom</code>, which mimics a browser for DOM-related tests.</li>
+<li><strong>setupFiles</strong>: Allows you to specify a file (e.g., <code>setupTests.ts</code>) to configure MSW and other utilities before running tests.</li>
+</ul>
+<p><strong>Set Up MSW</strong></p>
+<p>Create a folder structure for MSW mocks.</p>
+<pre><code>/src
+  /msw
+    handlers.ts
+    worker.ts
+</code></pre>
+<p><strong>handlers.ts</strong>: Define your mock API responses.</p>
+<pre><code class="language-typescript">import { http, HttpResponse } from 'msw';
+import { STATUS } from '../consts';
+
+export const handlers = [
+  http.get('http://localhost:8000/api/getStatus', () =&gt; {
+    return HttpResponse.json({ isActive: STATUS.ACTIVE });
+  }),
+];
+</code></pre>
+<p><strong>worker.ts</strong>: Initialize the MSW server for testing.</p>
+<pre><code class="language-typescript">import { setupServer } from 'msw/node';
+import { handlers } from './handlers';
+
+export const serviceWorker = setupServer(...handlers);
+</code></pre>
+<p><strong>setupTests.ts</strong>: Configure MSW and Testing Library.</p>
+<pre><code class="language-typescript">import { expect, afterEach, beforeAll, afterAll } from 'vitest';
+import { cleanup } from '@testing-library/react';
+import * as matchers from '@testing-library/jest-dom/matchers';
+import { serviceWorker } from './msw/worker';
+
+// Extend Vitest's expect with jest-dom matchers
+expect.extend(matchers);
+
+// Start the MSW server before all tests
+beforeAll(() =&gt; serviceWorker.listen());
+
+// Clean up after each test
+afterEach(() =&gt; {
+  cleanup(); // Reset the DOM
+  serviceWorker.resetHandlers(); // Reset MSW handlers
+});
+
+// Stop the MSW server after all tests
+afterAll(() =&gt; serviceWorker.close());
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li><strong>jest-dom matchers</strong>: Adds DOM-specific assertions like <code>.toBeInTheDocument()</code> to Vitest.</li>
+<li><strong>MSW lifecycle hooks</strong>: Ensure the server starts, resets handlers, and stops appropriately during testing.</li>
+</ul>
+<hr>
+<h3 id="writing-unit-tests">2. <strong>Writing Unit Tests</strong></h3>
+<p>Unit tests should focus on individual components, verifying that they render correctly and behave as expected. Below is an example of how to write unit tests for a React component.</p>
+<p><strong>Example Component (<code>Profile.tsx</code>)</strong></p>
+<p>A simple component that fetches user status:</p>
+<pre><code class="language-typescript">import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { STATUS } from './consts';
+
+const Profile = () =&gt; {
+  const [status, setStatus] = useState&lt;STATUS&gt;(STATUS.OFFLINE);
+
+  useEffect(() =&gt; {
+    axios.get('http://localhost:8000/api/getStatus').then((res) =&gt; {
+      setStatus(res.data.isActive);
+    });
+  }, []);
+
+  return (
+    &lt;div&gt;
+      {status === STATUS.ACTIVE ? (
+        &lt;div data-testid=&quot;user-active&quot;&gt;User is active&lt;/div&gt;
+      ) : (
+        &lt;div data-testid=&quot;user-offline&quot;&gt;User is offline&lt;/div&gt;
+      )}
+    &lt;/div&gt;
+  );
+};
+
+export default Profile;
+</code></pre>
+<p><strong>Test File (<code>Profile.test.tsx</code>)</strong></p>
+<p>Write tests using Vitest and React Testing Library:</p>
+<pre><code class="language-typescript">import { describe, test, expect } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import Profile from './Profile';
+
+describe('Profile Component', () =&gt; {
+  test('renders without crashing', () =&gt; {
+    render(&lt;Profile /&gt;);
+    expect(screen.getByTestId('user-offline')).toBeInTheDocument();
+  });
+
+  test('displays &quot;User is active&quot; when API returns ACTIVE', async () =&gt; {
+    render(&lt;Profile /&gt;);
+    await waitFor(() =&gt; {
+      expect(screen.getByTestId('user-active')).toBeInTheDocument();
+    });
+  });
+});
+</code></pre>
+<p><strong>Breakdown</strong>:</p>
+<ul>
+<li><strong>render</strong>: Renders the <code>Profile</code> component into the DOM.</li>
+<li><strong>screen.getByTestId</strong>: Locates elements using the <code>data-testid</code> attribute.</li>
+<li><strong>waitFor</strong>: Waits for asynchronous operations (e.g., API calls) to complete before performing assertions.</li>
+</ul>
+<hr>
+<h3 id="using-mock-service-worker-msw">3. <strong>Using Mock Service Worker (MSW)</strong></h3>
+<p>Mocking API responses is essential for isolating components during testing. MSW intercepts network requests, providing consistent and predictable responses.</p>
+<p><strong>Benefits of Using MSW</strong></p>
+<ul>
+<li><strong>Development Flexibility</strong>: Frontend developers can continue working even if backend APIs are unavailable or unstable.</li>
+<li><strong>Reusable Mocks</strong>: Centralized mock definitions can be reused across development and testing environments.</li>
+<li><strong>Network-Level Interception</strong>: Works independently of the HTTP client (e.g., Axios, Fetch), ensuring consistency.</li>
+</ul>
+<h3 id="example-integration">Example Integration</h3>
+<p><strong>MSW Handlers</strong>:</p>
+<pre><code class="language-typescript">import { http, HttpResponse } from 'msw';
+import { STATUS } from '../consts';
+
+export const handlers = [
+  http.get('http://localhost:8000/api/getStatus', () =&gt; {
+    return HttpResponse.json({ isActive: STATUS.ACTIVE });
+  }),
+];
+</code></pre>
+<p><strong>MSW Worker</strong>:</p>
+<pre><code class="language-typescript">import { setupServer } from 'msw/node';
+import { handlers } from './handlers';
+
+export const serviceWorker = setupServer(...handlers);
+</code></pre>
+<p><strong>Test Setup</strong>:</p>
+<pre><code class="language-typescript">import { expect, afterEach, beforeAll, afterAll } from 'vitest';
+import { cleanup } from '@testing-library/react';
+import { serviceWorker } from './msw/worker';
+
+beforeAll(() =&gt; serviceWorker.listen());
+afterEach(() =&gt; {
+  cleanup();
+  serviceWorker.resetHandlers();
+});
+afterAll(() =&gt; serviceWorker.close());
+</code></pre>
+<hr>
+<h3 id="running-tests">Running Tests</h3>
+<p>To execute the tests, update your <code>package.json</code> scripts:</p>
+<pre><code class="language-json">&quot;scripts&quot;: {
+  &quot;test:unit&quot;: &quot;vitest --root src/&quot;
+}
+</code></pre>
+<p>Run the tests using:</p>
+<pre><code class="language-bash">npm run test:unit
+</code></pre>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>Testing tools like <strong>Vitest</strong>, <strong>React Testing Library</strong>, and <strong>Mock Service Worker (MSW)</strong> form a powerful trio for building reliable and maintainable React applications. By focusing on user-centric testing, mocking network requests, and leveraging fast test execution, developers can ensure their applications function as intended under various scenarios. These tools not only enhance productivity but also foster collaboration between frontend and backend teams by decoupling development workflows. With a solid understanding of these tools, you’ll be equipped to implement a comprehensive testing strategy that improves code quality and delivers a seamless user experience.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

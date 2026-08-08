@@ -63,6 +63,27 @@ class RubberDuckTests(unittest.TestCase):
                 self.assertEqual(chunk["metadata"]["file_type"], "txt")
                 self.assertEqual(chunk["metadata"]["source"], str(txt_path))
 
+    def test_build_results_payload_includes_answer_when_provided(self):
+        result = {
+            "path": Path("sample.txt"),
+            "score": 0.9876,
+            "snippet": "Example snippet",
+            "metadata": {"file_name": "sample.txt"},
+        }
+
+        payload = rubber_duck.build_results_payload(
+            "what is prism",
+            [result],
+            user_id="placeholder-user",
+            answer="Prisma is a modern, open-source database toolkit.",
+        )
+
+        self.assertEqual(payload["query"], "what is prism")
+        self.assertEqual(payload["answer"], "Prisma is a modern, open-source database toolkit.")
+        self.assertIn("results", payload)
+        self.assertEqual(payload["results"][0]["path"], "sample.txt")
+        self.assertEqual(payload["results"][0]["score"], 0.988)
+
 
 if __name__ == "__main__":
     unittest.main()

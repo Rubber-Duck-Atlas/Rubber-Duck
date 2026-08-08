@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Why Global State Introducing Zustand</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-why-global-state-introducing-zustand">Lesson: Why Global State? Introducing Zustand</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In the ever-evolving world of frontend development, managing state effectively is crucial for building dynamic and responsive user interfaces. Whether you're toggling a button, tracking form inputs, or synchronizing data across multiple components, understanding how to manage state can make or break your application's performance and maintainability. In this lesson, we’ll explore the concept of local state, its best use cases, and its limitations. We’ll also delve into global state management solutions like Redux, MobX, and Zustand, equipping you with the tools to handle both simple and complex state requirements in your projects.</p>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will:</p>
+<ol>
+<li>Gain a clear understanding of what local state is, when to use it, and how it simplifies component-specific logic.</li>
+<li>Recognize scenarios where local state becomes insufficient and learn how to address these challenges.</li>
+<li>Discover popular global state management tools like Redux, MobX, and Zustand, and understand their unique strengths.</li>
+<li>Learn how to set up and integrate global state management libraries in React applications, enabling you to build scalable and maintainable apps.</li>
+<li>Understand the distinctions between <strong>local</strong>, <strong>global</strong>, and <strong>remote</strong> state, and know when to apply each type in your projects.</li>
+</ol>
+<h4 id="steps-to-identify-the-need-for-global-state">Steps to Identify the Need for Global State:</h4>
+<ol>
+<li>Determine which pieces of data are needed by multiple components or across different parts of the app.</li>
+<li>Assess whether prop drilling or other workarounds are becoming too cumbersome.</li>
+<li>Check if the state needs to persist across routes or sessions.</li>
+<li>Think about how the application might grow and whether local state will scale effectively.</li>
+</ol>
+<h4 id="tools-for-managing-global-state">Tools for Managing Global State:</h4>
+<ul>
+<li><strong>Redux</strong>: A predictable state container that enforces strict rules for state updates, making it ideal for large-scale applications.</li>
+<li><strong>MobX</strong>: A simpler, more flexible alternative that allows direct state mutation and automatic dependency tracking.</li>
+</ul>
+<h3 id="understanding-redux">Understanding Redux</h3>
+<p><img src="../_assets/lesson-3-redux.PNG" alt="Frontend"></p>
+<p>Redux is a predictable state container for JavaScript applications. It operates on three core principles:</p>
+<ol>
+<li><strong>Single Source of Truth</strong>: The entire application state is stored in a single object called the <strong>Store</strong>.</li>
+<li><strong>Read-Only State</strong>: State is immutable and can only be updated by dispatching actions.</li>
+<li><strong>Changes via Pure Functions</strong>: Reducers are pure functions that specify how the state should change based on actions.</li>
+</ol>
+<p>These principles make Redux highly predictable and scalable, especially for large applications. Redux also provides powerful debugging tools like the Redux DevTools, which simplify debugging and state inspection.</p>
+<h4 id="setting-up-redux-in-a-reactjs-app">Setting Up Redux in a ReactJS App</h4>
+<p>To integrate Redux with React, you use the <strong>React-Redux</strong> library. Here’s a step-by-step breakdown:</p>
+<ol>
+<li><strong>Creating the Store</strong><pre><code class="language-javascript">// store.jsimport { createStore } from 'redux';import rootReducer from './reducers';const store = createStore(rootReducer);export default store;</code></pre>The <code>createStore</code> function initializes the Redux store, which holds the application state. The <code>rootReducer</code> combines all reducers into a single reducer.</li>
+<li><strong>Defining Reducers</strong><pre><code class="language-javascript">// reducers.jsimport { combineReducers } from 'redux';import counterReducer from './counterReducer';const rootReducer = combineReducers({  counter: counterReducer,});export default rootReducer;</code></pre>The <code>combineReducers</code> utility merges multiple reducers into one, enabling modular state management.</li>
+<li><strong>Implementing a Reducer</strong><pre><code class="language-javascript">// counterReducer.jsconst initialState = { count: 0 };const counterReducer = (state = initialState, action) =&gt; {  switch (action.type) {    case 'INCREMENT':      return { ...state, count: state.count + 1 };    case 'DECREMENT':      return { ...state, count: state.count - 1 };    default:      return state;  }};export default counterReducer;</code></pre>This reducer handles actions (<code>INCREMENT</code>, <code>DECREMENT</code>) and updates the state accordingly.</li>
+<li><strong>Connecting Components to the Store</strong><pre><code class="language-javascript">// Counter.jsimport { connect } from 'react-redux';const Counter = ({ count, increment, decrement }) =&gt; (  &lt;div&gt;    &lt;h1&gt;{count}&lt;/h1&gt;    &lt;button onClick={increment}&gt;+&lt;/button&gt;    &lt;button onClick={decrement}&gt;-&lt;/button&gt;  &lt;/div&gt;);const mapStateToProps = (state) =&gt; ({  count: state.counter.count,});const mapDispatchToProps = (dispatch) =&gt; ({  increment: () =&gt; dispatch({ type: 'INCREMENT' }),  decrement: () =&gt; dispatch({ type: 'DECREMENT' }),});export default connect(mapStateToProps, mapDispatchToProps)(Counter);</code></pre><ul><li><strong>Explanation</strong>:This component displays the current <code>count</code> and provides buttons to increment or decrement it. It connects to the Redux store using <code>connect</code>:<ul><li><code>mapStateToProps</code>: Maps the Redux state (<code>state.counter.count</code>) to the component's props (<code>count</code>), allowing the component to access the state.</li><li><code>mapDispatchToProps</code>: Maps dispatch functions to props (<code>increment</code> and <code>decrement</code>), enabling the component to trigger actions.</li><li><code>connect</code> ties everything together, making the component aware of the Redux store.</li></ul></li></ul></li>
+</ol>
+<hr>
+<h3 id="exploring-mobx">Exploring MobX</h3>
+<p><img src="../_assets/lesson-3-MobX.PNG" alt="Frontend"></p>
+<p>MobX is a simpler and more intuitive alternative to Redux. It is based on the principles of <strong>observables</strong> and <strong>reactions</strong>:</p>
+<ul>
+<li><strong>Observables</strong>: Values that can be tracked for changes.</li>
+<li><strong>Reactions</strong>: Functions that automatically update when an observable value changes.</li>
+</ul>
+<p>MobX requires less boilerplate code and allows direct state mutation, making it ideal for smaller or medium-sized applications. It also includes built-in performance optimizations, ensuring efficiency even in large-scale apps.</p>
+<h4 id="using-mobx-in-a-reactjs-app">Using MobX in a ReactJS App</h4>
+<p>MobX integrates seamlessly with React through the <strong>mobx-react</strong> library. Here’s an example:</p>
+<ol>
+<li><strong>Defining the Store</strong><pre><code class="language-javascript">// store.jsimport { observable, action } from 'mobx';class CounterStore {  @observable count = 0;  @action increment() {    this.count++;  }  @action decrement() {    this.count--;  }  @action reset() {    this.count = 0;  }}const counterStore = new CounterStore();export default counterStore;</code></pre>The <code>@observable</code> decorator makes the <code>count</code> property trackable, while <code>@action</code> methods define how the state can be modified.</li>
+<li><strong>Creating a Reactive Component</strong><pre><code class="language-javascript">// Counter.jsimport { observer } from 'mobx-react';import counterStore from './store';const Counter = observer(() =&gt; {  const { count, increment, decrement } = counterStore;  return (    &lt;div&gt;      &lt;h1&gt;{count}&lt;/h1&gt;      &lt;button onClick={increment}&gt;+&lt;/button&gt;      &lt;button onClick={decrement}&gt;-&lt;/button&gt;    &lt;/div&gt;  );});export default Counter;</code></pre><ul><li><strong>Explanation</strong>:This is a reactive component that automatically updates when the <code>count</code> observable changes:<ul><li><code>observer</code>: Wraps the component to make it reactive. Whenever <code>count</code> changes, the component re-renders.</li><li>The component directly accesses the <code>counterStore</code> to get the <code>count</code> and call <code>increment</code>/<code>decrement</code>.</li></ul></li></ul></li>
+</ol>
+<hr>
+<h3 id="understanding-zustand">Understanding Zustand</h3>
+<p>Zustand is a small, fast, and scalable state management solution for React applications. Created by Jared Palmer and Daishi Kato, Zustand offers a simple and intuitive API that makes state management less cumbersome compared to other solutions.</p>
+<h4 id="types-of-state">Types of State</h4>
+<p>Before diving deeper into Zustand, let's understand the different types of state in web applications:</p>
+<ul>
+<li><strong>Local State</strong>: State that is specific to a component and doesn't need to be shared with other parts of the application.</li>
+<li><strong>Global State</strong>: State that needs to be accessed and modified by multiple components across the application.</li>
+<li><strong>Remote State</strong>: State that represents data fetched from an external source, typically an API.</li>
+</ul>
+<h4 id="getting-started-with-zustand">Getting Started with Zustand</h4>
+<p>To start using Zustand, first install it via npm, yarn, or pnpm:</p>
+<pre><code class="language-bash">npm install zustand
+# or
+yarn add zustand
+# or
+pnpm add zustand
+</code></pre>
+<h4 id="implementing-zustand">Implementing Zustand</h4>
+<p>Let's look at a basic implementation of Zustand:</p>
+<pre><code class="language-javascript">import { create } from 'zustand';
+
+const useStore = create((set) =&gt; ({
+  bears: 0,
+  increasePopulation: () =&gt; set((state) =&gt; ({ bears: state.bears + 1 })),
+  removeAllBears: () =&gt; set({ bears: 0 }),
+}));
+
+function BearCounter() {
+  const bears = useStore((state) =&gt; state.bears);
+  return &lt;h1&gt;{bears} around here...&lt;/h1&gt;;
+}
+
+function Controls() {
+  const increasePopulation = useStore((state) =&gt; state.increasePopulation);
+  return &lt;button onClick={increasePopulation}&gt;one up&lt;/button&gt;;
+}
+</code></pre>
+<p>In this example, we create a store with a <code>bears</code> state and two actions to modify it. The <code>BearCounter</code> and <code>Controls</code> components can then access and modify the state using the <code>useStore</code> hook.</p>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>State management is a cornerstone of modern frontend development, and mastering it empowers you to create efficient, scalable, and user-friendly applications. While <strong>local state</strong> is perfect for handling isolated, component-specific data, transitioning to <strong>global state</strong> becomes essential as your application grows in complexity. Tools like <strong>Redux</strong>, <strong>MobX</strong>, and <strong>Zustand</strong> offer powerful yet flexible solutions for managing shared and persistent data across your app.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

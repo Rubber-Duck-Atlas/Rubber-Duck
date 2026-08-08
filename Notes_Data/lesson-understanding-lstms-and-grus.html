@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Understanding Lstms And Grus</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-understanding-lstms-and-grus">Lesson: Understanding LSTMs and GRUs</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In previous lessons, we learned how Recurrent Neural Networks (RNNs) use a hidden state that is passed from one time step to the next to process sequences. While RNNs can, in theory, learn relationships across arbitrary time steps, they struggle in practice to retain long-range dependencies due to a challenge known as the vanishing gradient problem.</p>
+<p>This problem causes earlier inputs in a sequence to have little to no effect on model updates during training. As new inputs are processed, earlier context is overwritten, making it hard for RNNs to “remember” information over many steps.</p>
+<p>To overcome this, Long Short-Term Memory (LSTM) units and Gated Recurrent Units (GRUs) were introduced. These architectures incorporate gating mechanisms that regulate how information flows through the network allowing relevant data to be retained and irrelevant information to be forgotten.</p>
+<p>In this lesson, we’ll examine LSTMs and GRUs in detail, how they work, how they solve the vanishing gradient problem, and how they compare in practice.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Explain</strong> how LSTM and GRU architectures address the vanishing gradient problem.</li>
+<li><strong>Compare</strong> the gating structures of LSTM and GRU units.</li>
+<li><strong>Apply</strong> LSTM/GRU-based sequence models to solve NLP tasks involving long-range dependencies.</li>
+</ol>
+<hr>
+</section><section><h2 id="recap-why-vanilla-rnns-fail">Recap: Why Vanilla RNNs Fail</h2>
+<p>Before diving into gated recurrent architectures, it's worth briefly recalling why vanilla RNNs fall short on long sequences. Standard RNNs struggle to retain information over many time steps due to the vanishing gradient problem. As gradients are backpropagated through time, they often shrink to near-zero making it difficult for the model to update weights associated with earlier inputs. This limitation prevents RNNs from effectively modeling long-term dependencies, especially in tasks like language modeling, translation, or speech recognition, where important information may appear far from where it is needed.</p>
+<blockquote>
+<p>To overcome this, researchers introduced new recurrent architectures <strong>LSTMs</strong> and <strong>GRUs</strong> designed specifically to preserve information and gradients across long sequences.</p>
+</blockquote>
+<hr>
+</section><section><h2 id="understanding-lstm-architecture">Understanding LSTM Architecture</h2>
+<p>The Long Short-Term Memory (LSTM) network was introduced by Hochreiter and Schmidhuber in 1997 to address a key limitation of standard RNNs: the inability to retain long-range dependencies due to vanishing gradients. LSTMs solve this by modifying the structure of the recurrent unit itself adding internal gating mechanisms and a separate memory state that allows for better control over what information is remembered or forgotten over time.</p>
+<h3 id="core-design-the-cell-state">Core Design: The Cell State</h3>
+<p>At the heart of the LSTM is the cell state <span class="math">\(c_t\)</span>, which acts as a form of long-term memory. It is passed from one time step to the next with only minor linear interactions, allowing information to flow relatively unchanged. The model decides what to store, update, or discard using three gates:</p>
+<ul>
+<li><strong>Forget gate</strong> <span class="math">\(f_t\)</span>: Decides what information to remove from the cell state.</li>
+<li><strong>Input gate</strong> <span class="math">\(i_t\)</span>: Determines what new information to write to the cell state.</li>
+<li><strong>Output gate</strong> <span class="math">\(o_t\)</span>: Controls what part of the cell state is passed to the hidden state.</li>
+</ul>
+<p>Instead of relying only on the hidden state like vanilla RNNs, LSTMs separate short-term and long-term memory via:</p>
+<ul>
+<li>a hidden state <span class="math">\(h_t\)</span></li>
+<li>a cell state <span class="math">\(c_t\)</span></li>
+</ul>
+<p>The network learns to control these two through <strong>three gates</strong>.</p>
+<p><img src="../_assets/core-lstm.png" alt=""></p>
+<blockquote>
+<p>This figure shows the long horizontal line (cell state) running across time steps with minor linear interactions.</p>
+</blockquote>
+<hr>
+<h3 id="lstm-equations">LSTM Equations</h3>
+<p>At each time step <span class="math">\(t\)</span>, given input <span class="math">\(x_t\)</span> and previous hidden state <span class="math">\(h_{t-1}\)</span>, the LSTM performs the following operations:</p>
+<p><strong>New Content :</strong> new content to be written to the cell</p>
+<div class="math">
+\[
+\begin{aligned}
+ĉ_t &amp;= \tanh(W_c \cdot [h_{t-1}, x_t] + b_c) \\
+\end{aligned}
+\]</div>
+<p><img src="../_assets/new-cell.png" alt=""></p>
+<p><strong>Forget Gate</strong>: Controls what portion of the previous cell state to keep.</p>
+<div class="math">
+\[
+\begin{aligned}
+f_t &amp;= \sigma(W_f \cdot [h_{t-1}, x_t] + b_f) \\
+\end{aligned}
+\]</div>
+<p><img src="../_assets/forget.png" alt=""></p>
+<p><strong>Input Gate</strong>: Controls what new information to add to the cell state.</p>
+<div class="math">
+\[
+\begin{aligned}
+i_t &amp;= \sigma(W_i \cdot [h_{t-1}, x_t] + b_i) \\
+\end{aligned}
+\]</div>
+<p><img src="../_assets/input.png" alt=""></p>
+<p><strong>Cell State:</strong></p>
+<ul>
+<li>erase (“forget”) some content from last cell state</li>
+<li>write (“input”) some new cell content</li>
+</ul>
+<div class="math">
+\[
+\begin{aligned}
+c_t &amp;= f_t \cdot c_{t-1} + i_t \cdot \tilde{c}_t \\
+\end{aligned}
+\]</div>
+<p><img src="../_assets/cell.png" alt=""></p>
+<p><strong>Output Gate and Hidden State</strong>:</p>
+<ul>
+<li><strong>Output Gate:</strong> Controls what part of the cell state is exposed as output.</li>
+</ul>
+<div class="math">
+\[
+\begin{aligned}
+o_t &amp;= \sigma(W_o \cdot [h_{t-1}, x_t] + b_o) \\
+\end{aligned}
+\]</div>
+<ul>
+<li><strong>Hidden State:</strong> read (“output”) some content from the cell</li>
+</ul>
+<div class="math">
+\[
+\begin{aligned}
+h_t &amp;= o_t \cdot \tanh(c_t)
+\end{aligned}
+\]</div>
+<p><img src="../_assets/output.png" alt=""></p>
+<p>Here,</p>
+<ul>
+<li><span class="math">\(\sigma\)</span> is the sigmoid activation function.</li>
+<li><span class="math">\(\tilde{c}_t\)</span> is the candidate cell state.</li>
+<li><span class="math">\(h_t\)</span> is the hidden state (used for output or passed forward).</li>
+</ul>
+<p><img src="../_assets/sigmoid.png" alt="alt text"></p>
+<h3 id="gradient-preservation">Gradient Preservation</h3>
+<p>The key to the LSTM’s success lies in its additive update to the cell state:</p>
+<div class="math">
+\[
+c_t = f_t \cdot c_{t-1} + i_t \cdot \tilde{c}_t
+\]</div>
+<p>This structure allows gradients to flow back through time without being repeatedly scaled by small numbers, as long as <span class="math">\(f_t \approx 1\)</span> and <span class="math">\(i_t \approx 0\)</span>. In other words, the cell can retain information across many time steps without degradation.</p>
+<blockquote>
+<p>The LSTM cell introduces controlled memory and selective information flow enabling effective long-term learning in sequential models.</p>
+</blockquote>
+<p>While LSTMs are powerful and widely used, they are not the only solution to the vanishing gradient problem. A simpler and more computationally efficient variant, the Gated Recurrent Unit (GRU),  was later proposed to achieve similar results with fewer parameters. In the next section, we’ll explore how GRUs differ from LSTMs and when one might be preferred over the other.</p>
+<hr>
+</section><section><h2 id="gru-architecture">GRU Architecture</h2>
+<p>While LSTMs successfully addressed the vanishing gradient problem, their complexity, particularly the use of three gates and a separate cell state, motivated the development of a more streamlined alternative. The Gated Recurrent Unit (GRU), introduced by Cho et al. in 2014, simplifies the LSTM architecture while maintaining its ability to learn long-range dependencies.</p>
+<p>GRUs achieve this by merging the cell state and hidden state into a single vector and reducing the number of gates from three to two. This makes GRUs computationally lighter and easier to train, particularly on smaller datasets or in low-latency environments.</p>
+<h3 id="core-design-fewer-gates-unified-memory">Core Design: Fewer Gates, Unified Memory</h3>
+<p>Unlike LSTMs, which maintain two internal states (<span class="math">\(c_t\)</span> and <span class="math">\(h_t\)</span>), GRUs use only the hidden state <span class="math">\(h_t\)</span>. Two gates are used to control information flow:</p>
+<ul>
+<li><strong>Update gate</strong> <span class="math">\(z_t\)</span>: Determines how much of the previous hidden state should be retained.</li>
+<li><strong>Reset gate</strong> <span class="math">\(r_t\)</span>: Controls how much of the past information to forget before computing the candidate activation.</li>
+</ul>
+<p>This structure balances simplicity with effectiveness, allowing the GRU to selectively memorize or discard information as needed.</p>
+<h3 id="gru-equations">GRU Equations</h3>
+<p>At each time step <span class="math">\(t\)</span>, the GRU performs the following computations:</p>
+<div class="math">
+\[
+\begin{align*}
+z_t &amp;= \sigma(W_z [h_{t-1}, x_t] + b_z) \\\\
+r_t &amp;= \sigma(W_r [h_{t-1}, x_t] + b_r) \\\\
+\tilde{h}_t &amp;= \tanh(W_h [r_t \cdot h_{t-1}, x_t] + b_h) \\\\
+h_t &amp;= (1 - z_t) \cdot h_{t-1} + z_t \cdot \tilde{h}_t
+\end{align*}
+\]</div>
+<ul>
+<li><span class="math">\(z_t\)</span> controls the blend between the old and new information.</li>
+<li><span class="math">\(r_t\)</span> allows the model to reset memory when appropriate.</li>
+<li><span class="math">\(\tilde{h}_t\)</span> is the candidate activation for the new hidden state.</li>
+<li><span class="math">\(h_t\)</span> is the final hidden state output for the current time step.</li>
+</ul>
+<p><img src="../_assets/gru.png" alt=""></p>
+<p>GRUs directly update the hidden state <span class="math">\(h_t\)</span> using a weighted sum of the previous state and the new candidate. This allows them to efficiently retain or overwrite past information.</p>
+<h3 id="functional-summary">Functional Summary</h3>
+<ul>
+<li><strong>Memory merging:</strong> GRUs combine short-term and long-term memory into a single vector.</li>
+<li><strong>Simplified flow:</strong> Fewer gates reduce the number of parameters and computational overhead.</li>
+<li><strong>Training speed:</strong> GRUs often converge faster than LSTMs, especially on smaller or less complex datasets.</li>
+</ul>
+<blockquote>
+<p>In practice, GRUs tend to perform comparably to LSTMs in many tasks, but with reduced training time and resource usage.</p>
+</blockquote>
+<p>Now that we've examined the internal mechanisms of both <strong>LSTMs and GRUs</strong>, we can directly compare them across structural and functional dimensions. Understanding their differences will help you choose the right architecture for different types of sequence modeling tasks.</p>
+<hr>
+</section><section><h2 id="lstm-vs-gru-structural-and-functional-comparison">LSTM vs GRU: Structural and Functional Comparison</h2>
+<p>Now that we've explored both LSTM and GRU architectures, it's important to compare them side by side to understand their trade-offs. Both models were designed to preserve gradient flow and capture long-range dependencies, but they do so using different structural strategies.</p>
+<h3 id="key-differences">Key Differences</h3>
+<p><strong>Memory Structure</strong></p>
+<ul>
+<li><strong>LSTM</strong> maintains two states: the hidden state (<span class="math">\(h_t\)</span>) and the cell state (<span class="math">\(c_t\)</span>).</li>
+<li><strong>GRU</strong> combines these into a single hidden state (<span class="math">\(h_t\)</span>), simplifying the architecture.</li>
+</ul>
+<p><strong>Gating Mechanism</strong></p>
+<ul>
+<li><strong>LSTM</strong> uses three gates: input, forget, and output.</li>
+<li><strong>GRU</strong> uses two: update and reset.</li>
+</ul>
+<p><strong>Parameter Count</strong></p>
+<ul>
+<li>GRUs generally have <strong>fewer parameters</strong> than LSTMs, making them faster to train and more memory-efficient.</li>
+</ul>
+<p><strong>Expressiveness</strong></p>
+<ul>
+<li>LSTMs offer more <strong>control and flexibility</strong> due to the separation of memory and output.</li>
+<li>GRUs, while simpler, often perform just as well in practice—especially on tasks where model capacity is not a bottleneck.</li>
+</ul>
+<h3 id="practical-comparison-table">Practical Comparison Table</h3>
+<table>
+<thead>
+<tr>
+<th><strong>Aspect</strong></th>
+<th><strong>LSTM</strong></th>
+<th><strong>GRU</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Number of Gates</td>
+<td>3 (input, forget, output)</td>
+<td>2 (update, reset)</td>
+</tr>
+<tr>
+<td>Memory Components</td>
+<td>Cell state + hidden state</td>
+<td>Unified hidden state</td>
+</tr>
+<tr>
+<td>Parameter Count</td>
+<td>Higher</td>
+<td>Lower</td>
+</tr>
+<tr>
+<td>Training Time</td>
+<td>Slower</td>
+<td>Faster</td>
+</tr>
+<tr>
+<td>Performance</td>
+<td>Strong on complex dependencies</td>
+<td>Comparable on many tasks</td>
+</tr>
+<tr>
+<td>Interpretability</td>
+<td>Slightly more modular</td>
+<td>Simpler to analyze</td>
+</tr>
+<tr>
+<td>Real-World Preference</td>
+<td>Used in high-control scenarios</td>
+<td>Used in real-time applications</td>
+</tr>
+</tbody>
+</table>
+<h3 id="choosing-between-lstm-and-gru">Choosing Between LSTM and GRU</h3>
+<p>There’s no universal rule for when to use LSTM or GRU. Here are general guidelines:</p>
+<ul>
+<li>Use <strong>LSTM</strong> if:<ul><li>Your data has complex long-range dependencies.</li><li>You can afford longer training times for potentially better performance.</li><li>You need explicit memory control or want to experiment with gating behavior.</li></ul></li>
+<li>Use <strong>GRU</strong> if:<ul><li>You want faster training with fewer parameters.</li><li>You’re working with smaller datasets or limited compute.</li><li>You need a compact model for real-time or edge applications.</li></ul></li>
+</ul>
+<blockquote>
+<p>In practice, both LSTMs and GRUs are strong choices—selecting one depends on the problem, data scale, and resource constraints.</p>
+</blockquote>
+<p><img src="../_assets/lstmgru.png" alt=""></p>
+<hr>
+<h3 id="practical-example-comparing-lstm-and-gru-in-code">Practical Example: Comparing LSTM and GRU in Code</h3>
+<p>To illustrate how LSTMs and GRUs handle sequence memory, consider the following example. We generate binary sequences where the first token determines the class label. The model must retain that early token throughout the entire sequence to make the correct prediction—ideal for testing long-term memory in recurrent units.</p>
+<p><strong>Task Setup</strong></p>
+<pre><code class="language-python">import torch
+import torch.nn as nn
+import numpy as np
+
+# Generate sequences of 0s and 1s; label is the first token
+def generate_data(num_samples=10000, seq_len=10):
+    X = np.random.randint(0, 2, (num_samples, seq_len))
+    y = X[:, 0]  # Label = first token
+    return torch.tensor(X, dtype=torch.long), torch.tensor(y, dtype=torch.float32)
+
+X, y = generate_data()
+</code></pre>
+<p><strong>LSTM-Based Classifier</strong></p>
+<pre><code class="language-python">class LSTMClassifier(nn.Module):
+    def __init__(self, input_dim, hidden_dim):
+        super().__init__()
+        self.embedding = nn.Embedding(input_dim, 8)
+        self.lstm = nn.LSTM(input_size=8, hidden_size=hidden_dim, batch_first=True)
+        self.fc = nn.Linear(hidden_dim, 1)
+
+    def forward(self, x):
+        x = self.embedding(x)
+        _, (h_n, _) = self.lstm(x)
+        return torch.sigmoid(self.fc(h_n[-1]))
+</code></pre>
+<p><strong>GRU-Based Classifier</strong></p>
+<pre><code class="language-python">class GRUClassifier(nn.Module):
+    def __init__(self, input_dim, hidden_dim):
+        super().__init__()
+        self.embedding = nn.Embedding(input_dim, 8)
+        self.gru = nn.GRU(input_size=8, hidden_size=hidden_dim, batch_first=True)
+        self.fc = nn.Linear(hidden_dim, 1)
+
+    def forward(self, x):
+        x = self.embedding(x)
+        _, h_n = self.gru(x)
+        return torch.sigmoid(self.fc(h_n[-1]))
+</code></pre>
+<p><strong>Training Loop</strong></p>
+<pre><code class="language-python">def train(model, X, y, epochs=5):
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    loss_fn = nn.BCELoss()
+
+    for epoch in range(epochs):
+        model.train()
+        optimizer.zero_grad()
+        y_pred = model(X).squeeze()
+        loss = loss_fn(y_pred, y)
+        loss.backward()
+        optimizer.step()
+        print(f&quot;Epoch {epoch+1}, Loss: {loss.item():.4f}&quot;)
+</code></pre>
+<p><strong>Run Both Models</strong></p>
+<pre><code class="language-python">lstm_model = LSTMClassifier(input_dim=2, hidden_dim=16)
+train(lstm_model, X, y)
+
+gru_model = GRUClassifier(input_dim=2, hidden_dim=16)
+train(gru_model, X, y)
+</code></pre>
+<p><strong>Interpretation</strong></p>
+<p>Both models are trained on the same task. The LSTM may be <strong>slightly slower</strong> but preserves memory explicitly through a cell state. The GRU, while faster and simpler, often reaches <strong>similar accuracy</strong> with fewer parameters.</p>
+<blockquote>
+<p>This example shows how model choice affects training speed and complexity, especially for tasks that require sequence memory.</p>
+</blockquote>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>Vanilla RNNs struggle with long-term dependencies due to vanishing gradients. LSTMs and GRUs introduce memory and gating mechanisms that solve this problem. LSTMs use separate cell and hidden states with three gates, while GRUs simplify the model by merging these with only two gates.</p>
+<p>Understanding how these mechanisms work will help you design more effective sequence models for NLP. Next, you’ll apply both models in a sentiment classification task and compare their real-world performance.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

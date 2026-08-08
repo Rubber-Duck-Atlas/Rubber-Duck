@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Word2vec–Cbow And Skip Gram</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-word2vec-cbow-and-skip-gram">Lesson: Word2Vec – CBOW and Skip-Gram</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In our previous lessons, we explored vector semantics and count-based methods like co-occurrence matrices to represent words numerically. While these approaches capture distributional patterns, they produce high-dimensional, sparse vectors that struggle with scalability and generalization. Today, we’ll dive into <strong>Word2Vec</strong>, a transformative model that learns dense, meaningful word embeddings by predicting context. Using shallow neural networks and unsupervised learning, Word2Vec captures both semantic and syntactic relationships, offering a more efficient and powerful way to represent words in natural language processing (NLP).</p>
+<p>This lesson focuses on how Word2Vec generates embeddings and the key differences between its two architectures: <strong>Continuous Bag of Words (CBOW)</strong> and <strong>Skip-Gram</strong>. Let’s explore how these models work and why they’re so impactful!</p>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li>Explain how Word2Vec generates word embeddings from raw text using prediction-based methods.</li>
+<li>Differentiate between the Continuous Bag of Words (CBOW) and Skip-Gram architectures, including their approaches and use cases.</li>
+</ol>
+<hr>
+</section><section><h2 id="how-word2vec-generates-word-embeddings">How Word2Vec Generates Word Embeddings</h2>
+<p>Unlike earlier count-based models that rely on raw co-occurrence statistics, Word2Vec introduces a predictive approach that learns word representations through context prediction. By training a shallow neural network to predict a word from its surrounding context (or vice versa), Word2Vec generates dense, low-dimensional vectors that capture deep semantic relationships and are well-suited for modern NLP tasks.</p>
+<h3 id="from-count-based-to-predictive-models">From Count-Based to Predictive Models</h3>
+<p>In count-based vector models (e.g., term-term matrices), word vectors are constructed from raw co-occurrence counts and optionally transformed via weighting schemes like tf-idf or PPMI. These methods represent the <strong>global</strong> statistical structure of a corpus.</p>
+<p>However, these approaches have limitations:</p>
+<ul>
+<li>Vectors are <strong>sparse</strong> and <strong>high-dimensional</strong> (usually in the order of |V|, the vocabulary size).</li>
+<li>They do not directly <strong>optimize for similarity</strong>.</li>
+<li>They are <strong>inefficient</strong> for large corpora.</li>
+</ul>
+<p>Word2Vec solves this by introducing a <strong>predictive architecture</strong>, where the model is trained to predict a word given its context (or the reverse), thereby <strong>learning vector representations as part of the training process</strong>.</p>
+<hr>
+</section><section><h2 id="overview-on-word2vec">Overview on Word2Vec</h2>
+<p>Word2Vec is a model that learns word embeddings using a shallow neural network trained on a simple task: predict context from a word or a word from its context.</p>
+<p>The learned representations are:</p>
+<ul>
+<li><strong>Low-dimensional</strong>: Typically 100–300 dimensions, compared to thousands in count-based methods.</li>
+<li><strong>Dense</strong>: All values are meaningful, avoiding the sparsity of earlier approaches (all values are typically non-zero).</li>
+<li><strong>Meaningful</strong>: They encode relationships like synonyms, analogies, and word associations (Embeddings capture relationships like &quot;king&quot; to &quot;queen&quot; or &quot;run&quot; to &quot;ran.&quot;).</li>
+</ul>
+<p>Word2Vec doesn't rely on explicit frequency counts. Instead, it optimizes an objective function based on the likelihood of words appearing in particular contexts.</p>
+<hr>
+</section><section><h2 id="word2vec-architectures-cbow-and-skip-gram">Word2Vec Architectures: CBOW and Skip-Gram</h2>
+<p>Word2Vec offers two architectures (<strong>CBOW</strong> and <strong>Skip-Gram</strong>) each using a shallow neural network with three layers (input, hidden, output) to learn embeddings. Let’s explore how they work, including their use of the softmax function to compute probabilities.</p>
+<h3 id="continuous-bag-of-words-cbow">1. Continuous Bag of Words (CBOW)</h3>
+<p><strong>Goal</strong>: Predict a <strong>target word</strong> from a window of surrounding context words, such that:</p>
+<ul>
+<li>Ignores word order (&quot;bag of words&quot;)</li>
+<li>Uses the <strong>average of context word vectors</strong> as input</li>
+<li>Efficient to train; works well for frequent words</li>
+</ul>
+<p><img src="../_assets/cbow.png" alt=""></p>
+<h3 id="process"><strong>Process</strong></h3>
+<ol>
+<li><strong>Input layer</strong>: One-hot vectors of context words.</li>
+<li><strong>Hidden layer</strong>: A shared weight matrix projects inputs into dense space.</li>
+<li><strong>Output layer</strong>: Softmax predicts the target word.<strong>Objective function:</strong> The model is trained by maximizng the softmax (that calculates the probability of the target word ( w_t ) given its context words) given by:</li>
+</ol>
+<div class="math">
+\[
+\ P(w_t \mid w_{t-2}, w_{t-1}, w_{t+1}, w_{t+2}) = \frac{\exp(v'{w_t} \cdot v{\text{avg}})}{\sum_{w=1}^{|V|} \exp(v'w \cdot v{\text{avg}})}
+\]</div>
+<p><strong>Where:</strong></p>
+<ul>
+<li><span class="math">\(( w_t )\)</span> is the target word and the others are the context.</li>
+<li>Numerator <span class="math">\(\exp(v'{w_t} \cdot v{\text{avg}})\)</span>: The dot product of the target word’s output vector <span class="math">\(( v'{w_t} )\)</span> and the averaged context vector <span class="math">\(( v{\text{avg}} )\)</span> measures their similarity. The exponential ensures a positive score and amplifies this similarity.</li>
+<li>Denominator <span class="math">\(((\sum_{w=1}^{|V|} \exp(v'w \cdot v{\text{avg}}))\)</span>: Sums the exponentiated dot products over all vocabulary words, normalizing the probabilities to sum to 1.</li>
+</ul>
+<p><strong>Strengths:</strong></p>
+<ul>
+<li>Faster Training: Makes one prediction per context window.</li>
+<li>Works Well for Frequent Words: Averaging smooths out noise, capturing general patterns.</li>
+</ul>
+<p><strong>Example:</strong></p>
+<p>For the sentence &quot;The quick brown fox jumps&quot; with a context window of 2</p>
+<p>CBOW takes [&quot;The&quot;, &quot;quick&quot;, &quot;fox&quot;, &quot;jumps&quot;], averages their embeddings, and predicts &quot;brown.&quot;</p>
+<p>If the vocabulary is just [&quot;the&quot;, &quot;quick&quot;, &quot;brown&quot;, &quot;fox&quot;, &quot;jumps&quot;], softmax might assign &quot;brown&quot; a high probability (e.g., 70%) based on its similarity to the context.</p>
+<hr>
+<h3 id="skip-gram">2. Skip-Gram</h3>
+<p><strong>Goal</strong>: Predict <strong>context words</strong> given a <strong>target word</strong>, such that:</p>
+<ul>
+<li>Treats the target word as input</li>
+<li>Predicts each context word individually</li>
+<li>Slower to train, but more powerful for capturing rare word relationships</li>
+</ul>
+<p><img src="../_assets/Skip-Gram.png" alt=""></p>
+<h3 id="process-1"><strong>Process</strong></h3>
+<p>Skip-Gram reverses CBOW’s approach, predicting each context word from a single target word:</p>
+<ol>
+<li>The model takes a <strong>one-hot vector</strong> for the center word.</li>
+<li>Projects it to a hidden layer (embedding).</li>
+<li>Predicts surrounding context words using softmax.</li>
+</ol>
+<p><strong>Objective function:</strong>
+The softmax computes the probability of a context word <span class="math">\(( w_{t+j} )\)</span> given the target word <span class="math">\(( w_t )\)</span>:</p>
+<div class="math">
+\[
+P(w_{t+j} \mid w_t) = \frac{\exp(v'{w{t+j}} \cdot v_{w_t})}{\sum_{w=1}^{|V|} \exp(v'w \cdot v{w_t})}
+\]</div>
+<p><strong>Where</strong>:</p>
+<ul>
+<li>In training, the model takes the center word at position <span class="math">\(t\)</span> and learns to predict each context word at positions  <span class="math">\(t+j\)</span>, where <span class="math">\(j∈[−c,c]∖{0}\)</span>, and <span class="math">\(c\)</span> is the window size.</li>
+<li>Numerator <span class="math">\(((\exp(v'{w{t+j}} \cdot v_{w_t}))\)</span>: Measures similarity between the context word’s output vector <span class="math">\(( v'{w{t+j}} )\)</span> and the target word’s input vector <span class="math">\(( v_{w_t} )\)</span>. The exponential amplifies this similarity.</li>
+<li>Denominator <span class="math">\(((\sum_{w=1}^{|V|} \exp(v'w \cdot v{w_t})))\)</span>: Normalizes across the vocabulary.</li>
+</ul>
+<p>The overall objective is to maximize the log-likelihood of all context words:</p>
+<div class="math">
+\[
+\frac{1}{T} \sum_{t=1}^{T} \sum_{-c \leq j \leq c, j \neq 0} \log P(w_{t+j} \mid w_t)
+\]</div>
+<p><strong>Where</strong>:</p>
+<ul>
+<li><span class="math">\(( T )\)</span> is the total number of tokens in the corpus.</li>
+</ul>
+<p><strong>Example:</strong>
+Same sentence as above:</p>
+<p>Skip-Gram predicts [&quot;The&quot;, &quot;quick&quot;, &quot;fox&quot;, &quot;jumps&quot;] separately. If the dot products are high for &quot;quick&quot; and &quot;fox,&quot; softmax might assign probabilities like 40% for &quot;quick,&quot; 35% for &quot;fox,&quot; and lower for others.</p>
+<p><strong>Strengths</strong>:</p>
+<ul>
+<li>Better for Rare Words: Captures nuanced relationships without averaging.</li>
+<li>More Expressive Embeddings: Focuses on individual word-context pairs.</li>
+</ul>
+<hr>
+</section><section><h2 id="cbow-vs.skip-gram-in-depth">CBOW vs. Skip-Gram: In Depth</h2>
+<p>CBOW and Skip-Gram differ fundamentally in their approach to learning word embeddings, which impacts their performance and use cases. <strong>CBOW</strong> takes multiple context words (e.g., 2 to 5 words around the target) as input, averages their embeddings into a single vector (ignoring word order), and predicts the target word.
+In contrast, <strong>Skip-Gram</strong> uses a single center word as input and predicts each surrounding context word individually, creating multiple training pairs per target word. This makes CBOW <strong>faster to train</strong> since it generates fewer predictions per training sample (one target word per context window), while <strong>Skip-Gram is slower</strong> due to more predictions (one for each context word).</p>
+<p>CBOW performs better for <strong>frequent words</strong> because its averaging smooths out noise and captures general context patterns, but this can obscure nuanced relationships, leading to less detailed embeddings for rare words.
+Skip-Gram, by focusing on individual word-context pairs, excels at capturing <strong>rare word relationships</strong>, producing more expressive embeddings at the cost of increased computational complexity.</p>
+<p><strong>CBOW</strong> scales better for <strong>large corpora</strong> due to its efficiency, making it suitable for <strong>general</strong> tasks like sentiment analysis on broad datasets, whereas Skip-Gram is often preferred for <strong>specialized</strong> domains (e.g., medical texts) where rare terms need precise embeddings. The averaging in CBOW can dilute unique context signals, while Skip-Gram’s direct training of each pair preserves fine-grained semantic and syntactic patterns.</p>
+<h3 id="cbow-vs.skip-gram-key-differences">CBOW vs. Skip-Gram: Key Differences</h3>
+<p>The following table summarizes the key differences:</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>CBOW</th>
+<th>Skip-Gram</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td>Context words</td>
+<td>Center word</td>
+</tr>
+<tr>
+<td>Output</td>
+<td>Target word</td>
+<td>Context words</td>
+</tr>
+<tr>
+<td>Works better for</td>
+<td>Frequent words</td>
+<td>Rare words</td>
+</tr>
+<tr>
+<td>Training time</td>
+<td>Faster</td>
+<td>Slower</td>
+</tr>
+<tr>
+<td>Predictive power</td>
+<td>More general</td>
+<td>More detailed</td>
+</tr>
+<tr>
+<td>Scalability</td>
+<td>Better</td>
+<td>Less scalable</td>
+</tr>
+<tr>
+<td>Embedding Quality</td>
+<td>Less nuanced</td>
+<td>More expressive</td>
+</tr>
+</tbody>
+</table>
+<h3 id="training-data-differences">Training Data Differences</h3>
+<p>In CBOW, each training sample is one word predicted from multiple context words. For a context window of size 2 (2 words before and 2 after), CBOW generates <strong>one training example per target word</strong>, where the input is the averaged embeddings of the context words, and the output is the target word.</p>
+<p>In Skip-Gram, each training sample consists of <strong>multiple pairs</strong>: the center word paired with each context word individually. For a context window of size 2, Skip-Gram generates <strong>4 training examples per target word</strong> (one for each of the 2 words before and 2 words after), with the center word as input and each context word as a separate output prediction.</p>
+<blockquote>
+<p>For a context window size of 2 in the sentence “The quick brown fox jumps”:</p>
+<ul>
+<li><strong>CBOW</strong>: To predict “brown”, the input is the averaged embeddings of [“The”, “quick”, “fox”, “jumps”], and the output is “brown”. (1 training example)</li>
+<li><strong>Skip-Gram</strong>: Using “brown” as the center word, the training examples are:<ul><li>“brown” → “The”</li><li>“brown” → “quick”</li><li>“brown” → “fox”</li><li>“brown” → “jumps”<br>(4 training examples)</li></ul></li>
+</ul>
+</blockquote>
+<hr>
+<h3 id="practical-implications">Practical Implications</h3>
+<ul>
+<li><strong>CBOW’s Averaging</strong>: The averaging of context vectors in CBOW can lead to a loss of specific contextual information, which might make embeddings less sensitive to rare or nuanced patterns. However, this same averaging makes CBOW more robust to noise in large datasets, as it generalizes better for frequent words.</li>
+<li><strong>Skip-Gram’s Granularity</strong>: Skip-Gram’s focus on individual word-context pairs makes it more computationally intensive but also more precise. It excels at capturing relationships involving rare words because it doesn’t average out their context, allowing the model to learn more detailed embeddings.</li>
+<li><strong>Use Case Example</strong>: If you’re working on a task like sentiment analysis on a large, general corpus (e.g., news articles), CBOW might be preferred for its speed and ability to handle frequent words well. However, if you’re working on a specialized domain (e.g., medical texts) where rare terms like “arrhythmia” need precise embeddings, Skip-Gram would likely yield better results.</li>
+</ul>
+<h3 id="softmax-computational-challenge">Softmax Computational Challenge</h3>
+<p>For both CBOW and Skip-Gram, computing the softmax denominator (summing over the entire vocabulary) is slow for large vocabularies (e.g., 10,000 words). To speed things up, Word2Vec often uses negative sampling, focusing on a few &quot;wrong&quot; words instead of the whole vocabulary.</p>
+<hr>
+</section><section><h2 id="embedding-properties">Embedding Properties</h2>
+<p>Word2Vec embeddings capture rich linguistic patterns through the way they cluster words in vector space. One key property is <strong>semantic similarity</strong>—words like <em>doctor</em> and <em>nurse</em>, or <em>cat</em> and <em>dog</em>, tend to appear in similar contexts and therefore lie close together in the embedding space. The model also captures <strong>syntactic similarity</strong>, grouping together words that share grammatical roles, such as <em>run</em> and <em>ran</em> or <em>quick</em> and <em>quicker</em>.</p>
+<p>A particularly striking feature is the ability to perform <strong>word analogies</strong> through vector arithmetic. For example:</p>
+<div class="math">
+\[
+\text{king} - \text{man} + \text{woman} \approx \text{queen}
+\]</div>
+<p>This kind of relationship emerges because Word2Vec groups words with <strong>similar meanings, roles, and patterns of usage</strong> into <strong>consistent geometric structures</strong>, allowing it to encode both meaning and form within its learned embeddings.</p>
+<hr>
+</section><section><h2 id="word2vec-and-representation-learning">Word2Vec and Representation Learning</h2>
+<p>Word2Vec is one of the earliest successful models of <strong>representation learning</strong> in NLP. Instead of engineering features by hand, we learn embeddings directly from raw data.</p>
+<p>It exemplifies the trend toward <strong>self-supervised learning</strong>, where the training signal is derived from the structure of the data itself. Predicting context serves as a <strong>pretext task</strong> that yields representations useful for many downstream applications.</p>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>In this lesson, we explored how Word2Vec represents a major step forward in semantic modeling. It moves beyond co-occurrence to prediction, training a neural network to <strong>embed meaning</strong> into compact vectors. You learned how CBOW and Skip-Gram differ, how Word2Vec is trained, and what makes its embeddings powerful and generalizable.</p>
+<p>Word2Vec's influence laid the foundation for contextualized embeddings and modern NLP models like BERT and GPT, which build on the idea of <strong>learning from context</strong>.</p>
+<p>With a strong understanding of how CBOW and Skip-Gram operate, in the next activity, you'll apply this knowledge in practice through hands-on training both models and compare how their outputs differ.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

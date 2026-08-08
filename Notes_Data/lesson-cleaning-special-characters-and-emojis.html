@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Cleaning Special Characters And Emojis</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-cleaning-special-characters-and-emojis">Lesson: Cleaning Special Characters and Emojis</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Text data collected from various sources often contains unnecessary elements such as <strong>punctuation, URLs, emojis, and HTML/XML text</strong>. These elements can introduce noise into Natural Language Processing (NLP) tasks and impact the accuracy of machine learning models. Properly cleaning the text ensures better performance in text classification, sentiment analysis, and other NLP applications.</p>
+<p>In this lesson, we will explore different techniques for <strong>removing special characters and emojis</strong> using <strong>regular expressions (re library)</strong> and NLP libraries.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Identify</strong> different types of unwanted characters in text data.</li>
+<li><strong>Apply</strong> regular expressions to clean text efficiently.</li>
+<li><strong>Utilize</strong> NLP libraries to handle URLs, punctuation, and emojis.</li>
+<li><strong>Evaluate</strong> the impact of text cleaning on NLP applications.</li>
+</ol>
+<hr>
+</section><section><h2 id="identifying-unwanted-characters">Identifying Unwanted Characters</h2>
+<p>In raw text data, there are often <strong>unwanted characters</strong> that do not add value to the analysis and can negatively impact NLP models. These include:</p>
+<ul>
+<li><strong>Punctuation marks</strong>: <code>!</code>, <code>?</code>, <code>#</code>, <code>@</code>, etc.</li>
+<li><strong>Special symbols</strong>: <code>$</code>, <code>%</code>, <code>&amp;</code>, <code>*</code>, etc.</li>
+<li><strong>Digits</strong> (in some contexts): <code>0–9</code></li>
+<li><strong>Extra whitespace</strong> or <strong>non-printable characters</strong>: tabs, newlines, escape sequences</li>
+<li><strong>HTML tags</strong> or <strong>markup code</strong>: <code>&lt;div&gt;</code>, <code>&amp;nbsp;</code>, etc.</li>
+</ul>
+<p>Removing or handling these characters helps <strong>clean and normalize</strong> the text before tokenization or feature extraction.</p>
+<h3 id="common-cleanup-tasks">Common Cleanup Tasks:</h3>
+<ul>
+<li>Removing punctuation and special symbols</li>
+<li>Converting text to lowercase</li>
+<li>Removing or replacing HTML tags</li>
+<li>Replacing multiple spaces with a single space</li>
+<li>Removing emojis or non-ASCII characters (if not relevant to the task)</li>
+</ul>
+<p><strong>Tip:</strong> Use regular expressions (regex) or built-in string functions to automate unwanted character filtering. Popular libraries like <strong>re</strong> in Python and tools in <strong>NLTK</strong> and <strong>spaCy</strong> can help with this.</p>
+<p><strong>Example</strong>:</p>
+<pre><code class="language-python">text = &quot;Visit our website at https://example.com! It's the best 😊 &lt;p&gt;Enjoy!&lt;/p&gt;&quot;
+</code></pre>
+<p>Before cleaning, the text contains unnecessary information. We will now explore techniques to remove such noise.</p>
+<hr>
+</section><section><h2 id="removing-special-characters-with-regular-expressions">Removing Special Characters with Regular Expressions</h2>
+<p>In Natural Language Processing (NLP), <strong>special characters</strong> such as <code>!</code>, <code>@</code>, <code>#</code>, <code>%</code>, <code>&amp;</code>, and punctuation marks often add noise to the data and should be removed—unless they carry meaningful context (e.g., <code>@username</code> in tweets).</p>
+<h3 id="removing-punctuation"><strong>Removing Punctuation</strong></h3>
+<p>Python’s <strong>re</strong> module allows us to define patterns for removing unwanted text elements efficiently.</p>
+<pre><code class="language-python">import re
+
+text = &quot;Hello, world! How's everything?&quot;
+clean_text = re.sub(r'[^\w\s]', '', text)  # Removes all punctuation
+print(clean_text)
+</code></pre>
+<p><strong>Output:</strong></p>
+<p><code>Hello world Hows everything</code></p>
+<hr>
+<h3 id="removing-urls"><strong>Removing URLs</strong></h3>
+<pre><code class="language-python">text = &quot;Check this out: https://example.com/news&quot;
+clean_text = re.sub(r'http\S+|www.\S+', '', text)
+print(clean_text)
+</code></pre>
+<p><strong>Output:</strong></p>
+<p><code>Check this out:</code></p>
+<hr>
+<h3 id="removing-htmlxml-tags"><strong>Removing HTML/XML Tags</strong></h3>
+<pre><code class="language-python">text = &quot;&lt;p&gt;Hello &lt;b&gt;world&lt;/b&gt;!&lt;/p&gt;&quot;
+clean_text = re.sub(r'&lt;.*?&gt;', '', text)
+print(clean_text)
+</code></pre>
+<p><strong>Output:</strong><br>
+<code>Hello world!</code></p>
+<hr>
+</section><section><h2 id="handling-emojis-and-symbols">Handling Emojis and Symbols</h2>
+<p><strong>Emojis</strong> and <strong>Unicode symbols</strong> often appear in social media, chat logs, and informal text. Depending on the NLP task, they can either be:</p>
+<ul>
+<li><strong>Removed</strong> to reduce noise (e.g., for formal text analysis), or</li>
+<li><strong>Converted into text descriptions</strong> to preserve emotional or semantic meaning (e.g., for sentiment analysis).</li>
+</ul>
+<p>Two helpful Python libraries for this are:</p>
+<ul>
+<li><a href="https://pypi.org/project/emoji/"><code>emoji</code></a>: For detecting and converting emojis to text.</li>
+<li><a href="https://docs.python.org/3/library/unicodedata.html"><code>unicodedata</code></a>: For handling general Unicode characters and their categories.</li>
+</ul>
+<hr>
+<h3 id="removing-emojis"><strong>Removing Emojis</strong></h3>
+<pre><code class="language-python">import emoji
+
+text = &quot;Python is amazing! 🙂👍&quot;
+clean_text = emoji.replace_emoji(text, replace='')
+print(clean_text)
+</code></pre>
+<p><strong>Output:</strong></p>
+<p><code>Python is amazing!</code></p>
+<h3 id="converting-emojis-to-text-descriptions"><strong>Converting Emojis to Text Descriptions</strong></h3>
+<pre><code class="language-python">text = &quot;Python is amazing! 🙂👍&quot;
+converted_text = emoji.demojize(text)
+print(converted_text)
+</code></pre>
+<p><strong>Output:</strong></p>
+<p><code>Python is amazing! :slightly_smiling_face: :thumbs_up:</code></p>
+<hr>
+<h3 id="removing-non-alphanumeric-symbols"><strong>Removing Non-Alphanumeric Symbols</strong></h3>
+<pre><code class="language-python">import unicodedata
+
+text = &quot;Hello ☀️! It's a beautiful day.&quot;
+clean_text = ''.join(c for c in text if unicodedata.category(c)[0] != 'S')
+print(clean_text)
+</code></pre>
+<p><strong>Output:</strong></p>
+<p><code>Hello ! Its a beautiful day.</code></p>
+<hr>
+</section><section><h2 id="combining-all-cleaning-steps">Combining All Cleaning Steps</h2>
+<p>We can combine these techniques into a single function for efficient text preprocessing:</p>
+<pre><code class="language-python">def clean_text(text):
+    text = re.sub(r'http\S+|www.\S+', '', text)  # Remove URLs
+    text = re.sub(r'&lt;.*?&gt;', '', text)  # Remove HTML/XML tags
+    text = re.sub(r'[^\w\s]', '', text)  # Remove punctuation
+    text = emoji.replace_emoji(text, replace='')  # Remove emojis
+    return text
+
+text = &quot;Visit https://example.com! Amazing offers 🔥 &lt;p&gt;Don't miss out!&lt;/p&gt;&quot;
+cleaned_text = clean_text(text)
+print(cleaned_text)
+</code></pre>
+<p><strong>Output:</strong></p>
+<p><code>Visit Amazing offers Dont miss out</code></p>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>In this lesson, we explored the importance of cleaning special characters and emojis in text preprocessing. We covered:</p>
+<ul>
+<li><strong>Identifying unwanted characters</strong> like punctuation, URLs, emojis, and HTML/XML tags.</li>
+<li><strong>Using regular expressions</strong> to efficiently remove noise.</li>
+<li><strong>Handling emojis and symbols</strong> for better text analysis.</li>
+<li><strong>Combining all techniques</strong> into a reusable function.</li>
+</ul>
+<p>Now, we will apply these concepts to preprocess a <strong>customer reviews dataset</strong> in the practical activity.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

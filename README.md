@@ -92,7 +92,7 @@ Both are ignored by git. Use `--no-cache` to disable caching, or `--rebuild-cach
 
 ## Output format
 
-Search results are printed as JSON to stdout, including a placeholder user id, a timestamp, the query, and each result's path, score, snippet, and metadata (file name, file type, chunk position).
+Search results are printed as JSON to stdout, including a placeholder user id, a timestamp, the query, and each result's path, score, snippet, and metadata (file name, file type, chunk position). When `--ask` is enabled, the JSON also includes an `answer` field between `query` and `results`.
 
 ## Run the regression tests
 

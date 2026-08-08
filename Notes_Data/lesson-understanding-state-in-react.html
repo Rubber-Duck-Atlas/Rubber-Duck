@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Understanding State In React</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-understanding-state-in-react">Lesson: Understanding State in React</h1></header>
+<section><h2 id="introduction"><strong>Introduction</strong></h2>
+<p>State is a fundamental concept in frontend development, representing the dynamic data that powers an application’s behavior and appearance. It acts as the &quot;memory&quot; of your app, storing information such as user inputs, API responses, or UI preferences. Proper state management ensures that the user interface remains responsive, consistent, and synchronized with the underlying data. In this lesson, we will explore the different types of state—local, global, derived, and remote—and understand their roles in building scalable and maintainable applications. Additionally, we’ll delve into how React handles state updates, the importance of state management solutions, and how TypeScript enhances safety and clarity in state handling.</p>
+</section><section><h2 id="learning-outcomes"><strong>Learning Outcomes</strong></h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Understand the Concept of State</strong>: Define what state is in frontend development and explain its significance in creating dynamic and interactive user interfaces.</li>
+<li><strong>Identify Types of State</strong>: Differentiate between local, global, derived, and remote state, and determine when to use each type based on the requirements of your application.</li>
+<li><strong>Implement State Management in React</strong>: Write code examples to manage local and global state using React hooks like <code>useState</code> and <code>useContext</code>, and compute derived state dynamically.</li>
+<li><strong>Handle Remote State</strong>: Fetch and manage asynchronous data from APIs, including handling loading states and errors effectively.</li>
+<li><strong>Optimize React Re-Renders</strong>: Understand how React re-renders components when state changes and apply best practices to avoid unnecessary re-renders.</li>
+</ol>
+<h3 id="introduction-to-state-in-frontend">Introduction to State in Frontend</h3>
+<p>State represents the dynamic data that defines how an application behaves and appears at any given moment. In frontend development, state refers to variables or values that determine what the user interface (UI) displays and how it responds to user interactions. Think of state as the &quot;memory&quot; of your app—it tracks everything from user inputs to API responses, ensuring the UI reflects the current condition of the application.</p>
+<p>For instance, a form remembers what you’ve typed because its state stores the input values. Similarly, a shopping cart knows which items are added because its state holds that information. Proper state management ensures the UI remains responsive and consistent as users interact with the application, making it a cornerstone of modern frontend development.</p>
+<h3 id="types-of-state-in-frontend"><strong>Types of State in Frontend</strong></h3>
+<p>Frontend state can be categorized into four primary types: local state, global state, derived state, and remote state. Each type serves a distinct purpose, and understanding their roles is crucial for building scalable and maintainable applications.</p>
+<p><img src="../_assets/lesson-1-state-types.PNG" alt="Frontend"></p>
+<h4 id="local-state"><strong>Local State</strong></h4>
+<p>Local state is confined to a single component and is ideal for managing data that only affects that specific component. For example, a form input field might use local state to track the value entered by the user. Since the data doesn’t need to be shared with other components, encapsulating it within the component keeps the code modular and self-contained.</p>
+<p><strong>Code Example</strong>:</p>
+<pre><code class="language-tsx">import React, { useState } from 'react';
+
+const InputField = () =&gt; {
+  const [value, setValue] = useState&lt;string&gt;('');
+
+  return (
+    &lt;div&gt;
+      &lt;input 
+        type=&quot;text&quot; 
+        value={value} 
+        onChange={(e) =&gt; setValue(e.target.value)} 
+        placeholder=&quot;Enter text&quot;
+      /&gt;
+      &lt;p&gt;You typed: {value}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+};
+
+export default InputField;
+</code></pre>
+<p>Here, the <code>value</code> state is entirely local to the <code>InputField</code> component. Changes to this state are isolated and don’t propagate to other parts of the application, making it a straightforward choice for self-contained functionality.</p>
+<h3 id="local-state-use-cases">Local State Use Cases</h3>
+<ul>
+<li>Handling user input in forms.</li>
+<li>Toggling the visibility of UI elements.</li>
+<li>Keeping track of simple component-specific values.</li>
+</ul>
+<h4 id="global-state"><strong>Global State</strong></h4>
+<p>Global state is shared across multiple components and becomes essential when data needs to be accessed or modified by different parts of the application. Examples include user authentication status, theme settings, or shopping cart contents. Without global state, developers would need to pass data through multiple layers of components, leading to cumbersome prop drilling and tightly coupled code.</p>
+<p><strong>Code Example</strong>:</p>
+<pre><code class="language-tsx">import React, { createContext, useContext, useState } from 'react';
+
+// Create a Context
+const AuthContext = createContext&lt;{ isLoggedIn: boolean; login: () =&gt; void; logout: () =&gt; void }&gt;({
+  isLoggedIn: false,
+  login: () =&gt; {},
+  logout: () =&gt; {},
+});
+
+// Provider Component
+const AuthProvider: React.FC&lt;{ children: React.ReactNode }&gt; = ({ children }) =&gt; {
+  const [isLoggedIn, setIsLoggedIn] = useState&lt;boolean&gt;(false);
+
+  const login = () =&gt; setIsLoggedIn(true);
+  const logout = () =&gt; setIsLoggedIn(false);
+
+  return (
+    &lt;AuthContext.Provider value={{ isLoggedIn, login, logout }}&gt;
+      {children}
+    &lt;/AuthContext.Provider&gt;
+  );
+};
+
+// Consumer Component
+const LoginButton = () =&gt; {
+  const { isLoggedIn, login, logout } = useContext(AuthContext);
+
+  return (
+    &lt;button onClick={isLoggedIn ? logout : login}&gt;
+      {isLoggedIn ? 'Logout' : 'Login'}
+    &lt;/button&gt;
+  );
+};
+
+// App Component
+const App = () =&gt; {
+  return (
+    &lt;AuthProvider&gt;
+      &lt;LoginButton /&gt;
+    &lt;/AuthProvider&gt;
+  );
+};
+
+export default App;
+</code></pre>
+<p>In this example, the <code>isLoggedIn</code> state is centralized and shared via <code>AuthContext</code>. Any component wrapped inside the <code>AuthProvider</code> can access and modify the authentication status. This eliminates the need for prop drilling and ensures consistency across the application, making global state indispensable for complex apps.</p>
+<h3 id="global-state-use-cases">Global State Use Cases</h3>
+<ul>
+<li>Managing user authentication (e.g., login/logout).</li>
+<li>App-wide settings (e.g., themes, language).</li>
+<li>Sharing data between unrelated components.</li>
+</ul>
+<h4 id="derived-state"><strong>Derived State</strong></h4>
+<p>Derived state is computed from other state values rather than being explicitly stored. It’s particularly useful for scenarios where the output depends on existing state. For example, the total price of items in a shopping cart can be derived from the individual item prices. By calculating values on demand, derived state avoids redundancy and ensures the UI always reflects the most up-to-date information.</p>
+<p><strong>Code Example</strong>:</p>
+<pre><code class="language-tsx">import React, { useState } from 'react';
+
+const ShoppingCart = () =&gt; {
+  const [items, setItems] = useState&lt;number[]&gt;([10, 20, 30]);
+
+  // Derived state: Total price
+  const totalPrice = items.reduce((sum, price) =&gt; sum + price, 0);
+
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Cart Items: {items.join(', ')}&lt;/p&gt;
+      &lt;p&gt;Total Price: ${totalPrice}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+};
+
+export default ShoppingCart;
+</code></pre>
+<p>The <code>totalPrice</code> is not explicitly stored but is instead calculated dynamically based on the <code>items</code> array. This approach ensures that the total price updates automatically whenever the <code>items</code> array changes, reducing the risk of inconsistencies.</p>
+<h4 id="server-state"><strong>Server State</strong></h4>
+<p>The server state comes from external sources like APIs or databases. It’s often used when your app needs to fetch data from a server, Sync data between the front end and back end, and cache frequently used data.</p>
+<p><strong>Code Example</strong>:</p>
+<pre><code class="language-tsx">import { useQuery } from 'react-query';  
+
+function Users() {  
+  const { data, isLoading, error } = useQuery('users', () =&gt;  
+    fetch('/api/users').then(res =&gt; res.json())  
+  );  
+
+  if (isLoading) return &lt;p&gt;Loading...&lt;/p&gt;;  
+  if (error) return &lt;p&gt;Error loading data&lt;/p&gt;;  
+
+  return (  
+    &lt;ul&gt;  
+      {data.map(user =&gt; (  
+        &lt;li key={user.id}&gt;{user.name}&lt;/li&gt;  
+      ))}  
+    &lt;/ul&gt;  
+  );  
+}  
+</code></pre>
+<p>In this example, useQuery fetches data and handles loading or error states automatically.</p>
+<hr>
+<h3 id="importance-of-state-management-solutions"><strong>Importance of State Management Solutions</strong></h3>
+<p>As applications grow in complexity, managing state becomes increasingly challenging. Issues like state synchronization, debugging, and performance optimization can arise without a structured approach. Consider a scenario where one part of the app updates the state but another part fails to reflect the change—this leads to inconsistent UI behavior. Similarly, passing state through multiple layers of components (prop drilling) increases coupling and makes the code harder to maintain.</p>
+<p>Performance issues also come into play when inefficient state management triggers unnecessary re-renders, slowing down the application. Debugging state-related bugs can be particularly frustrating without clear structures or tools to trace changes over time. Frameworks like Redux address these challenges by providing predictable patterns and powerful debugging tools, such as Redux DevTools, which allow developers to trace state changes step-by-step.</p>
+<h3 id="methodology-of-react-re-renders">**Methodology of React Re-Renders **</h3>
+<p>React employs a declarative approach to UI rendering. When state changes, React automatically re-renders the component to reflect the updated state. Let’s break down the process:</p>
+<p><img src="../_assets/lesson-1-rerender.PNG" alt="Frontend"></p>
+<ol>
+<li><strong>Trigger</strong>: An event, such as a button click or API response, updates the state.</li>
+<li><strong>Reconciliation</strong>: React compares the previous state with the new state to determine what needs updating in the DOM.</li>
+<li><strong>Re-render</strong>: If the state has changed, React re-renders the component and its children, ensuring the UI stays in sync.</li>
+</ol>
+<p><strong>Code Example</strong>:</p>
+<pre><code class="language-tsx">import React, { useState } from 'react';
+
+const Counter = () =&gt; {
+  const [count, setCount] = useState&lt;number&gt;(0);
+
+  console.log('Rendering...');
+
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Count: {count}&lt;/p&gt;
+      &lt;button onClick={() =&gt; setCount(count + 1)}&gt;Increment&lt;/button&gt;
+    &lt;/div&gt;
+  );
+};
+</code></pre>
+<p>Clicking the button updates the <code>count</code> state, triggering React’s reconciliation process. React detects the change and updates the DOM to reflect the new count. While this automatic re-rendering simplifies UI development, it requires careful optimization to avoid performance bottlenecks in large-scale applications.</p>
+<h3 id="adding-safety-and-clarity-in-state-types">Adding Safety and Clarity in State Types</h3>
+<p>TypeScript enhances state management by enforcing type safety and reducing runtime errors. By defining explicit types for state, developers ensure that state values match their expected formats, improving code reliability and readability. For example, setting a number to a variable expecting a string would trigger a TypeScript error during development, catching potential issues early.</p>
+<p><strong>Code Example</strong>:</p>
+<pre><code class="language-tsx">import React, { useState } from 'react';
+
+const Counter = () =&gt; {
+  const [count, setCount] = useState&lt;number&gt;(0); // Explicitly typed as number
+
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Count: {count}&lt;/p&gt;
+      &lt;button onClick={() =&gt; setCount(count + 1)}&gt;Increment&lt;/button&gt;
+    &lt;/div&gt;
+  );
+};
+</code></pre>
+<p>In this example, the <code>count</code> state is explicitly typed as a number, preventing accidental assignment of invalid values.
+TypeScript also provides IntelliSense support in IDEs, offering autocomplete suggestions that boost productivity and reduce errors.</p>
+<hr>
+<h3 id="conclusion"><strong>Conclusion</strong></h3>
+<p>State is the backbone of modern frontend applications, enabling dynamic and interactive user experiences. By understanding the different types of state—local, global, derived, and remote—you can design applications that are modular, scalable, and maintainable. React’s declarative approach to state management simplifies UI updates but requires careful optimization to handle performance challenges. Tools like TypeScript further enhance reliability by enforcing type safety, while state management libraries address the complexities of large-scale applications.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

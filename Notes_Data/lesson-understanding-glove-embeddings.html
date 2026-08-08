@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Understanding Glove Embeddings</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-understanding-glove-embeddings">Lesson: Understanding GloVe Embeddings</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>After exploring prediction-based models like Word2Vec, we now turn to <strong>GloVe (Global Vectors for Word Representation)</strong> a model that returns to the <strong>count-based family</strong> of vector semantics but with important innovations. GloVe aims to combine the strengths of count-based methods and predictive embeddings by focusing on capturing global word co-occurrence statistics in a principled way.</p>
+<p>In this lesson, we will explore how GloVe works, how it builds meaningful vector representations using a <strong>co-occurrence matrix</strong>, and how it differs from models like Word2Vec in terms of both philosophy and implementation.</p>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li>Describe the GloVe model and its training objective.</li>
+<li>Explain how co-occurrence counts are used to learn word embeddings.</li>
+<li>Compare GloVe to Word2Vec in terms of model type, optimization, and representation.</li>
+</ol>
+<hr>
+</section><section><h2 id="overview-on-glove">Overview on GloVe</h2>
+<p><strong>GloVe (Global Vectors)</strong> is a count-based model that learns word embeddings from a <strong>word-word co-occurrence matrix</strong>. Unlike Word2Vec, which learns embeddings by predicting context from a word or vice versa, GloVe <strong>explicitly factorizes</strong> a matrix of word co-occurrence counts.</p>
+<p>Its key intuition is:</p>
+<blockquote>
+<p>Words that co-occur frequently with similar sets of words should have similar vector representations.</p>
+</blockquote>
+<p>GloVe uses <strong>global corpus statistics</strong> (the co-occurrence counts across the entire corpus) rather than local predictions (one context window at a time). Despite being count-based, GloVe produces <strong>dense, low-dimensional vectors</strong> (e.g., 100–300 dimensions) similar to those learned by Word2Vec, capturing both semantic and syntactic relationships.</p>
+<hr>
+</section><section><h2 id="co-occurrence-matrix">Co-occurrence Matrix</h2>
+<p>GloVe starts with building a <strong>term-term matrix</strong> where:</p>
+<ul>
+<li>Each row is a <strong>target word</strong></li>
+<li>Each column is a <strong>context word</strong></li>
+<li>Each cell <span class="math">\(( X_{ij})\)</span> is the number of times word <span class="math">\(( j)\)</span> appears in the context of word <span class="math">\(( i )\)</span>, typically within a fixed window (e.g., ±4 words around the target word).</li>
+</ul>
+<p>The context window size determines how far GloVe looks for co-occurrences. A window of ±4 means GloVe counts words up to 4 positions before and after the target word, often weighted by distance (e.g., closer words contribute more to the count).</p>
+<p><strong>Example</strong>:</p>
+<p>Consider the following co-occurrence matrix, where each cell represents how often a given word appears in the context of another:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>computer</th>
+<th>data</th>
+<th>pie</th>
+<th>sugar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cherry</td>
+<td>2</td>
+<td>8</td>
+<td>442</td>
+<td>25</td>
+</tr>
+<tr>
+<td>strawberry</td>
+<td>0</td>
+<td>0</td>
+<td>60</td>
+<td>19</td>
+</tr>
+<tr>
+<td>digital</td>
+<td>1670</td>
+<td>1683</td>
+<td>5</td>
+<td>4</td>
+</tr>
+<tr>
+<td>information</td>
+<td>3325</td>
+<td>3982</td>
+<td>5</td>
+<td>13</td>
+</tr>
+</tbody>
+</table>
+<p>We can see that <em>cherry</em> and <em>strawberry</em> frequently co-occur with words like <em>pie</em> and <em>sugar</em>, while <em>digital</em> and <em>information</em> tend to appear with <em>data</em> and <em>computer</em>. These co-occurrence patterns form the basis for building word vectors. Words with similar distributional profiles—such as <em>cherry</em> and <em>strawberry</em>—end up with similar embeddings. This reflects the core idea of <strong>distributional semantics</strong>: words that appear in similar contexts tend to have similar meanings.</p>
+<hr>
+<h3 id="gloves-objective-function">GloVe's Objective Function</h3>
+<p>GloVe creates word embeddings by looking at how often words appear together in a text and using that information to understand their relationships. Let’s go through this process step by step to make it easy to understand.</p>
+<p><strong>Understanding Co-occurrence Probabilities</strong></p>
+<p>GloVe’s clever idea is to use the <strong>ratios</strong> of probabilities to figure out how words are related. First, it counts how often words appear near each other. Imagine we have a word <span class="math">\(i\)</span>, and we want to know how many times any word appears in its context (like within a few words before or after it). We call this total count <span class="math">\(X_i\)</span>, and it’s the sum of all counts in row <span class="math">\(i\)</span> of the co-occurrence matrix, written as:</p>
+<div class="math">
+\[
+X_i = \sum_k X_{ik}
+\]</div>
+<p>Next, GloVe calculates the probability that a specific word <span class="math">\(k\)</span> appears in the context of word <span class="math">\(i\)</span>. We call this probability <span class="math">\(P_{ik}\)</span>, and it’s the number of times <span class="math">\(k\)</span> appears with <span class="math">\(i\)</span>, divided by the total count <span class="math">\(X_i\)</span>:</p>
+<div class="math">
+\[
+P_{ik} = \frac{X_{ik}}{X_i}
+\]</div>
+<p>Now, GloVe compares these probabilities for two words <span class="math">\(i\)</span> and <span class="math">\(j\)</span> with respect to word <span class="math">\(k\)</span> by looking at their ratio:</p>
+<div class="math">
+\[
+\frac{P_{ik}}{P_{jk}}
+\]</div>
+<p>This ratio tells us how much more (or less) likely word <span class="math">\(k\)</span> is to appear with word <span class="math">\(i\)</span> compared to word <span class="math">\(j\)</span>. For example, if <span class="math">\(i = \text{ice}\)</span>, <span class="math">\(j = \text{steam}\)</span>, and <span class="math">\(k = \text{solid}\)</span>, the ratio <span class="math">\(\frac{P_{\text{ice, solid}}}{P_{\text{steam, solid}}}\)</span> would be a big number because &quot;solid&quot; appears much more often with &quot;ice&quot; than with &quot;steam.&quot; This helps GloVe understand that &quot;ice&quot; and &quot;solid&quot; are more closely related.</p>
+<p><strong>Building  Simple Relationship with Vectors</strong></p>
+<p>To capture these relationships, GloVe gives each word two vectors: one called the input vector <span class="math">\(w_i\)</span>, and another called the context vector <span class="math">\(\tilde{w}_j\)</span>. It also adds two small numbers, called bias terms <span class="math">\(b_i\)</span> and <span class="math">\(\tilde{b}_j\)</span>, to adjust for things like how common a word is. GloVe’s goal is to make the following equation true:</p>
+<div class="math">
+\[
+w_i^T \tilde{w}_j + b_i + \tilde{b}_j = \log X_{ij}
+\]</div>
+<p w="">This equation is called a <strong>log-bilinear model</strong>. Let’s break that down: the &quot;bilinear&quot; part comes from multiplying the two vectors together (using a dot product $(w_i^T \tilde_j $), and the &quot;log&quot; part comes from using the logarithm of the co-occurrence count <span class="math">\(\log X_{ij}\)</span>. The logarithm makes big and small counts easier to work with, and the biases help fine-tune the result.</p>
+<p><strong>Creating Loss Function to Learn</strong></p>
+<p>GloVe learns by trying to make its predictions as close as possible to the actual co-occurrence counts. It does this by using a loss function, which measures how far off its predictions are. The loss function GloVe uses is:</p>
+<p><img src="../_assets/weighting-function.png" alt=""></p>
+<p>Here’s what each part means:</p>
+<ul>
+<li><span class="math">\(|V|\)</span>: The total number of unique words in the vocabulary.</li>
+<li><span class="math">\(w_i^T \tilde{w}_j + b_i + \tilde{b}_j\)</span>: GloVe’s prediction for the log co-occurrence.</li>
+<li><span class="math">\(\log X_{ij}\)</span>: The actual log co-occurrence count we want to match.</li>
+<li><span class="math">\(f(X_{ij})\)</span>: A special weighting function to make sure frequent word pairs don’t take over.</li>
+</ul>
+<p>This loss function adds up the errors for all word pairs, squares them (to make sure errors are always positive), and adjusts them with the weighting function.</p>
+<p><strong>Using a Weighting Function for Balance</strong></p>
+<p>The weighting function <span class="math">\(f(X_{ij})\)</span> helps GloVe focus on the most useful word pairs. Very common pairs (like &quot;the&quot; and &quot;is&quot;) happen a lot but don’t tell us much about meaning, so GloVe gives them less importance. The weighting function is defined as:</p>
+<div class="math">
+\[
+f(x) = \begin{cases}
+(\frac{x}{x_{\text{max}}})^\alpha &amp; \text{if } x &lt; x_{max} \\
+1 &amp; \text{otherwise}
+\end{cases}
+\]</div>
+<ul>
+<li><span class="math">\(x_{\text{max}}\)</span>: A limit, usually set to 100, to keep the weighting from getting too big.</li>
+<li><span class="math">\(\alpha\)</span>: A number, often 0.75, that decides how much to focus on less frequent pairs.</li>
+</ul>
+<p>This weighting makes sure GloVe pays more attention to word pairs that happen often enough to be meaningful, but not so often that they’re just noise, helping create better embeddings.</p>
+</section><section><h2 id="intuition-behind-glove">Intuition Behind GloVe</h2>
+<p>The goal is to learn word vectors where <strong>differences in the vector space encode meaningful relationships</strong>, such as analogies:</p>
+<div class="math">
+\[
+w\_{\text{king}} - w_{\text{man}} + w_{\text{woman}} \approx w_{\text{queen}}
+\]</div>
+<p>This results from the structure imposed by co-occurrence statistics and the model’s optimization objective, not from hard-coding such rules.
+For example, the result of the expression <span class="math">\(\vec{\text{king}}-\vec{\text{man}} + \vec{\text{woman}}\)</span> is a vector close to <span class="math">\(\vec{\text{queen}}\)</span>. The embedding model thus seems to be extracting representations of relations like MALE-FEMALE, or COMPARATIVE/SUPERLATIVE, as shown:</p>
+<p><img src="../_assets/glove.png" alt=""></p>
+<blockquote>
+<p>Relational properties of the GloVe vector space, shown by projecting vectors onto two dimensions. (a) <span class="math">\(\vec{\text{king}}-\vec{\text{man}} + \vec{\text{woman}}\)</span> is close to <span class="math">\(\vec{\text{queen}}\)</span>. (b) offsets seem to capture comparative and superlative morphology.</p>
+</blockquote>
+<hr>
+<h3 id="strengths-and-limitations-of-glove">Strengths and Limitations of GloVe</h3>
+<p><strong>Strengths</strong></p>
+<ul>
+<li>Captures <strong>fine-grained semantic relationships</strong> using global co-occurrence statistics.</li>
+<li>Provides <strong>interpretable embeddings</strong>, making it easier to understand and visualize word relationships.</li>
+<li>Performs well on a variety of <strong>NLP benchmarks</strong>, including word similarity and analogy tasks.</li>
+<li>Suitable for <strong>pretraining</strong> embeddings on large, static corpora.</li>
+<li>Embeddings are <strong>consistent and reproducible</strong>, independent of random initialization.</li>
+</ul>
+<p><strong>Limitations</strong></p>
+<ul>
+<li>Requires building a <strong>large word-word co-occurrence matrix</strong>, which is memory- and compute-intensive.</li>
+<li>Less suitable for <strong>dynamic or streaming data</strong>, as retraining is non-trivial.</li>
+<li>Struggles with <strong>rare or out-of-vocabulary words</strong> not well represented in the co-occurrence matrix.</li>
+<li>Embedding quality is <strong>sensitive to hyperparameters</strong>, such as:<ul><li>Context window size</li><li>Minimum frequency thresholds</li><li>Weighting functions (e.g., the x-max parameter)</li></ul></li>
+</ul>
+<hr>
+</section><section><h2 id="glove-vs.word2vec">GloVe vs. Word2Vec</h2>
+<p>Although GloVe and Word2Vec both produce word embeddings and can solve tasks like analogies and word similarity, they learn those embeddings in very different ways.</p>
+<p><strong>Word2Vec</strong> is a <strong>prediction-based model</strong>. It learns word meanings by guessing: “If I know this word, can I predict the nearby words?” or the opposite, “Can I guess the missing word from the nearby ones?” It does this while reading the text <strong>one window at a time</strong>, learning from each short phrase as it appears.</p>
+<p>In contrast, <strong>GloVe</strong> is a <strong>count-based model</strong>. Instead of guessing context words like Word2Vec, it <strong>builds a huge table first</strong>, counting how often each pair of words appears near each other. It then tries to <strong>compress that giant table into vectors</strong> that still reflect the original relationships.</p>
+<p>Think of it like this:</p>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Word2Vec</th>
+<th>GloVe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Learns from</td>
+<td>Local context (one phrase/window)</td>
+<td>Entire corpus (global co-occurrence)</td>
+</tr>
+<tr>
+<td>Method</td>
+<td>Trains a neural net to predict</td>
+<td>Factorizes a word-word count matrix</td>
+</tr>
+<tr>
+<td>Goal</td>
+<td>Predict missing words</td>
+<td>Match co-occurrence patterns</td>
+</tr>
+<tr>
+<td>Analogy</td>
+<td>Like learning by doing flashcards</td>
+<td>Like learning by studying a full map</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Word2Vec</strong> is like practicing many small language puzzles, learning embeddings by predicting words in short contexts. This makes it flexible and adaptive but can miss broader patterns in the data.</li>
+<li><strong>GloVe</strong> is like looking at the <strong>big picture</strong>—a map of how all words relate to each other across the entire corpus. This global view helps GloVe capture broader statistical patterns but requires more memory to store the co-occurrence matrix.</li>
+</ul>
+<h3 id="practical-implications">Practical Implications:</h3>
+<ul>
+<li><strong>Training Speed</strong>: Word2Vec can start producing embeddings quickly as it processes the corpus sequentially, while GloVe requires building the co-occurrence matrix first, which can be memory-intensive for large corpora.</li>
+<li><strong>Performance</strong>: GloVe often performs better on tasks requiring global semantic understanding (e.g., word analogy tasks), while Word2Vec (especially Skip-Gram) excels at capturing local syntactic patterns and rare word relationships.</li>
+<li><strong>Adaptability</strong>: Word2Vec can easily update embeddings by continuing training on new data, whereas GloVe typically requires rebuilding the co-occurrence matrix to incorporate new data.</li>
+</ul>
+<p>Both approaches are powerful, but they approach the problem of word meaning differently: Word2Vec learns from <strong>what happens nearby</strong>, while GloVe learns from <strong>how often things happen everywhere</strong>.</p>
+<hr>
+</section><section><h2 id="use-case-scenarios-glove-vs.word2vec">Use Case Scenarios: GloVe vs. Word2Vec</h2>
+<p><strong>GloVe</strong> is often chosen for tasks that benefit from a <strong>global understanding of language structure</strong>. Because it builds embeddings by analyzing co-occurrence statistics across the entire corpus, GloVe captures broader thematic relationships between words. This makes it especially effective for:</p>
+<ul>
+<li><strong>Sentiment analysis</strong>, where antonyms and polarity are encoded through co-occurrence patterns.</li>
+<li><strong>Semantic search</strong>, where understanding conceptual similarity across documents is essential.</li>
+<li><strong>Text classification</strong>, where embeddings serve as rich input features even with limited labeled data.</li>
+</ul>
+<p>GloVe is preferred in situations where:</p>
+<ul>
+<li>You have access to <strong>large, static corpora</strong>.</li>
+<li>You want to <strong>pre-train embeddings once</strong> and reuse them across models.</li>
+<li><strong>Interpretability</strong> and consistency across runs are important.</li>
+</ul>
+<p><strong>Word2Vec</strong>, in contrast, is often favored for its <strong>flexibility and local contextual learning</strong>. It excels at tasks where capturing fine-grained usage patterns of words is essential, especially for:</p>
+<ul>
+<li><strong>Real-time or adaptive systems</strong>, where models need to update with new data (e.g., chatbots, user modeling).</li>
+<li><strong>Rare word handling</strong>, particularly with the Skip-Gram model, which learns well from limited context.</li>
+<li><strong>Language modeling or transfer learning</strong>, where embeddings are learned jointly with a larger architecture.</li>
+</ul>
+<p>Word2Vec is typically preferred when:</p>
+<ul>
+<li>You’re working with <strong>domain-specific or dynamic data</strong>.</li>
+<li>You want <strong>context-aware</strong> embeddings that reflect local linguistic usage.</li>
+<li>You’re training <strong>end-to-end models</strong> and embeddings are part of the optimization process.</li>
+</ul>
+<h4 id="summary-comparison-table">Summary Comparison Table</h4>
+<table>
+<thead>
+<tr>
+<th><strong>Scenario</strong></th>
+<th><strong>GloVe</strong></th>
+<th><strong>Word2Vec</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Best for</strong></td>
+<td>Global semantics, general NLP tasks</td>
+<td>Local context, dynamic or rare-word settings</td>
+</tr>
+<tr>
+<td><strong>Strengths</strong></td>
+<td>Interpretability, broad co-occurrence</td>
+<td>Flexibility, adaptation to new data</td>
+</tr>
+<tr>
+<td><strong>Sentiment Analysis</strong></td>
+<td>Captures polarity via global co-occurrence</td>
+<td>Learns fine-grained sentiment signals</td>
+</tr>
+<tr>
+<td><strong>Semantic Search</strong></td>
+<td>Strong due to global concept clustering</td>
+<td>Good, but less consistent across corpora</td>
+</tr>
+<tr>
+<td><strong>Text Classification</strong></td>
+<td>Common for pre-trained embeddings</td>
+<td>Strong when trained jointly with model</td>
+</tr>
+<tr>
+<td><strong>Rare Word Learning</strong></td>
+<td>Limited if not observed in corpus</td>
+<td>Skip-Gram works well for low-frequency</td>
+</tr>
+<tr>
+<td><strong>Real-Time/Adaptive Use</strong></td>
+<td>Requires retraining on new data</td>
+<td>Easily updated or trained online</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>In this lesson, you learned how GloVe offers a count-based alternative to predictive models like Word2Vec. Instead of predicting words, GloVe learns word vectors by factorizing a matrix of co-occurrence statistics, optimizing for meaningful semantic relationships via log-ratio constraints.</p>
+<p>Though its training pipeline differs, the resulting vectors support many of the same powerful properties as Word2Vec—similarity, analogy-solving, and clustering—while offering a model grounded in global corpus structure.</p>
+<p>In the next activity, you'll use GloVe embeddings to compute word analogies, a classic test of embedding quality.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

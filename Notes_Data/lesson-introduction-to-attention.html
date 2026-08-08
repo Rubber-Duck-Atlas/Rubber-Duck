@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Introduction To Attention</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-introduction-to-attention">Lesson: Introduction to Attention</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In our previous lessons, we explored the encoder-decoder structure of Sequence-to-Sequence (Seq2Seq) models and implemented one using LSTMs. While this architecture performs well on short sequences, its effectiveness degrades as sequence length increases due to its reliance on a <strong>fixed-size context vector</strong>. This creates an information bottleneck, preventing the decoder from accessing relevant parts of the input at the right time.</p>
+<p>In many deep learning tasks, especially involving sequential or structured data, it is crucial for the model to weigh the relevance of different elements in an input. To solve this problem, the <strong>attention mechanism</strong> was introduced, it enables this capability. Instead of processing inputs in a fixed order (as in RNNs), attention allows the model to learn dynamic weighting of inputs based on their contextual importance.</p>
+<p>In this lesson, we will dissect the <strong>self-attention mechanism</strong>, understand the role of <strong>Query (Q), Key (K), and Value (V)</strong> matrices, and explore how <strong>multi-head attention</strong> enriches representational power. We will also contrast attention with fixed-context models and briefly mention applications in other domains like computer vision and reinforcement learning.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Explain</strong> the motivation for attention in Seq2Seq models.</li>
+<li><strong>Describe</strong> the core mechanism of additive attention (Bahdanau).</li>
+<li><strong>Differentiate</strong> between self-attention and encoder-decoder attention.</li>
+<li><strong>Interpret</strong> multi-head attention as used in Transformer-based models.</li>
+</ol>
+<hr>
+</section><section><h2 id="motivation-behind-attention">Motivation Behind Attention</h2>
+<p>While the classical Sequence-to-Sequence (Seq2Seq) architecture offers a foundational framework for tasks like machine translation and text summarization, it suffers from critical limitations, particularly when handling long or information-rich sequences. These shortcomings arise from how the model represents input context during decoding.</p>
+<h3 id="the-limitation-fixed-length-encoding">The Limitation: Fixed-Length Encoding</h3>
+<p>In a traditional Seq2Seq model, the <strong>entire input sequence</strong> is compressed into a <strong>single, fixed-length context vector</strong>, which is typically the <strong>final hidden state of the encoder</strong>. This vector is expected to encapsulate all semantic and syntactic information needed to generate the output sequence.</p>
+<p>However, this design presents major issues:</p>
+<ul>
+<li><strong>Information Bottleneck</strong>: All details from the input, regardless of sequence length, must be squeezed into one vector. As input complexity increases, the capacity of this vector becomes insufficient.</li>
+<li><strong>Poor Long-Sequence Performance</strong>: For longer or more complex sentences, the decoder often lacks access to relevant portions of the input, leading to degraded output quality.</li>
+<li><strong>No Direct Access to Tokens</strong>: The decoder has no mechanism to selectively revisit specific parts of the input sequence. It must rely entirely on what the final encoder state retained.</li>
+</ul>
+<blockquote>
+<p>Analogy: Asking a student to summarize an entire textbook after reading it once and recalling only the last sentence.</p>
+</blockquote>
+<p><img src="../_assets/info-bottlenick.png" alt=""></p>
+<blockquote>
+<p>The bottleneck problem.</p>
+</blockquote>
+<h3 id="the-solution-dynamic-focus-with-attention">The Solution: Dynamic Focus with Attention</h3>
+<p>To address this bottleneck, researchers introduced <strong>attention mechanisms</strong>, which fundamentally change how context is handled in the decoder. Instead of relying on a single static vector, attention allows the decoder to:</p>
+<ul>
+<li><strong>Access all encoder hidden states</strong>, not just the final one.</li>
+<li><strong>Dynamically focus on different parts</strong> of the input sequence at each decoding step.</li>
+<li><strong>Learn which input words are most relevant</strong> to generating the current output token.</li>
+</ul>
+<p>This approach enhances model performance, particularly on longer sequences, by allowing more flexible and context-aware decoding.</p>
+<h3 id="attention-mechanism"><strong>Attention Mechanism</strong></h3>
+<p>Attention solves this by giving the decoder <strong>direct access to all encoder hidden states</strong>. At each decoding step, the decoder computes a <strong>context vector <span class="math">\(C_i\)</span></strong> as a weighted average of all encoder outputs. These weights—called <strong>attention scores</strong> reflect the importance of each input token for generating the current output token. With this, we finally have a fixed-length context vector that takes into account information from the entire encoder state that is dynamically updated to reflect the needs of the decoder at each step of decoding. the next figure illustrates an encoder-decoder network with attention, focusing on the computation of one context vector <span class="math">\(C_i\)</span></p>
+<p><img src="../_assets/attention-diagram.png" alt=""></p>
+<blockquote>
+<p>A sketch of the encoder-decoder network with attention, focusing on the computation of <span class="math">\(c_i\)</span>. The context value <span class="math">\(c_i\)</span> is one of the inputs to the computation of <span class="math">\({h_i}^d\)</span>. It is computed by taking the weighted sum of all the encoder hidden states, each weighted by their dot product with the prior decoder hidden state <span class="math">\({h_{i-1}}^d\)</span></p>
+</blockquote>
+<hr>
+</section><section><h2 id="understanding-self-attention">Understanding Self-Attention</h2>
+<p>While traditional attention mechanisms in Sequence-to-Sequence (Seq2Seq) models operate between the encoder and the decoder allowing the decoder to selectively attend to parts of the encoder’s output, self-attention shifts the focus inward. It enables a model to capture dependencies within a single sequence, allowing each token to consider the context provided by every other token in that sequence. This internal relational capability is foundational to the Transformer architecture, which replaces recurrence and convolution entirely with parallelizable self-attention mechanisms.</p>
+<h3 id="role-of-self-attention">Role of Self-Attention</h3>
+<p>Self-attention addresses several key limitations of earlier models like RNNs:</p>
+<ul>
+<li><strong>Long-Range Dependency Modeling</strong>: Unlike RNNs, which struggle with distant relationships due to vanishing gradients, self-attention captures long-range dependencies in a single computation step.</li>
+<li><strong>Parallelization</strong>: All tokens in the sequence are processed simultaneously, enabling substantial speed-ups during both training and inference.</li>
+<li><strong>Dynamic Contextualization</strong>: Each token in the input sequence is represented not only by its identity but also by its relation to all other tokens—yielding more informative and flexible representations.</li>
+</ul>
+<h3 id="how-self-attention-works">How Self-Attention Works</h3>
+<p>At its core, self-attention allows each input token to compute a weighted representation of the <strong>entire sequence</strong>, including itself. The mechanism learns to assign higher attention weights to tokens that are more relevant in a given context.</p>
+<p>For example, consider the sentence:</p>
+<blockquote>
+<p><strong>&quot;The chicken didn’t cross the road because it was too tired.&quot;</strong></p>
+</blockquote>
+<p>Here, the pronoun <strong>&quot;it&quot;</strong> should refer to <strong>&quot;chicken&quot;</strong>, not <strong>&quot;road.&quot;</strong> A well-functioning self-attention mechanism learns this relationship automatically by assigning a higher attention score from &quot;it&quot; to &quot;chicken.&quot;</p>
+<p><strong>Key Idea</strong></p>
+<p>Each token is transformed into three learned vectors:</p>
+<ul>
+<li><strong>Query (Q)</strong>: Represents what a token is &quot;looking for&quot; in the sequence.</li>
+<li><strong>Key (K)</strong>: Represents what each token &quot;offers&quot; to others.</li>
+<li><strong>Value (V)</strong>: The actual information carried by each token.</li>
+</ul>
+<p>The attention weight between any two tokens is computed by comparing the <strong>Query</strong> of one token with the <strong>Key</strong> of another. These weights are used to compute a weighted sum of the <strong>Value</strong> vectors, resulting in a new representation that reflects both the token's identity and its contextual relationships.</p>
+<p><img src="../_assets/layer-k%20.png" alt=""></p>
+<blockquote>
+<p>The self-attention weight distribution α, used to compute the representation for the word &quot;it&quot; at layer k+1, assigns varying attention to words at layer k, with darker shades indicating stronger attention. Notably, the transformer focuses heavily on the tokens &quot;chicken&quot; and &quot;road,&quot; which is logical since &quot;it&quot; could refer to either, making it beneficial for its representation to incorporate these earlier words' representations.</p>
+</blockquote>
+<hr>
+<h3 id="summary-of-benefits">Summary of Benefits</h3>
+<ul>
+<li>Eliminates the need for recurrence or convolution</li>
+<li>Supports parallel computation across sequences</li>
+<li>Learns context-sensitive representations efficiently</li>
+<li>Enhances performance on long and complex sequences</li>
+</ul>
+<h3 id="mathematical-formulation-query-key-value">Mathematical Formulation: Query, Key, Value</h3>
+<p>Each input vector <span class="math">\(x_i \in \mathbb{R}^d\)</span> is projected into three vectors using learned weights:</p>
+<ul>
+<li><span class="math">\(Q = X W^Q \in \mathbb{R}^{n \times d_k}\)</span></li>
+<li><span class="math">\(K = X W^K \in \mathbb{R}^{n \times d_k}\)</span></li>
+<li><span class="math">\(V = X W^V \in \mathbb{R}^{n \times d_v}\)</span></li>
+</ul>
+<p>The attention score between token <span class="math">\(i\)</span> and <span class="math">\(j\)</span> is computed using the dot product of query and key vectors:</p>
+<div class="math">
+\[
+\text{score}_{i,j} = \frac{Q_i \cdot K_j^T}{\sqrt{d_k}}
+\]</div>
+<p>These scores are passed through a softmax function to obtain attention weights:</p>
+<div class="math">
+\[
+\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q K^T}{\sqrt{d_k}}\right) V
+\]</div>
+<p><img src="../_assets/Attention-Computation.png" alt="Attention Computation"></p>
+<blockquote>
+<p>Attention matrix and weighted value computation.</p>
+</blockquote>
+<p d_k=""><strong>Scale by $(\sqrt $)</strong></p>
+<p>Without scaling, the dot product values can grow large in magnitude, pushing softmax into regions with extremely small gradients. This makes training unstable. Scaling keeps the distribution more balanced.</p>
+<hr>
+</section><section><h2 id="multi-head-attention">Multi-Head Attention</h2>
+<p>While self-attention enables a model to compute context-aware representations of each token by attending to others in the sequence, it may be limited in expressiveness when using a single set of attention weights. Multi-head attention addresses this limitation by applying multiple parallel attention mechanisms, each with its own parameterization, allowing the model to capture a richer set of relationships.</p>
+<h3 id="motivation">Motivation</h3>
+<p>Different attention heads can specialize in learning different aspects of the sequence:</p>
+<ul>
+<li>Some heads may learn <strong>syntactic</strong> relationships, such as subject–verb agreement.</li>
+<li>Others may learn <strong>semantic</strong> or <strong>positional</strong> dependencies, such as referring expressions or word order.</li>
+<li>Certain heads may focus on <strong>short-range dependencies</strong>, while others track <strong>long-distance connections</strong>.</li>
+</ul>
+<p>This diversity allows the model to build robust and nuanced representations of text, far beyond what single-head attention can offer.</p>
+<h3 id="how-multi-head-attention-works">How Multi-Head Attention Works</h3>
+<p>Instead of computing a single set of attention weights, multi-head attention computes multiple independent self-attention operations (called <em>heads</em>) in parallel. Each head uses its own learned linear projections. This mechanism is a core innovation of the <strong>Transformer architecture</strong>, and is instrumental in its ability to model complex linguistic patterns. Each head uses its own set of weights: <span class="math">\(W^Q_i, W^K_i, W^V_i\)</span>. The outputs are concatenated and projected through a final linear layer:</p>
+<div class="math">
+\[
+\text{MultiHead}(Q, K, V) = [\text{head}_1; \dots; \text{head}_h]W^O
+\]</div>
+<div class="math">
+\[
+\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, ..., \text{head}_h) W^O
+\]</div>
+<p><img src="../_assets/multi-head.png" alt="Multi-Head Attention"></p>
+<blockquote>
+<p>The multi-head attention computation for input <span class="math">\(x_i\)</span>, producing output <span class="math">\(a_i\)</span>. A multi-head attention layer consists of <span class="math">\(A\)</span> heads, each with its own key, query, and value weight matrices. The outputs from all heads are concatenated and projected to dimension <span class="math">\(d\)</span>, resulting in an output of the same size as the input.</p>
+</blockquote>
+<h3 id="summary-of-benefits-1">Summary of Benefits</h3>
+<ul>
+<li><strong>Parallel Processing</strong>: All heads compute attention simultaneously, allowing for efficient computation.</li>
+<li><strong>Representation Diversity</strong>: Each head learns different patterns and relationships within the sequence.</li>
+<li><strong>Expressive Power</strong>: Enables modeling of multiple linguistic phenomena concurrently, contributing significantly to the success of Transformer-based models in NLP.</li>
+</ul>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>In this lesson, you learned why attention mechanisms are necessary to overcome the bottlenecks in traditional Seq2Seq models. We explored how attention enables a decoder to selectively focus on relevant input tokens, and how self-attention generalizes this concept for intra-sequence modeling. Multi-head attention further enhances this ability by learning multiple types of relationships in parallel.</p>
+<p>In the next lesson, we will implement attention in a Seq2Seq model and visualize its performance on translation tasks.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

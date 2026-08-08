@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Basics Of JSX And React Components</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-basics-of-jsx-and-react-components">Lesson: Basics of JSX and React Components</h1></header>
+<section><h2 id="introduction"><strong>Introduction</strong></h2>
+<p>JSX is one of the core features of React, allowing developers to write HTML-like syntax directly within JavaScript. This makes building user interfaces more intuitive and efficient. In this lesson, we'll explore what JSX is, how it differs from traditional HTML, and how it integrates seamlessly with JavaScript to create dynamic and interactive UI components. We’ll also cover essential concepts like embedding expressions, using props and state, understanding the component lifecycle, and incorporating accessibility best practices.</p>
+</section><section><h2 id="learning-outcomes"><strong>Learning Outcomes</strong></h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li>Understand what JSX is and how it simplifies UI development in React.</li>
+<li>Differentiate between JSX and HTML, including key syntax differences like camelCase attributes and self-closing tags.</li>
+<li>Embed JavaScript expressions in JSX to create dynamic content.</li>
+<li>Use props to pass data into components and manage internal state using the <code>useState</code> hook.</li>
+<li>Explain the React component lifecycle and how state updates trigger re-renders.</li>
+<li>Apply basic accessibility practices to ensure your applications are inclusive and user-friendly.</li>
+</ol>
+<hr>
+</section><section><h2 id="jsx-syntax-and-how-it-differs-from-html">JSX syntax and how it differs from HTML</h2>
+<p>JSX (JavaScript XML) is a syntax extension for JavaScript that allows you to write HTML-like code inside your JavaScript files. It’s one of the key features of React and makes building user interfaces more intuitive and readable.</p>
+<p><img src="../_assets/lesson-2-frontend-JSX.PNG" alt="Frontend"></p>
+<p><strong>Example</strong>:</p>
+<pre><code class="language-javascript">const jsx = &lt;h1&gt;This is JSX&lt;/h1&gt;;
+</code></pre>
+<p>At first glance, this looks like HTML, but it’s actually JavaScript. JSX allows you to seamlessly mix HTML and JavaScript, making it easier to define the structure and behavior of your UI components.</p>
+<p>However, browsers don’t natively understand JSX because it’s not valid JavaScript. Tools like Babel are used to convert JSX into plain JavaScript that browsers can execute.</p>
+<hr>
+<h3 id="differences-between-jsx-and-html"><strong>Differences Between JSX and HTML</strong></h3>
+<p>Although <strong>JSX</strong> looks nearly identical to <strong>HTML</strong>, it’s important to understand that JSX is not HTML. It’s a <strong>JavaScript syntax extension</strong> that compiles down to <code>React.createElement()</code> calls. Because JSX lives inside JavaScript, there are several key differences in syntax and behavior.</p>
+<p><img src="../_assets/lesson-2-frontend-JSX-vs-HTML.PNG" alt="Frontend"></p>
+<p><strong>Attributes Use CamelCase</strong>:</p>
+<p>In JSX, attributes are written in camelCase instead of lowercase as in HTML.</p>
+<pre><code class="language-jsx">&lt;div className=&quot;container&quot;&gt;Hello, World!&lt;/div&gt;
+</code></pre>
+<p>Here, <code>className</code> is used instead of <code>class</code> because <code>class</code> is a reserved keyword in JavaScript.</p>
+<p><strong>Self-Closing Tags Must Be Explicit</strong>:</p>
+<p>In JSX, all tags must be properly closed, even for elements like <code>&lt;img&gt;</code> or <code>&lt;input&gt;</code>.</p>
+<pre><code class="language-jsx">&lt;img src=&quot;logo.png&quot; alt=&quot;Logo&quot; /&gt;
+</code></pre>
+<p><strong>Embedding JavaScript Expressions</strong>:</p>
+<p>JSX allows you to embed JavaScript expressions inside curly braces <code>{}</code>. This is not possible in plain HTML.</p>
+<pre><code class="language-jsx">const name = &quot;React&quot;;
+const element = &lt;h1&gt;Hello, {name}!&lt;/h1&gt;;
+</code></pre>
+<p><strong>JSX is Transpiled to JavaScript</strong>:</p>
+<p>JSX is not understood by browsers directly. Tools like Babel transpile JSX into plain JavaScript.</p>
+<pre><code class="language-jsx">const element = &lt;h1&gt;Hello, World!&lt;/h1&gt;;
+</code></pre>
+<p>Transpiles to:</p>
+<pre><code class="language-js">const element = React.createElement(&quot;h1&quot;, null, &quot;Hello, World!&quot;);
+</code></pre>
+<p><strong>JSX Can Only Have One Root Element</strong>:</p>
+<p>A JSX expression must have a single root element. If you need multiple elements, wrap them in a parent container like <code>&lt;div&gt;</code> or a React Fragment (<code>&lt;&gt;...&lt;/&gt;</code>).</p>
+<pre><code class="language-jsx">const element = (
+  &lt;&gt;
+    &lt;h1&gt;Title&lt;/h1&gt;
+    &lt;p&gt;Content&lt;/p&gt;
+  &lt;/&gt;
+);
+</code></pre>
+<hr>
+<h3 id="methodology-of-jsx-conversion-to-react.createelement"><strong>Methodology of JSX : Conversion to <code>React.createElement</code></strong></h3>
+<p>Under the hood, JSX is syntactic sugar for calling <code>React.createElement</code>. This function creates a JavaScript object that represents a DOM element or a React component.</p>
+<p><strong>Example:</strong></p>
+<p>Here’s a simple JSX example:</p>
+<pre><code class="language-javascript">const jsx = &lt;h1&gt;This is JSX&lt;/h1&gt;;
+</code></pre>
+<p>When Babel processes this code, it converts it into:</p>
+<pre><code class="language-javascript">const jsx = React.createElement(&quot;h1&quot;, null, &quot;This is JSX&quot;);
+</code></pre>
+<p>The <code>React.createElement</code> function takes three arguments:</p>
+<ol>
+<li><strong>Type</strong>: The type of element to create (e.g., <code>&quot;h1&quot;</code>, <code>&quot;div&quot;</code>, or a custom React component).</li>
+<li><strong>Props</strong>: An object containing attributes (like <code>id</code>, <code>className</code>, etc.) and event handlers (like <code>onClick</code>).</li>
+<li><strong>Children</strong>: The content inside the element (e.g., text or nested elements).</li>
+</ol>
+<p>The above <code>React.createElement</code> call produces an object like this:</p>
+<pre><code class="language-javascript">{
+  type: 'h1',
+  props: {
+    children: 'This is JSX'
+  }
+}
+</code></pre>
+<p>You can log this object to see its structure:</p>
+<pre><code class="language-javascript">console.log(jsx);
+</code></pre>
+<p>This object is what React uses internally to render the actual DOM element.</p>
+<h3 id="adding-attributes-to-jsx"><strong>Adding Attributes to JSX</strong></h3>
+<p>When you add attributes to JSX elements, they are passed as the second argument (<code>props</code>) to <code>React.createElement</code>.</p>
+<p><strong>Example with Attributes:</strong></p>
+<pre><code class="language-javascript">const jsx = &lt;h1 id=&quot;jsx&quot;&gt;This is JSX&lt;/h1&gt;;
+</code></pre>
+<p>This gets converted to:</p>
+<pre><code class="language-javascript">const jsx = React.createElement(&quot;h1&quot;, { id: &quot;jsx&quot; }, &quot;This is JSX&quot;);
+</code></pre>
+<p>The resulting object looks like this:</p>
+<pre><code class="language-javascript">{
+  type: 'h1',
+  props: {
+    id: 'jsx',
+    children: 'This is JSX'
+  }
+}
+</code></pre>
+<p>Attributes like <code>id</code>, <code>className</code>, <code>style</code>, etc., are all part of the <code>props</code> object.</p>
+<h3 id="handling-events"><strong>Handling Events</strong></h3>
+<p>Event handlers like <code>onClick</code> are also included in the <code>props</code> object. For example:</p>
+<p><strong>JSX Code:</strong></p>
+<pre><code class="language-javascript">&lt;button id=&quot;btn&quot; onClick={() =&gt; console.log(&quot;clicked&quot;)}&gt;
+  Click Here
+&lt;/button&gt;
+</code></pre>
+<p><strong>Converted Code:</strong></p>
+<pre><code class="language-javascript">React.createElement(&quot;button&quot;, { 
+  id: &quot;btn&quot;, 
+  onClick: () =&gt; console.log(&quot;clicked&quot;) 
+}, &quot;Click Here&quot;);
+</code></pre>
+<p>The <code>props</code> object now includes the <code>onClick</code> handler:</p>
+<pre><code class="language-javascript">{
+  type: 'button',
+  props: {
+    id: 'btn',
+    onClick: () =&gt; console.log(&quot;clicked&quot;),
+    children: 'Click Here'
+  }
+}
+</code></pre>
+<p>React automatically binds these event handlers to the corresponding DOM events during rendering.</p>
+<hr>
+</section><section><h2 id="embedding-expressions-in-jsx"><strong>Embedding Expressions in JSX</strong></h2>
+<p>JSX allows you to embed JavaScript expressions inside curly braces <code>{}</code>. These expressions can include variables, function calls, arithmetic operations, and more. The result of the expression is rendered as part of the UI.</p>
+<h3 id="examples">Examples:</h3>
+<p><strong>Using Variables</strong>:</p>
+<pre><code class="language-jsx">const name = &quot;Alice&quot;;
+const greeting = &lt;h1&gt;Hello, {name}!&lt;/h1&gt;;
+</code></pre>
+<p><strong>Using Arithmetic Operations</strong>:</p>
+<pre><code class="language-jsx">const num1 = 5;
+const num2 = 10;
+const sum = &lt;p&gt;The sum is {num1 + num2}.&lt;/p&gt;;
+</code></pre>
+<p><strong>Calling Functions</strong>:</p>
+<pre><code class="language-jsx">function formatName(user) {
+  return `${user.firstName} ${user.lastName}`;
+}
+const user = { firstName: &quot;John&quot;, lastName: &quot;Doe&quot; };
+const welcomeMessage = &lt;h1&gt;Welcome, {formatName(user)}!&lt;/h1&gt;;
+</code></pre>
+<p><strong>Conditional Rendering</strong>:</p>
+<ul>
+<li>You can use ternary operators or logical operators to conditionally render elements.</li>
+<li>Example:<pre><code class="language-jsx">const isLoggedIn = true;const message = &lt;p&gt;{isLoggedIn ? &quot;Welcome back!&quot; : &quot;Please log in.&quot;}&lt;/p&gt;;</code></pre></li>
+</ul>
+<p><strong>Rendering Lists</strong>:</p>
+<ul>
+<li>Use the <code>.map()</code> method to render lists of elements.</li>
+<li>Example:<pre><code class="language-jsx">const items = [&quot;Apple&quot;, &quot;Banana&quot;, &quot;Cherry&quot;];const list = (  &lt;ul&gt;    {items.map((item, index) =&gt; (      &lt;li key={index}&gt;{item}&lt;/li&gt;    ))}  &lt;/ul&gt;);</code></pre></li>
+</ul>
+<hr>
+</section><section><h2 id="the-importance-of-the-key-prop-in-react">The Importance of the <code>key</code> Prop in React</h2>
+<p>When rendering lists of elements in React, the <code>key</code> prop is a special string attribute you need to include when creating lists of elements. Keys help React identify which items have changed, are added, or are removed. They give elements a stable identity, which is crucial for efficient updates and re-renders.</p>
+<h3 id="importance-of-keys">Importance of keys</h3>
+<ul>
+<li><strong>Performance Optimization</strong>: Keys allow React to efficiently update the user interface by only re-rendering components that have changed rather than re-rendering the entire list.</li>
+<li><strong>Stable Identity</strong>: Keys provide a stable identity to each element in the list, helping React understand the relationship between the component and the DOM element.</li>
+<li><strong>Avoiding Bugs</strong>: Without keys, React might shuffle or incorrectly update elements, leading to subtle bugs and unexpected behavior.</li>
+</ul>
+<h3 id="methodology">Methodology</h3>
+<p>Keys should be:</p>
+<ul>
+<li><strong>Unique</strong> among siblings: Each key must be unique within the array of elements but doesn’t need to be globally unique.</li>
+<li><strong>Stable</strong>: The value of the key should not change between renders.</li>
+<li><strong>Predictable</strong>: Avoid using index as a key if the order of items may change, as it can lead to performance issues and bugs.</li>
+</ul>
+<h3 id="example-without-keys"><strong>Example Without Keys</strong></h3>
+<p>Let’s consider an example where we render a list without using keys:</p>
+<pre><code class="language-jsx">const items = [&quot;Apple&quot;, &quot;Banana&quot;, &quot;Cherry&quot;];
+
+function List() {
+  return (
+    &lt;ul&gt;
+      {items.map((item) =&gt; (
+        &lt;li&gt;{item}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}
+</code></pre>
+<p>In this case, React will warn you in the console about missing keys. This is because React cannot efficiently manage and update individual list items.</p>
+<h3 id="example-with-keys"><strong>Example With Keys</strong></h3>
+<p>Now, let's improve the example by adding unique keys to each list item:</p>
+<pre><code class="language-jsx">const items = [
+  { id: 1, name: &quot;Apple&quot; },
+  { id: 2, name: &quot;Banana&quot; },
+  { id: 3, name: &quot;Cherry&quot; }
+];
+
+function List() {
+  return (
+    &lt;ul&gt;
+      {items.map((item) =&gt; (
+        &lt;li key={item.id}&gt;{item.name}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}
+</code></pre>
+<p>Here, each <code>li</code> element has a unique <code>key</code> attribute set to <code>item.id</code>. This helps React identify each list item distinctly, making the reconciliation process more efficient.</p>
+<h3 id="best-practices-for-using-keys"><strong>Best Practices for Using Keys</strong></h3>
+<ol>
+<li><strong>Use IDs from Data</strong>: If your data comes from a database or an API, use unique identifiers (like <code>id</code>) as keys.<pre><code class="language-jsx">const users = [  { id: '1', name: 'Alice' },  { id: '2', name: 'Bob' },  { id: '3', name: 'Charlie' }];function UserList() {  return (    &lt;ul&gt;      {users.map(user =&gt; (        &lt;li key={user.id}&gt;{user.name}&lt;/li&gt;      ))}    &lt;/ul&gt;  );}</code></pre></li>
+<li><strong>Avoid Using Index as Key</strong>: Using the array index as a key can cause issues if the list can change (e.g., items are added, removed, or reordered).<pre><code class="language-jsx">// Not recommended if the list can changeconst items = [&quot;Apple&quot;, &quot;Banana&quot;, &quot;Cherry&quot;];function List() {  return (    &lt;ul&gt;      {items.map((item, index) =&gt; (        &lt;li key={index}&gt;{item}&lt;/li&gt;      ))}    &lt;/ul&gt;  );}</code></pre>In this example, using the index as a key might seem convenient, but it can lead to performance issues and bugs if the list changes frequently.</li>
+<li><strong>Ensure Keys Are Unique</strong>: Always ensure that the keys are unique among siblings.<pre><code class="language-jsx">const comments = [  { id: 'comment1', text: 'Great post!' },  { id: 'comment2', text: 'Thanks for sharing.' }];function CommentList() {  return (    &lt;div&gt;      {comments.map(comment =&gt; (        &lt;div key={comment.id}&gt;          &lt;p&gt;{comment.text}&lt;/p&gt;        &lt;/div&gt;      ))}    &lt;/div&gt;  );}</code></pre></li>
+</ol>
+<hr>
+</section><section><h2 id="using-props-and-basic-state-in-components"><strong>Using Props and Basic State in Components</strong></h2>
+<p>In React, components are the building blocks of your UI. They become powerful when they are dynamic—able to receive data (via props) and manage internal changes (via state). This section introduces both.</p>
+<h3 id="props"><strong>Props</strong></h3>
+<ul>
+<li>Props (short for &quot;properties&quot;) are inputs passed to a component. They allow you to make components reusable and dynamic.</li>
+<li>Props are read-only and cannot be modified within the component.</li>
+<li><strong>Example</strong>:<pre><code class="language-jsx">function Greeting(props) {  return &lt;h1&gt;Hello, {props.name}!&lt;/h1&gt;;}const element = &lt;Greeting name=&quot;Alice&quot; /&gt;;</code></pre></li>
+<li><strong>Destructuring Props</strong>:<ul><li>You can destructure props for cleaner code.</li><li>Example:<pre><code class="language-jsx">function Greeting({ name }) {  return &lt;h1&gt;Hello, {name}!&lt;/h1&gt;;}</code></pre></li></ul></li>
+</ul>
+<h3 id="state"><strong>State</strong></h3>
+<ul>
+<li>State represents data that can change over time within a component. Unlike props, state is managed internally by the component.</li>
+<li>The <code>useState</code> hook is used to manage state in functional components.</li>
+<li><strong>Example</strong>:<pre><code class="language-jsx">import React, { useState } from &quot;react&quot;;function Counter() {  const [count, setCount] = useState(0);  return (    &lt;div&gt;      &lt;p&gt;Count: {count}&lt;/p&gt;      &lt;button onClick={() =&gt; setCount(count + 1)}&gt;Increment&lt;/button&gt;    &lt;/div&gt;  );}</code></pre></li>
+</ul>
+<hr>
+</section><section><h2 id="overview-of-the-react-component-lifecycle">Overview of the React Component Lifecycle</h2>
+<p>React components don’t just render once and sit idle. They go through a lifecycle of stages from creation to removal.</p>
+<h3 id="component-lifecycle"><strong>Component Lifecycle</strong></h3>
+<p>React components experience three primary lifecycle phases:</p>
+<ol>
+<li><strong>Mounting</strong>: The component is being created and inserted into the DOM for the first time. This is where you typically initialize state and perform side effects like fetching data.</li>
+<li><strong>Updating</strong>: Triggered when the component’s <strong>state or props</strong> change. React re-renders the component and may re-run side effects depending on dependencies.</li>
+<li><strong>Unmounting</strong>: The component is removed from the DOM.  This is where you clean up side effects (e.g., cancelling timers, aborting fetch requests).</li>
+</ol>
+<hr>
+<h3 id="functional-components-and-hooks"><strong>Functional Components and Hooks</strong>:</h3>
+<p>Functional components use hooks like <code>useEffect</code> to handle lifecycle events.</p>
+<p><strong>Example</strong>:</p>
+<pre><code class="language-jsx">import React, { useEffect, useState } from &quot;react&quot;;
+function LifecycleExample() {
+  const [data, setData] = useState(null);
+  useEffect(() =&gt; {
+    console.log(&quot;Component mounted or updated&quot;);
+    fetch(&quot;https://api.example.com/data&quot;)
+      .then((response) =&gt; response.json())
+      .then((result) =&gt; setData(result));
+    return () =&gt; {
+      console.log(&quot;Component will unmount&quot;);
+    };
+  }, []);
+  return &lt;div&gt;{data ? &lt;p&gt;Data: {data}&lt;/p&gt; : &lt;p&gt;Loading...&lt;/p&gt;}&lt;/div&gt;;
+}
+</code></pre>
+<hr>
+</section><section><h2 id="ways-state-updates-trigger-re-renders">Ways State Updates Trigger Re-Renders</h2>
+<p>In React, state is a core feature that enables components to be dynamic and interactive. When the state of a component changes, React automatically re-renders the component to reflect the new state in the UI.</p>
+<h3 id="how-react-handles-state-updates-and-re-renders">How React Handles State Updates and Re-Renders</h3>
+<ul>
+<li><strong>State Changes Trigger Reconciliation</strong>: Whenever you call a state setter (like <code>setCount</code>), React schedules a re-render of that component. It doesn’t update the DOM directly but instead starts a reconciliation process.</li>
+<li><strong>Virtual DOM Optimization</strong>: React tracks changes using a virtual DOM. It compares the new virtual DOM with the previous one (a process called diffing) and applies only the minimal necessary changes to the actual DOM, ensuring better performance.</li>
+<li><strong>Component-Level Scope</strong>: Only the component whose state has changed, and its children, will be re-rendered. Sibling components or unrelated components are unaffected unless they share state via props or context.</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre><code class="language-jsx">function Counter() {
+  const [count, setCount] = React.useState(0);
+
+  return (
+    &lt;button onClick={() =&gt; setCount(count + 1)}&gt;
+      Clicked {count} times
+    &lt;/button&gt;
+  );
+}
+</code></pre>
+<ul>
+<li>Every time you click the button, <code>setCount</code> updates the state.</li>
+<li>React re-renders the <code>Counter</code> component to display the new count.</li>
+<li>Only the parts of the UI that use <code>count</code> are updated in the DOM.</li>
+</ul>
+<hr>
+</section><section><h2 id="introduction-to-basic-accessibility-considerations"><strong>Introduction to Basic Accessibility Considerations</strong></h2>
+<p>Accessibility (often abbreviated as a11y) is about designing and developing applications that can be used by everyone, regardless of their abilities or disabilities. In modern web development, accessibility is not just a “nice-to-have”. It’s a fundamental requirement for building inclusive, effective, and legally compliant digital experiences.</p>
+<h3 id="benefits-accessibility"><strong>Benefits Accessibility</strong></h3>
+<ul>
+<li><strong>Inclusive Design</strong>: Ensures that people with visual, auditory, motor, or cognitive impairments can use your application effectively.</li>
+<li><strong>Improved Usability</strong>: Accessibility improvements—like clear labels, keyboard navigation, and readable content—benefit all users, not just those with disabilities.</li>
+<li><strong>Better SEO</strong>: Search engines rely on semantic HTML and descriptive attributes, many of which overlap with accessibility best practices.</li>
+<li><strong>Legal Compliance</strong>: Following standards like <strong>WCAG</strong> (Web Content Accessibility Guidelines) helps organizations meet legal obligations and avoid discrimination lawsuits.</li>
+<li><strong>Wider Audience Reach</strong>: Making your application accessible means more people can use it, which can lead to increased traffic, customer satisfaction, and engagement.</li>
+</ul>
+<h3 id="basic-accessibility-practices"><strong>Basic Accessibility Practices</strong></h3>
+<p><strong>Semantic HTML</strong>: Use semantic HTML elements like <code>&lt;header&gt;</code>, <code>&lt;main&gt;</code>, <code>&lt;footer&gt;</code>, <code>&lt;button&gt;</code>, etc., instead of generic <code>&lt;div&gt;</code> elements.</p>
+<pre><code class="language-jsx">&lt;button onClick={handleClick}&gt;Submit&lt;/button&gt;
+</code></pre>
+<p><strong>ARIA Attributes</strong>: Use ARIA (Accessible Rich Internet Applications) attributes to enhance accessibility.</p>
+<pre><code class="language-jsx">&lt;div role=&quot;alert&quot;&gt;This is an important message!&lt;/div&gt;
+</code></pre>
+<p><strong>Alt Text for Images</strong> Always provide descriptive <code>alt</code> text for images.</p>
+<pre><code class="language-jsx">&lt;img src=&quot;logo.png&quot; alt=&quot;Company Logo&quot; /&gt;
+</code></pre>
+<p><strong>Keyboard Navigation</strong>: Ensure interactive elements like buttons and links are accessible via keyboard navigation.</p>
+<p><strong>Focus Management</strong>: Manage focus for modal dialogs and other dynamic content to ensure users with screen readers can navigate effectively.</p>
+<p><strong>Color Contrast</strong>: Ensure sufficient color contrast between text and background for readability.</p>
+<hr>
+</section><section><h2 id="conclusion"><strong>Conclusion</strong></h2>
+<p>By the end of this lesson, you should have a solid understanding of JSX, including its syntax, how to embed expressions, and how to use props and state in React components. You’ve also learned about the React component lifecycle and how state updates trigger re-renders. Finally, we introduced basic accessibility considerations to help you build inclusive and user-friendly applications.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

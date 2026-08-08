@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>TF</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-tf-idf-term-frequency-inverse-document-frequency">Lesson: TF-IDF (Term Frequency-Inverse Document Frequency)</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In the previous lesson, we explored the <strong>Bag-of-Words (BoW) model</strong> and its ability to convert text into numerical representations using word frequency vectors. However, BoW has a critical limitation: <strong>it treats all words equally</strong>, regardless of their importance in distinguishing between documents.</p>
+<p>For example, common words like &quot;the&quot; and &quot;is&quot; appear frequently in all texts, but they do not contribute much to understanding the meaning of a document. The <strong>TF-IDF (Term Frequency-Inverse Document Frequency)</strong> technique addresses this issue by <strong>assigning higher weights to important words</strong> while <strong>down-weighting frequent but unimportant words</strong>.</p>
+<p>TF-IDF is widely used in search engines, text classification, and information retrieval to enhance text representation by weighting words based on their importance.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Explain</strong> how TF-IDF improves upon the Bag-of-Words model.</li>
+<li><strong>Calculate</strong> TF-IDF values for terms in a document collection.</li>
+<li><strong>Analyze</strong> how TF-IDF assigns higher importance to meaningful words.</li>
+<li><strong>Implement</strong> TF-IDF using Python for text representation and analysis.</li>
+</ol>
+<hr>
+</section><section><h2 id="understanding-tf-idf">Understanding TF-IDF</h2>
+<p><strong>TF-IDF</strong> stands for <strong>Term Frequency–Inverse Document Frequency</strong>, and it’s a fundamental technique used in Natural Language Processing and Information Retrieval to evaluate how important a word is to a document in a collection or corpus.</p>
+<p>It’s especially useful for tasks like document ranking, keyword extraction, and search engines.</p>
+<h3 id="what-is-tf-idf">What is TF-IDF?</h3>
+<p><strong>TF-IDF</strong> (Term Frequency–Inverse Document Frequency) is a <strong>statistical measure</strong> used to evaluate how important a word is in a specific document <strong>relative to</strong> a larger collection of documents, known as a <strong>corpus</strong>.</p>
+<p>It balances two key factors:</p>
+<ul>
+<li><strong>Term Frequency (TF):</strong> Measures how often a word appears in a document. The more frequent the word, the more important it may seem for that document.</li>
+<li><strong>Inverse Document Frequency (IDF):</strong> Discounts the importance of words that appear in many documents across the corpus, giving higher weight to words that are more unique or informative.</li>
+</ul>
+<p>Together, TF-IDF highlights words that are <strong>frequent in a document but rare across the corpus</strong>, helping identify the most meaningful terms in a given context.</p>
+<p>The <strong>TF-IDF score</strong> is calculated as:</p>
+<div class="math">
+\[
+w_{t,d} = tf_{t,d} \times idf_t
+\]</div>
+<p>where:</p>
+<ul>
+<li><span class="math">\(w_{t,d}\)</span> is the TF-IDF weight of term ( t ) in document ( d ).</li>
+<li><span class="math">\(tf_{t,d}\)</span> is the <strong>term frequency</strong> in the document.</li>
+<li><span class="math">\(idf_t\)</span> is the <strong>inverse document frequency</strong> across all documents.</li>
+</ul>
+<h3 id="term-frequency-tf">Term Frequency (TF)</h3>
+<p>The <strong>Term Frequency</strong> <span class="math">\((tf_{t,d​})\)</span> represents the number of times a term <span class="math">\(t\)</span> appears in a document <span class="math">\(d\)</span>. However, using raw counts can introduce bias toward longer documents that naturally contain more words. To address this, normalization techniques are applied.</p>
+<p><strong>Raw Count</strong></p>
+<p>The simplest approach—just counts the number of times the term appears:</p>
+<div class="math">
+\[
+$tf_{t,d}​=\text{count}(t,d)$
+\]</div>
+<hr>
+<h3 id="log-normalization"><strong>Log Normalization</strong></h3>
+<p>To reduce the disproportionate influence of very frequent terms, <strong>logarithmic scaling</strong> is used. This approach dampens the effect of large term frequencies while preserving relative importance.</p>
+<p>The <strong>log-weighted term frequency</strong> is defined as:</p>
+<div class="math">
+\[
+tf_{t,d} =
+\begin{cases}
+1 + \log_{10}(\text{count}(t, d)) &amp; \text{if } \text{count}(t, d) &gt; 0 \\\
+0 &amp; \text{otherwise}
+\end{cases}
+\]</div>
+<p>This formula ensures that:</p>
+<ul>
+<li>Words appearing more frequently still have higher importance.</li>
+<li>The rate of growth slows down logarithmically, preventing extremely frequent words from dominating. This weighting helps reduce the impact of very frequent terms.</li>
+</ul>
+<p><strong>Example</strong></p>
+<p>Suppose the word <em>&quot;disaster&quot;</em> appears <strong>0 times</strong>, then <strong>tf = 0</strong>.</p>
+<p>If it appears <strong>1 time</strong>, then <span class="math">\(tf = 1 + log₁₀(1) = 1\)</span>.</p>
+<p>If it appears <strong>10 times</strong>, then  <span class="math">\(tf = 1 + log₁₀(10) = 2\)</span>.</p>
+<p>If it appears <strong>100 times</strong>, then <span class="math">\(tf = 1 + log₁₀(100) = 3\)</span>, and so on.</p>
+<hr>
+<h3 id="inverse-document-frequency-idf">Inverse Document Frequency (IDF)</h3>
+<p><strong>Inverse Document Frequency (IDF)</strong> is a measure used to <strong>downweight common words</strong> that appear in many documents across the corpus. The idea is that terms occurring in many documents are <strong>less useful</strong> for distinguishing one document from another.</p>
+<p>The formula for IDF is:</p>
+<div class="math">
+\[
+idf_t = \log_{10} \left( \frac{N}{df_t} \right)
+\]</div>
+<p>where:</p>
+<ul>
+<li><span class="math">\(N\)</span>  is the total number of documents.</li>
+<li>$tf_ $ is the number of documents containing the term ( t ).</li>
+</ul>
+<p>Words that appear in <strong>almost every document</strong>—such as &quot;the&quot;, &quot;is&quot;, or &quot;and&quot;—have high document frequency (<span class="math">\(df_t\)</span>), resulting in a <strong>low IDF</strong>. In fact, if a word appears in <strong>all</strong> documents, its IDF becomes:</p>
+<div class="math">
+\[
+idf_t = \log_{10} \left( \frac{N}{N} \right)=\log_{10}(1)=0
+\]</div>
+<p>Here’s a revised and polished version of your <strong>Shakespeare’s Plays</strong> example with improved clarity, formatting, and a bit more explanation for context:</p>
+<hr>
+<h3 id="example-shakespeares-plays"><strong>Example: Shakespeare’s Plays</strong></h3>
+<p>Assume we have a collection of <strong>37 plays</strong> written by Shakespeare. We can compute the <strong>Inverse Document Frequency (IDF)</strong> for various words based on how many plays each word appears in:</p>
+<table>
+<thead>
+<tr>
+<th><strong>Word</strong></th>
+<th><strong>Document Frequency</strong> (<span class="math">\(df\)</span>)</th>
+<th><strong>IDF</strong> <span class="math">\(\log_{10}\left( \frac{37}{df} \right)\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>Romeo</em></td>
+<td>1</td>
+<td>1.57</td>
+</tr>
+<tr>
+<td><em>Salad</em></td>
+<td>2</td>
+<td>1.27</td>
+</tr>
+<tr>
+<td><em>Fool</em></td>
+<td>36</td>
+<td>0.012</td>
+</tr>
+<tr>
+<td><em>Good</em></td>
+<td>37</td>
+<td>0.00</td>
+</tr>
+</tbody>
+</table>
+<h4 id="interpretation">Interpretation:</h4>
+<ul>
+<li><strong>&quot;Romeo&quot;</strong> appears in only one play, so its <strong>IDF is high</strong> (<em>1.57</em>), making it a <strong>strong indicator</strong> of that specific document.</li>
+<li><strong>&quot;Salad&quot;</strong> is rare, showing up in just two plays, so it also has a relatively high IDF (<em>1.27</em>).</li>
+<li><strong>&quot;Fool&quot;</strong> appears in 36 of the 37 plays, so its IDF is close to <strong>zero</strong>, indicating it's <strong>too common to be distinctive</strong>.</li>
+<li><strong>&quot;Good&quot;</strong> appears in <strong>all</strong> 37 plays, resulting in an IDF of <strong>0</strong>, meaning it contributes <strong>no value</strong> in distinguishing one play from another.</li>
+</ul>
+<p>This example highlights how IDF helps identify <strong>unique or significant terms</strong> while downweighting <strong>common, less informative words</strong>.</p>
+<hr>
+</section><section><h2 id="example-calculation">Example Calculation</h2>
+<h3 id="step-1-compute-term-frequency-tf">Step 1: Compute Term Frequency (TF)</h3>
+<p>Suppose we analyze a document where &quot;Romeo&quot; appears <strong>10 times</strong>. Using log normalization:</p>
+<div class="math">
+\[
+tf_{\text{Romeo},d} = 1 + \log_{10}(10) = 2
+\]</div>
+<h3 id="step-2-compute-inverse-document-frequency-idf">Step 2: Compute Inverse Document Frequency (IDF)</h3>
+<p>Since &quot;Romeo&quot; appears in only one of 37 documents:</p>
+<div class="math">
+\[
+idf_{\text{Romeo}} = \log_{10} \left( \frac{37}{1} \right) = 1.57
+\]</div>
+<h3 id="step-3-compute-tf-idf">Step 3: Compute TF-IDF</h3>
+<div class="math">
+\[
+w_{\text{Romeo},d} = 2 \times 1.57 = 3.14
+\]</div>
+<p>This high weight means that <strong>&quot;Romeo&quot; is a significant term in this document</strong>.</p>
+<hr>
+</section><section><h2 id="implementing-tf-idf-in-python">Implementing TF-IDF in Python</h2>
+<p>We can compute TF-IDF using <strong>TfidfVectorizer</strong> from <code>sklearn.feature_extraction.text</code>.</p>
+<h3 id="step-1-import-required-libraries">Step 1: Import Required Libraries</h3>
+<pre><code class="language-python">from sklearn.feature_extraction.text import TfidfVectorizer
+
+corpus = [
+    &quot;Antony appears in Julius Caesar and Antony and Cleopatra.&quot;,
+    &quot;Brutus appears in Julius Caesar and Hamlet.&quot;,
+    &quot;Caesar appears in Julius Caesar, Hamlet, and Othello.&quot;
+]
+</code></pre>
+<h3 id="step-2-create-and-apply-the-tf-idf-vectorizer">Step 2: Create and Apply the TF-IDF Vectorizer</h3>
+<pre><code class="language-python">vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(corpus)
+</code></pre>
+<h3 id="step-3-display-the-vocabulary">Step 3: Display the Vocabulary</h3>
+<pre><code class="language-python">print(&quot;Vocabulary:&quot;, vectorizer.get_feature_names_out())
+</code></pre>
+<p><strong>Output:</strong></p>
+<pre><code>Vocabulary: ['antony' 'appears' 'brutus' 'caesar' 'cleopatra' 'hamlet' 'julius' 'othello']
+</code></pre>
+<h3 id="step-4-convert-text-into-tf-idf-matrix">Step 4: Convert Text into TF-IDF Matrix</h3>
+<pre><code class="language-python">print(&quot;TF-IDF Matrix:\n&quot;, X.toarray())
+</code></pre>
+<p><strong>Example Output:</strong></p>
+<pre><code>TF-IDF Matrix:
+[[0.69 0.40 0.   0.28 0.69 0.   0.28 0.  ]
+ [0.   0.40 0.69 0.28 0.   0.69 0.28 0.  ]
+ [0.   0.40 0.   0.56 0.   0.56 0.28 0.69]]
+</code></pre>
+<ul>
+<li>Each row represents a document, and each column corresponds to a word.</li>
+<li>The TF-IDF score reflects how important a word is in distinguishing one document from another.</li>
+</ul>
+<hr>
+</section><section><h2 id="applications-of-tf-idf">Applications of TF-IDF</h2>
+<p><strong>TF-IDF</strong> is a foundational technique in <strong>Natural Language Processing (NLP)</strong>, widely used for extracting meaningful insights from text. Its ability to highlight important terms makes it valuable in many real-world scenarios:</p>
+<ol>
+<li><strong>Search Engines</strong>: TF-IDF helps rank documents based on how relevant they are to a user's query by scoring terms that are both frequent in a document and rare across the corpus.</li>
+<li><strong>Document Similarity</strong>: By converting documents into TF-IDF vectors, we can compute how similar two texts are using distance metrics like cosine similarity—useful for clustering or recommendation systems.</li>
+<li><strong>Plagiarism Detection</strong>: TF-IDF can highlight unique terms or unusual overlaps in phrasing, helping detect copied or highly similar content across large document collections.</li>
+<li><strong>Text Classification</strong>: TF-IDF improves model performance by emphasizing discriminative words and reducing noise from common, uninformative terms—making it ideal for spam detection, topic categorization, and sentiment analysis.</li>
+</ol>
+<hr>
+</section><section><h2 id="comparing-bag-of-words-bow-and-tf-idf">Comparing Bag-of-Words (BoW) and TF-IDF</h2>
+<p>Both <strong>Bag-of-Words (BoW)</strong> and <strong>TF-IDF</strong> are popular methods for representing text as numerical features in NLP. While they share some similarities, they differ in how they treat word importance and document context.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Bag-of-Words (BoW)</th>
+<th>TF-IDF</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Considers frequency</strong></td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><strong>Handles common words effectively</strong></td>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><strong>Differentiates important words</strong></td>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><strong>Keeps word order</strong></td>
+<td>No</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<h4 id="summary">Summary:</h4>
+<ul>
+<li><strong>BoW</strong> simply counts word occurrences without considering how common or rare the words are across documents.</li>
+<li><strong>TF-IDF</strong> enhances this by reducing the weight of common words and highlighting unique, informative ones—making it more suitable for tasks like search and classification.</li>
+</ul>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>TF-IDF improves upon the Bag-of-Words model by reducing the weight of common words and highlighting important ones. This makes it a <strong>powerful tool</strong> for text representation in NLP tasks such as search engines, document classification, and text similarity.</p>
+<p>Now that we understand text representation techniques, it’s time to apply our knowledge by implementing a full text preprocessing pipeline.
+In the next week, we will explore <strong>Vector Semantics and Word Embeddings</strong>, which capture contextual meaning .</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

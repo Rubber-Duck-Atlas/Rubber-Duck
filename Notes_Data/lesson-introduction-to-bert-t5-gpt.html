@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Introduction To Bert T5 Gpt</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-introduction-to-bert-t5-and-gpt">Lesson: Introduction to BERT, T5, and GPT</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Transformer-based models have transformed NLP by enabling large-scale transfer learning. In earlier lessons, you learned how Transformers process input sequences in parallel using self-attention and positional encoding. But their real power is revealed when they are pretrained on massive corpora and then fine-tuned on specific tasks.</p>
+<p>This lesson introduces three foundational Transformer models—<strong>BERT</strong>, <strong>GPT</strong>, and <strong>T5</strong>—each with a distinct architecture and training philosophy. These models are not trained from scratch on every task. Instead, they are first <strong>pretrained</strong> on large unlabeled datasets to learn general language features and then <strong>fine-tuned</strong> on a smaller, task-specific dataset.</p>
+<p>Understanding the <strong>architecture, training objectives, and use cases</strong> of BERT, GPT, and T5 will help you decide which model to use for tasks such as classification, summarization, question answering, and generation.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Compare</strong> the architectural and functional differences between BERT, GPT, and T5.</li>
+<li><strong>Explain</strong> the pre-training objectives used in each model.</li>
+<li><strong>Describe</strong> how fine-tuning enables these models to adapt to specific NLP tasks.</li>
+</ol>
+<hr>
+</section><section><h2 id="the-bert-model"><strong>The BERT Model</strong></h2>
+<p>To understand modern language representation models, we begin with BERT (Bidirectional Encoder Representations from Transformers), which is foundational to the development of T5 and GPT. This section explores BERT’s architecture and pretraining methodology, illustrating how it departs from traditional language models by introducing bidirectional attention and sentence-level reasoning.</p>
+<h3 id="model-architecture"><strong>Model Architecture</strong></h3>
+<p>BERT is based solely on the <strong>Transformer encoder</strong> stack. Unlike autoregressive models (e.g., GPT) that process tokens in one direction, BERT incorporates context from <strong>both left and right</strong> simultaneously. This <strong>bidirectional design</strong> significantly improves performance on tasks requiring deep contextual understanding.</p>
+<p>Key architectural elements include:</p>
+<ul>
+<li><strong>Transformer Encoder Stack</strong>: Multiple layers of multi-head self-attention and feed-forward sublayers.</li>
+<li><strong>Input Representation</strong>:<ul><li><code>[CLS]</code> token at the beginning for classification tasks.</li><li><code>[SEP]</code> token to separate sentences in pairwise tasks.</li><li>Positional encodings and segment embeddings added to token embeddings.</li></ul></li>
+<li><strong>Output</strong>: A sequence of contextual embeddings, with the <code>[CLS]</code> token embedding typically used for classification.</li>
+</ul>
+<h3 id="pretraining-objectives">Pretraining Objectives</h3>
+<p><strong>Masked Language Modeling (MLM)</strong>
+Masked Language Modeling (MLM) trains BERT-like models on unannotated text. 15% of tokens are manipulated: 80% replaced with [MASK], 10% with random tokens, 10% unchanged. The model predicts original tokens using subword tokenization, word/positional embeddings, and bidirectional transformers. Cross-entropy loss from manipulated tokens drives training, with all tokens used in self-attention.</p>
+<ul>
+<li>Randomly masks some input tokens and trains the model to predict them.</li>
+<li>Enables bidirectional understanding.</li>
+</ul>
+<p><strong>Example</strong>:
+Input: &quot;So <code>[mask]</code> and <code>[mask]</code> for all <code>apricot</code> fish&quot;
+Target: &quot;long&quot;, &quot;thanks&quot;, &quot;the&quot;
+Here, long, thanks and the have been sampled from the training sequence, with the first two masked and the replaced with the randomly sampled token apricot. The following figure illustrates this approach with a simple example:</p>
+<p><img src="../_assets/masked.png" alt=""></p>
+<blockquote>
+<p>Masked language model training. In this example, three of the input tokens are selected, two of which are masked and the third is replaced with an unrelated word. The probabilities assigned by the model to these three items are used as the training loss. The other 5 tokens don't play a role in training loss.</p>
+</blockquote>
+<hr>
+<p><strong>Next Sentence Prediction (NSP)</strong>
+Next Sentence Prediction (NSP) in BERT models trains them to predict if two sentences are adjacent or unrelated (50% positive, 50% random pairs). It uses <code>[CLS]</code> and <code>[SEP]</code> tokens, plus segment embeddings, to process sentence pairs and support tasks like paraphrase detection and entailment.</p>
+<ul>
+<li>Trains the model to determine whether a second sentence logically follows the first.</li>
+<li>Helps the model understand relationships between sentences.Cross entropy calculates the NSP loss for each sentence pair input to the model. In BERT, the NSP loss is combined with the MLM objective to create the final loss. The following figure illustrates the NSP training process:<img src="../_assets/nsp.png" alt=""></li>
+</ul>
+<blockquote>
+<p>An example of the NSP loss calculation.</p>
+</blockquote>
+<h3 id="bert-input-embeddings"><strong>BERT Input Embeddings</strong></h3>
+<p>BERT’s input representation is carefully designed to support both single-sentence and sentence-pair tasks within the same architecture. The final embedding for each token is a <strong>sum of three components</strong>:</p>
+<p><strong>Token Embeddings</strong></p>
+<ul>
+<li>These are standard word-piece embeddings derived from a pre-learned vocabulary.</li>
+<li>BERT uses WordPiece tokenization, which splits words into subword units (e.g., &quot;playing&quot; → &quot;play&quot;, &quot;##ing&quot;).</li>
+</ul>
+<p><strong>Segment Embeddings</strong></p>
+<ul>
+<li>Used to differentiate between two sentences (A and B) when processing sentence pairs.</li>
+<li>Tokens from the first sentence receive a segment ID of 0; tokens from the second sentence receive 1.</li>
+</ul>
+<p><strong>Positional Embeddings</strong></p>
+<ul>
+<li>Because Transformers do not process input sequentially, positional encodings are required to retain word order.</li>
+<li>BERT uses learned positional embeddings (unlike the sinusoidal ones in the original Transformer paper).</li>
+</ul>
+<p>The final input to the encoder is:</p>
+<div class="math">
+\[
+\text{Input}_\text{Embedding} =\text{Token Embedding+Segment Embedding+Position Embedding}
+\]</div>
+<hr>
+<h3 id="fine-tuning-bert-for-downstream-tasks"><strong>Fine-Tuning BERT for Downstream Tasks</strong></h3>
+<p>Once pretraining is complete, BERT can be <strong>fine-tuned</strong> for a wide range of NLP tasks by adding task-specific layers on top of the pretrained architecture.</p>
+<p><strong>General Fine-Tuning Procedure</strong></p>
+<ol>
+<li>Add a lightweight output layer (e.g., softmax for classification, span extractor for QA).</li>
+<li>Initialize BERT with pretrained weights.</li>
+<li>Train the entire model (BERT + new layer) on a task-specific dataset with supervised labels.</li>
+</ol>
+<p>Unlike earlier NLP pipelines that relied on frozen embeddings or task-specific architectures, BERT allows <strong>end-to-end learning</strong> with minimal task-specific modification.</p>
+<p><strong>Examples of Fine-Tuning Tasks</strong></p>
+<table>
+<thead>
+<tr>
+<th>Task Type</th>
+<th>Input Format (Sentence A + B)</th>
+<th>Output Layer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sentiment Analysis</td>
+<td>Single sentence</td>
+<td>Dense layer → softmax</td>
+</tr>
+<tr>
+<td>Natural Language Inference</td>
+<td>Sentence pair (premise + hypothesis)</td>
+<td>Dense layer → softmax</td>
+</tr>
+<tr>
+<td>Question Answering</td>
+<td>Paragraph + Question</td>
+<td>Span prediction over token indices</td>
+</tr>
+<tr>
+<td>Named Entity Recognition</td>
+<td>Single sentence</td>
+<td>Token-level softmax over BIO tags</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why BERT’s Fine-Tuning is Powerful</strong></p>
+<ul>
+<li>Requires very little task-specific architecture engineering.</li>
+<li>Makes it possible to achieve state-of-the-art performance on many benchmarks with only a few additional parameters.</li>
+<li>Leverages bidirectional context, making it more powerful than traditional left-to-right or right-to-left language models.</li>
+</ul>
+<hr>
+<h3 id="common-use-cases-for-bert"><strong>Common Use Cases for BERT</strong></h3>
+<p>BERT's flexible architecture and powerful bidirectional encoding make it suitable for a wide range of Natural Language Understanding (NLU) tasks. After fine-tuning, BERT has consistently set state-of-the-art benchmarks across the following applications:</p>
+<p><strong>Text Classification</strong></p>
+<p>BERT can be fine-tuned to classify text into categories such as:</p>
+<ul>
+<li><strong>Sentiment analysis</strong> (e.g., positive vs. negative movie reviews)</li>
+<li><strong>Topic classification</strong> (e.g., politics, sports, technology)</li>
+</ul>
+<p>The <code>[CLS]</code> token embedding is typically passed through a softmax classifier for these tasks.</p>
+<p><strong>Named Entity Recognition (NER)</strong></p>
+<p>For sequence labeling tasks like NER, BERT is fine-tuned to make token-level predictions:</p>
+<ul>
+<li>Recognizing entities such as names, locations, organizations (e.g., BIO tagging)</li>
+<li>Handles context-sensitive disambiguation more effectively than traditional models</li>
+</ul>
+<p><strong>Question Answering (QA)</strong></p>
+<p>BERT excels in extractive QA tasks (e.g., SQuAD), where it is fine-tuned to identify:</p>
+<ul>
+<li>The <strong>start</strong> and <strong>end</strong> positions of an answer span within a given passage</li>
+<li>The model uses the entire context bidirectionally, improving accuracy in ambiguous questions</li>
+</ul>
+<p><strong>Sentence Pair Tasks</strong></p>
+<p>BERT was explicitly designed to model relationships between sentence pairs, supporting tasks such as:</p>
+<ul>
+<li><strong>Natural Language Inference (NLI)</strong>: Determine if a hypothesis logically follows from a premise (e.g., entailment, contradiction, or neutral)</li>
+<li><strong>Paraphrase Detection</strong> and <strong>Semantic Textual Similarity (STS)</strong></li>
+</ul>
+<p>It does this by leveraging segment embeddings and encoding both sentences jointly.</p>
+<p>By adapting BERT through minimal task-specific additions and end-to-end fine-tuning, researchers and practitioners can build powerful models for a wide spectrum of real-world applications in NLP.</p>
+<p>While BERT has proven highly effective for understanding tasks through its bidirectional encoder architecture, another foundational model, GPT, was designed with a contrasting philosophy: text generation. GPT leverages the power of autoregressive modeling, using only the Transformer decoder to predict future tokens based on past context.</p>
+<hr>
+</section><section><h2 id="the-gpt-model-and-autoregressive-generation">The GPT Model and Autoregressive Generation</h2>
+<p>GPT (Generative Pretrained Transformer) is a decoder-only Transformer trained to generate text by predicting the next word in a sequence. Unlike BERT, which processes input in both directions, GPT uses masked self-attention to ensure that each token only attends to earlier tokens, enabling left-to-right generation.</p>
+<h3 id="key-properties-of-gpt">Key Properties of GPT</h3>
+<ul>
+<li><strong>Architecture</strong>: Decoder-only Transformer with causal (masked) self-attention to prevent access to future tokens during training.</li>
+<li><strong>Input</strong>: A prompt or partial sentence (e.g., &quot;The weather today is&quot;).</li>
+<li><strong>Output</strong>: The model predicts the next word (e.g., &quot;sunny&quot;) and continues generation autoregressively.</li>
+</ul>
+<h3 id="pretraining-objective">Pretraining Objective</h3>
+<p>GPT learns using <strong>Causal Language Modeling</strong>, where the model predicts the next token without looking ahead. For training chatbots, the typical approach uses a standard causal language model architecture, where the model predicts each word based on all preceding words, employing the standard language modeling loss. The key distinction lies in the data, incorporating substantial conversation and pseudo-conversation data, as outlined earlier. As usual, the left context may encompass the entire prior conversation, limited only by the context window size. The following figure illustrates this training setup:</p>
+<p><img src="../_assets/decoder-chatbot.png" alt=""></p>
+<blockquote>
+<p>Training a causal (decoder-only) language model for a chatbot.</p>
+</blockquote>
+<h3 id="applications-of-gpt">Applications of GPT</h3>
+<p>Building on its decoder-only architecture and ability to generate coherent, context-aware text, GPT models have been widely adopted across a variety of real-world tasks. Their autoregressive nature makes them especially powerful for tasks that involve sequence continuation, language generation, or prompt-based reasoning.</p>
+<p><strong>Common Use Cases</strong></p>
+<ul>
+<li><strong>Story and Article Generation</strong>: GPT can generate human-like narratives, blog posts, summaries, and creative fiction based on a short prompt.</li>
+<li><strong>Conversational Agents and Chatbots</strong>: Its context-aware design allows GPT to drive natural, multi-turn conversations in customer service, virtual assistants, and interactive agents.</li>
+<li><strong>Few-Shot and Zero-Shot Learning</strong>: With larger models like GPT-3 and GPT-4, the model can perform tasks with minimal or no task-specific training—just by observing examples within a prompt.</li>
+<li><strong>Code Generation and Assistance</strong>: Specialized versions like <strong>Codex</strong> (used in tools such as GitHub Copilot) are fine-tuned on programming languages to assist with code generation, completion, and documentation.</li>
+</ul>
+<p>These applications underscore GPT’s role as a general-purpose language model, bridging the gap between structured task learning and open-ended generation.</p>
+<hr>
+</section><section><h2 id="the-t5-model-and-the-text-to-text-framework">The T5 Model and the Text-to-Text Framework</h2>
+<p>Having explored how BERT excels at language understanding and GPT at generation, we now turn to a model that unifies both paradigms under a single, flexible architecture: T5 (Text-to-Text Transfer Transformer). Where BERT is trained to understand masked input and GPT is trained to predict future tokens, T5 reframes all NLP tasks classification, translation, summarization, question answering, as a text-to-text problem. This uniformity simplifies the training pipeline and enables the model to handle diverse tasks with the same architecture and objective.</p>
+<h3 id="key-properties-of-t5">Key Properties of T5</h3>
+<ul>
+<li>Architecture: A full encoder-decoder Transformer, enabling both input comprehension and output generation.</li>
+<li>Input Format: Each task begins with a natural-language instruction (e.g., <code>&quot;translate English to German: Hello.&quot;</code>) followed by the actual input.</li>
+<li>Output Format: The corresponding target text (e.g., <code>&quot;Hallo.&quot;</code>).</li>
+</ul>
+<p>This framework promotes generalization across tasks and supports multitask learning.</p>
+<h3 id="pretraining-objective-1">Pretraining Objective</h3>
+<p>T5 is pretrained using a span corruption objective, a variation on masked language modeling:</p>
+<ul>
+<li><strong>Spans</strong> (contiguous sequences of tokens) are replaced by sentinel tokens such as <code>&lt;extra_id_0&gt;</code>.</li>
+<li>The model learns to generate the missing spans in the output, enabling it to learn deep contextual representations and flexible text generation.</li>
+</ul>
+<p>This strategy blends the strengths of BERT-style denoising and GPT-style decoding, preparing T5 for a wide range of downstream applications.</p>
+<p><img src="../_assets/t5.png" alt=""></p>
+<p><strong>Example</strong>:
+Input: <code>&quot;summarize: The movie was long and boring, but the acting was good.&quot;</code>
+Output: <code>&quot;The acting was good&quot;</code></p>
+<h3 id="applications-of-t5">Applications of T5</h3>
+<p>The flexibility of the text-to-text framework enables T5 to excel across a wide range of NLP tasks. By expressing every problem as &quot;input text → output text,&quot; T5 seamlessly adapts to various applications:</p>
+<ul>
+<li><strong>Text Classification</strong>Tasks like sentiment analysis, topic classification, or spam detection are reformulated as:<em>Input</em>: <code>&quot;classify sentiment: The movie was amazing!&quot;</code><br><em>Output</em>: <code>&quot;positive&quot;</code></li>
+<li><strong>Summarization</strong>Given a document, T5 generates a concise summary:<br><em>Input</em>: <code>&quot;summarize: The article discusses the recent advancements in AI...&quot;</code><em>Output</em>: <code>&quot;AI research is rapidly evolving.&quot;</code></li>
+<li><strong>Translation</strong>Multilingual tasks are supported using prompts:<br><em>Input</em>: <code>&quot;translate English to French: I love programming&quot;</code><em>Output</em>: <code>&quot;J'aime programmer&quot;</code></li>
+<li><strong>Question Answering</strong>T5 supports extractive and generative QA:<em>Input</em>: <code>&quot;question: What is the capital of France? context: France is a country in Europe. Its capital is Paris.&quot;</code><br><em>Output</em>: <code>&quot;Paris&quot;</code></li>
+<li><strong>Text Generation and Paraphrasing</strong>Tasks such as rewriting or generating creative text fall within T5’s capabilities.</li>
+</ul>
+<p>This versatility highlights why T5 has become a central model in many modern NLP systems, especially when paired with task-specific prompting strategies.</p>
+<hr>
+</section><section><h2 id="comparative-summary-bert-vs.gpt-vs.t5">Comparative Summary: BERT vs. GPT vs. T5</h2>
+<table>
+<thead>
+<tr>
+<th><strong>Aspect</strong></th>
+<th><strong>BERT</strong></th>
+<th><strong>GPT</strong></th>
+<th><strong>T5</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Architecture</strong></td>
+<td>Encoder-only</td>
+<td>Decoder-only</td>
+<td>Encoder–Decoder</td>
+</tr>
+<tr>
+<td><strong>Training Objective</strong></td>
+<td>Masked Language Modeling (MLM)</td>
+<td>Autoregressive (Left-to-right language modeling)</td>
+<td>Span Corruption (Text-to-Text pretraining)</td>
+</tr>
+<tr>
+<td><strong>Input Format</strong></td>
+<td>Sentence or sentence pairs with <code>[CLS]</code>, <code>[SEP]</code></td>
+<td>Prompt text</td>
+<td>Instruction + Input Text</td>
+</tr>
+<tr>
+<td><strong>Output Format</strong></td>
+<td>Contextual embeddings (used in downstream heads)</td>
+<td>Next token or sequence of tokens</td>
+<td>Target text</td>
+</tr>
+<tr>
+<td><strong>Directionality</strong></td>
+<td>Bidirectional (uses context on both sides)</td>
+<td>Unidirectional (left to right only)</td>
+<td>Bidirectional encoding, left-to-right decoding</td>
+</tr>
+<tr>
+<td><strong>Typical Use Cases</strong></td>
+<td>Classification, NER, QA (extractive)</td>
+<td>Text generation, dialogue, few-shot learning</td>
+<td>Any NLP task (classification, QA, summarization, etc.)</td>
+</tr>
+<tr>
+<td><strong>Strengths</strong></td>
+<td>Deep contextual understanding</td>
+<td>Fluent generation with few-shot capability</td>
+<td>General-purpose model with strong multi-task performance</td>
+</tr>
+<tr>
+<td><strong>Limitations</strong></td>
+<td>Not generative, needs fine-tuning for tasks</td>
+<td>Limited bidirectional context</td>
+<td>Computationally intensive</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key Observations</strong></p>
+<ul>
+<li><strong>BERT</strong> is best suited for <strong>understanding</strong> tasks where deep bidirectional context is valuable.</li>
+<li><strong>GPT</strong> excels in <strong>generative</strong> tasks and few-shot learning via prompt engineering.</li>
+<li><strong>T5</strong> offers the most <strong>versatility</strong>, unifying all tasks under a single &quot;text-to-text&quot; paradigm.</li>
+</ul>
+<p>This comparative perspective helps clarify which model to choose depending on the task's requirements classification, generation, or multi-task flexibility.</p>
+<hr>
+</section><section><h2 id="pre-training-and-fine-tuning-in-nlp">Pre-training and Fine-tuning in NLP</h2>
+<p>In recent years, natural language processing (NLP) has shifted from building task-specific models from scratch to using large pre-trained language models. These models undergo a two-stage training paradigm: pre-training, where they learn general language representations from massive unlabeled text, and fine-tuning, where they are adapted to specific downstream tasks using labeled data. This approach has become the foundation for state-of-the-art performance across a wide range of NLP applications.</p>
+<h3 id="pre-training">Pre-training</h3>
+<p>During pre-training, models are exposed to extensive text corpora to learn syntactic and semantic patterns of language. Depending on the model architecture, different pretraining objectives are used:</p>
+<ul>
+<li><strong>Masked Language Modeling (MLM)</strong> (e.g., BERT): A percentage of input tokens are masked, and the model is trained to predict them.</li>
+<li><strong>Autoregressive Language Modeling</strong> (e.g., GPT): The model predicts the next token given previous tokens in a sequence.</li>
+<li><strong>Span Corruption</strong> (e.g., T5): Spans of text are replaced with special tokens, and the model learns to reconstruct them.</li>
+</ul>
+<p>These objectives enable the model to develop a contextual understanding of language that can generalize across tasks.</p>
+<h3 id="fine-tuning">Fine-tuning</h3>
+<p>After pre-training, the model is fine-tuned on a specific task such as sentiment analysis, question answering, or named entity recognition. This involves:</p>
+<ul>
+<li>Adding a task-specific output layer (e.g., a classification head).</li>
+<li>Training the entire model, or just the output layers, using supervised data for the target task.</li>
+<li>Typically requiring much less labeled data and fewer training iterations than training from scratch.</li>
+</ul>
+<p>Fine-tuning aligns the general language knowledge acquired during pre-training with the specific requirements of the task at hand.</p>
+<h3 id="benefits-of-the-paradigm">Benefits of the Paradigm</h3>
+<ul>
+<li><strong>Data Efficiency</strong>: Reduces dependence on large labeled datasets for each new task.</li>
+<li><strong>Transferability</strong>: Pre-trained models can be reused across multiple NLP problems.</li>
+<li><strong>Performance</strong>: Achieves state-of-the-art results with less task-specific engineering.</li>
+</ul>
+<p>This two-stage framework is now standard across modern NLP and underlies popular models such as BERT, GPT, RoBERTa, T5, and more.</p>
+<p><img src="../_assets/fine-tuning.png" alt=""></p>
+<blockquote>
+<p>Pretraining and finetuning. A pre-trained model can be fine-tuned to a particular domain, dataset, or task. There are many different ways to fine-tune, depending on exactly which parameters are updated from the fine-tuning data: all the parameters, some of the parameters, or only the parameters of specific extra circuitry.</p>
+</blockquote>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>In this lesson, you explored three major pretrained Transformer models:</p>
+<ul>
+<li><strong>BERT</strong> excels at understanding and classification due to bidirectional attention.</li>
+<li><strong>GPT</strong> is powerful for natural and coherent generation via causal decoding.</li>
+<li><strong>T5</strong> offers a flexible framework that reformulates all tasks into text generation.</li>
+</ul>
+<p>You also learned how pretraining provides a language foundation and how fine-tuning customizes the model for a specific task. These principles form the backbone of all modern NLP workflows. In the next lesson, you will fine-tune BERT on a classification task using Hugging Face’s <code>transformers</code> library, completing the theory-practice cycle.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

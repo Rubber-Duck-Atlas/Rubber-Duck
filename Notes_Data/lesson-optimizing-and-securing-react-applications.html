@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Optimizing And Securing React Applications</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-optimizing-and-securing-react-applications">Lesson: Optimizing and Securing React Applications</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Performance optimization and error handling are critical aspects of building robust and efficient React applications. This lesson explores techniques such as <strong>memoization</strong> (using <code>React.memo</code>, <code>useMemo</code>, and <code>useCallback</code>) and <strong>code-splitting</strong> (via <code>React.lazy</code> and <code>Suspense</code>) to enhance runtime performance and reduce initial load times. Additionally, it delves into implementing <strong>error boundaries</strong> for class components and graceful error-handling strategies for functional components, ensuring applications remain stable and user-friendly even when errors occur. By mastering these techniques, developers can create high-performing, scalable, and resilient React applications.</p>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li>Understand the importance of performance optimization and its impact on user experience, SEO, and scalability.</li>
+<li>Implement memoization techniques (<code>React.memo</code>, <code>useMemo</code>, <code>useCallback</code>) to optimize component rendering and avoid unnecessary computations.</li>
+<li>Use code-splitting with <code>React.lazy</code> and <code>Suspense</code> to reduce initial bundle size and improve application load times.</li>
+<li>Create and use error boundaries to catch and handle runtime errors in class components effectively.</li>
+<li>Apply graceful error-handling strategies, such as conditional rendering, <code>try-catch</code> blocks, and custom hooks, in functional components.</li>
+<li>Build reusable error-handling utilities to centralize and standardize error management across an application.</li>
+</ol>
+<hr>
+</section><section><h2 id="techniques-for-improving-performance-in-react-applications">Techniques for Improving Performance in React Applications</h2>
+<p>Performance optimization is a cornerstone of building efficient and responsive web applications. In React, techniques like <strong>code-splitting</strong> and <strong>memoization</strong> play a pivotal role in enhancing the user experience by reducing load times and minimizing unnecessary computations.</p>
+<h3 id="performance-optimization">Performance Optimization</h3>
+<p>Optimizing the performance of your React application is crucial for several reasons:</p>
+<ul>
+<li><strong>Better User Experience</strong>: Slow-loading or unresponsive applications frustrate users and lead to poor engagement.</li>
+<li><strong>Improved SEO</strong>: Search engines consider page load times when ranking websites. Faster applications rank higher, increasing visibility.</li>
+<li><strong>Reduced Bounce Rates</strong>: Users are more likely to leave if an application takes too long to load or respond.</li>
+<li><strong>Cost Savings</strong>: A performant application requires fewer server resources, reducing hosting and infrastructure costs.</li>
+<li><strong>Competitive Advantage</strong>: Fast and efficient applications stand out in a crowded market.</li>
+</ul>
+<p>With these benefits in mind, let’s dive into two key strategies for optimizing React applications: <strong>memoization</strong> and <strong>code-splitting</strong>.</p>
+<h3 id="memoization-optimizing-component-and-function-performance">Memoization: Optimizing Component and Function Performance</h3>
+<p>Memoization is a technique used to optimize the performance of functional components by caching the results of expensive computations or function calls. It avoids redundant calculations, improving efficiency and responsiveness. React provides three primary tools for memoization: <code>React.memo</code>, <code>useMemo</code>, and <code>useCallback</code>. Let’s explore each in detail.</p>
+<p><img src="../_assets/lesson-3-memoization.PNG" alt="Frontend"></p>
+<h3 id="react.memo"><strong>React.memo</strong></h3>
+<p><code>React.memo</code> is a higher-order component that prevents unnecessary re-renders of functional components when their props remain unchanged.</p>
+<p><img src="../_assets/lesson-3-react-memo.PNG" alt="Frontend"></p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import React from 'react';
+
+const Post = ({ signedIn, post }) =&gt; {
+  console.log('Rendering Post');
+  return (
+    &lt;div&gt;
+      &lt;h2&gt;{post.title}&lt;/h2&gt;
+      &lt;p&gt;{post.content}&lt;/p&gt;
+      {signedIn &amp;&amp; &lt;button&gt;Edit Post&lt;/button&gt;}
+    &lt;/div&gt;
+  );
+};
+
+export default React.memo(Post);
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li>The <code>Post</code> component depends on the <code>signedIn</code> and <code>post</code> props.</li>
+<li>Wrapping it with <code>React.memo</code> ensures that it only re-renders when these props change.</li>
+<li>This saves rendering time and resources, especially in large applications.</li>
+</ul>
+<p><strong>Usage in Parent Component:</strong></p>
+<pre><code class="language-typescript">import React, { useState } from 'react';
+import Post from './Post';
+
+const App = () =&gt; {
+  const [signedIn, setSignedIn] = useState(false);
+  const post = { title: 'Hello World', content: 'Welcome to my blog!' };
+
+  return (
+    &lt;div&gt;
+      &lt;Post signedIn={signedIn} post={post} /&gt;
+      &lt;button onClick={() =&gt; setSignedIn(!signedIn)}&gt;Toggle Signed In&lt;/button&gt;
+    &lt;/div&gt;
+  );
+};
+
+export default App;
+</code></pre>
+<p><strong>Behavior</strong>:</p>
+<ul>
+<li>Clicking the &quot;Toggle Signed In&quot; button toggles the <code>signedIn</code> state.</li>
+<li>Since <code>Post</code> is wrapped with <code>React.memo</code>, it only re-renders when <code>signedIn</code> changes.</li>
+</ul>
+<h3 id="usememo"><strong>useMemo</strong></h3>
+<p>The <code>useMemo</code> hook caches the result of an expensive computation and recalculates it only when its dependencies change.</p>
+<p><img src="../_assets/lesson-3-use-memo.PNG" alt="Frontend"></p>
+<h5 id="example">Example:</h5>
+<pre><code class="language-typescript">import React, { useMemo, useState } from 'react';
+
+function App() {
+  const [count, setCount] = useState(0);
+  const [otherState, setOtherState] = useState('');
+
+  const expensiveComputation = (num) =&gt; {
+    let i = 0;
+    while (i &lt; 1000000000) i++;
+    return num * num;
+  };
+
+  const memoizedValue = useMemo(() =&gt; expensiveComputation(count), [count]);
+
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Count: {count}&lt;/p&gt;
+      &lt;p&gt;Square: {memoizedValue}&lt;/p&gt;
+      &lt;button onClick={() =&gt; setCount(count + 1)}&gt;Increase Count&lt;/button&gt;
+      &lt;input type=&quot;text&quot; onChange={(e) =&gt; setOtherState(e.target.value)} /&gt;
+    &lt;/div&gt;
+  );
+}
+
+export default App;
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li>The <code>expensiveComputation</code> function simulates a resource-intensive operation.</li>
+<li><code>useMemo</code> caches the result of this computation, recalculating it only when <code>count</code> changes.</li>
+<li>Changing <code>otherState</code> via the input field does not trigger a recalculation since it is not a dependency.</li>
+</ul>
+<h3 id="usecallback"><strong>useCallback</strong></h3>
+<p>The <code>useCallback</code> hook memoizes functions, ensuring they remain stable across re-renders unless their dependencies change.</p>
+<p><img src="../_assets/lesson-3-use-callback.PNG" alt="Frontend"></p>
+<p><strong>Example</strong>:</p>
+<pre><code class="language-typescript">import React, { useState, useCallback } from 'react';
+
+const ParentComponent = () =&gt; {
+  const [count, setCount] = useState(0);
+
+  const incrementCount = () =&gt; {
+    setCount(count + 1);
+  };
+
+  const memoizedIncrement = useCallback(incrementCount, [count]);
+
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Count: {count}&lt;/p&gt;
+      &lt;ChildComponent onIncrement={memoizedIncrement} /&gt;
+    &lt;/div&gt;
+  );
+};
+
+const ChildComponent = React.memo(({ onIncrement }) =&gt; {
+  console.log('Child component rendered');
+  return (
+    &lt;div&gt;
+      &lt;button onClick={onIncrement}&gt;Increment Count&lt;/button&gt;
+    &lt;/div&gt;
+  );
+});
+
+export default ParentComponent;
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li>The <code>incrementCount</code> function is memoized using <code>useCallback</code>.</li>
+<li>The <code>ChildComponent</code> only re-renders when <code>onIncrement</code> changes, thanks to <code>React.memo</code>.</li>
+</ul>
+<p><strong>Note</strong>:</p>
+<ul>
+<li>Use <code>useCallback</code> sparingly and only for performance-critical parts of your application.</li>
+<li>Overusing it can introduce overhead, negating its benefits.</li>
+</ul>
+<hr>
+<h3 id="code-splitting-reducing-initial-load-times">Code-Splitting: Reducing Initial Load Times</h3>
+<p>While memoization optimizes runtime performance, <strong>code-splitting</strong> focuses on reducing the initial load time of your application. Code-splitting is a technique that divides a large JavaScript bundle into smaller chunks, loading only the necessary code for a specific part of the application.</p>
+<p><img src="../_assets/lesson-3-code-splitting.PNG" alt="Frontend"></p>
+<p><strong>Importance of Code-Splitting</strong></p>
+<ul>
+<li>Reduces initial load times by loading only the required code upfront.</li>
+<li>Improves performance by fetching additional code on demand.</li>
+<li>Enhances scalability as the application grows.</li>
+</ul>
+<p><strong>Implementation Using <code>React.lazy</code> and <code>Suspense</code></strong></p>
+<pre><code class="language-typescript">// AsyncComponent.js
+import React, { lazy, Suspense } from 'react';
+
+const DynamicComponent = lazy(() =&gt; import('./DynamicComponent'));
+
+const AsyncComponent = () =&gt; (
+  &lt;Suspense fallback={&lt;div&gt;Loading...&lt;/div&gt;}&gt;
+    &lt;DynamicComponent /&gt;
+  &lt;/Suspense&gt;
+);
+
+export default AsyncComponent;
+
+// DynamicComponent.js
+import React from 'react';
+
+const DynamicComponent = () =&gt; (
+  &lt;div&gt;
+    &lt;p&gt;This is a dynamically loaded component!&lt;/p&gt;
+  &lt;/div&gt;
+);
+
+export default DynamicComponent;
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li><code>React.lazy</code> dynamically imports the <code>DynamicComponent</code>.</li>
+<li>The <code>Suspense</code> component specifies a fallback UI (<code>Loading...</code>) while the dynamic import resolves.</li>
+<li>When <code>AsyncComponent</code> is rendered, <code>DynamicComponent</code> is loaded only when needed, reducing the initial bundle size.</li>
+</ul>
+<hr>
+</section><section><h2 id="implementing-error-boundaries-and-graceful-error-handling">Implementing Error Boundaries and Graceful Error Handling</h2>
+<p>Error handling is essential for building robust React applications.To address these issues, error boundaries and graceful error handling provide mechanisms to catch and manage errors effectively, ensuring your application remains stable and user-friendly even when unexpected problems arise.</p>
+<h3 id="error-boundaries">Error Boundaries</h3>
+<p>Error boundaries are React components that catch JavaScript errors anywhere in their child component tree, log those errors, and display a fallback UI instead of crashing the entire application. They are particularly useful for handling runtime errors in rendering, lifecycle methods, and constructors of class components.</p>
+<p><img src="../_assets/lesson-3-error-bounderies.PNG" alt="Frontend"></p>
+<p><strong>Characteristics</strong>:</p>
+<ul>
+<li><strong>Class Components Only</strong>: Error boundaries can only be implemented using class components.</li>
+<li><strong>Catches Errors in Child Components</strong>: They do not catch errors in event handlers, asynchronous code (e.g., <code>setTimeout</code>), or server-side rendering.</li>
+<li><strong>Fallback UI</strong>: When an error occurs, error boundaries render a fallback UI instead of the erroneous component tree.</li>
+</ul>
+<h3 id="implementing-error-boundaries">Implementing Error Boundaries</h3>
+<p>To create an error boundary, you need to define a class component with two lifecycle methods: <code>static getDerivedStateFromError</code> and <code>componentDidCatch</code>.</p>
+<p><strong>Example Implementation:</strong></p>
+<pre><code class="language-typescript">import React from 'react';
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class ErrorBoundary extends React.Component&lt;ErrorBoundaryProps, ErrorBoundaryState&gt; {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  // Catches errors and updates state
+  static getDerivedStateFromError(_: Error): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  // Logs the error details
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+    console.error('Error caught by ErrorBoundary:', error, errorInfo);
+  }
+
+  render(): React.ReactNode {
+    if (this.state.hasError) {
+      // Fallback UI
+      return &lt;h1&gt;Something went wrong. Please try again later.&lt;/h1&gt;;
+    }
+
+    return this.props.children;
+  }
+}
+
+export default ErrorBoundary;
+</code></pre>
+<h3 id="usage-in-application">Usage in Application:</h3>
+<p>Wrap the <code>ErrorBoundary</code> around components that might throw errors:</p>
+<pre><code class="language-typescript">import React from 'react';
+import ErrorBoundary from './ErrorBoundary';
+import Profile from './Profile';
+
+const App = () =&gt; (
+  &lt;div&gt;
+    &lt;h1&gt;User Dashboard&lt;/h1&gt;
+    &lt;ErrorBoundary&gt;
+      &lt;Profile /&gt;
+    &lt;/ErrorBoundary&gt;
+  &lt;/div&gt;
+);
+
+export default App;
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li>The <code>ErrorBoundary</code> wraps the <code>Profile</code> component.</li>
+<li>If an error occurs in <code>Profile</code>, the fallback UI (<code>Something went wrong</code>) is displayed instead of crashing the app.</li>
+</ul>
+<hr>
+</section><section><h2 id="graceful-error-handling">Graceful Error Handling</h2>
+<p>While error boundaries handle errors in class components, functional components require additional strategies for graceful error handling. Techniques like conditional rendering, <code>try-catch</code> blocks, and custom hooks can be used to manage errors effectively.</p>
+<p><img src="../_assets/lesson-3-graceful-error.PNG" alt="Frontend"></p>
+<h3 id="conditional-rendering"><strong>Conditional Rendering</strong></h3>
+<p>Use conditional rendering to handle errors gracefully without crashing the application.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import React, { useState } from 'react';
+
+const UserProfile = () =&gt; {
+  const [user, setUser] = useState&lt;{ name: string; age: number } | null&gt;(null);
+  const [error, setError] = useState&lt;string | null&gt;(null);
+
+  const fetchUserData = async () =&gt; {
+    try {
+      const response = await fetch('https://api.example.com/user');
+      if (!response.ok) {
+        throw new Error('Failed to fetch user data');
+      }
+      const data = await response.json();
+      setUser(data);
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  React.useEffect(() =&gt; {
+    fetchUserData();
+  }, []);
+
+  if (error) {
+    return &lt;p&gt;Error: {error}&lt;/p&gt;;
+  }
+
+  if (!user) {
+    return &lt;p&gt;Loading...&lt;/p&gt;;
+  }
+
+  return (
+    &lt;div&gt;
+      &lt;h2&gt;{user.name}&lt;/h2&gt;
+      &lt;p&gt;Age: {user.age}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+};
+
+export default UserProfile;
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li>The <code>fetchUserData</code> function attempts to fetch user data and handles errors using a <code>try-catch</code> block.</li>
+<li>If an error occurs, it sets the <code>error</code> state, which triggers a fallback UI displaying the error message.</li>
+</ul>
+<h3 id="custom-error-handling-hooks"><strong>Custom Error Handling Hooks</strong></h3>
+<p>Create reusable hooks for consistent error handling across components.</p>
+<p><strong>Example</strong>:</p>
+<pre><code class="language-typescript">import { useState } from 'react';
+
+function useErrorHandler() {
+  const [error, setError] = useState&lt;string | null&gt;(null);
+
+  const handleError = (err: unknown) =&gt; {
+    setError((err as Error).message || 'An unexpected error occurred.');
+  };
+
+  return { error, handleError };
+}
+
+export default useErrorHandler;
+</code></pre>
+<h4 id="usage">Usage:</h4>
+<pre><code class="language-typescript">import React from 'react';
+import useErrorHandler from './useErrorHandler';
+
+const FetchData = () =&gt; {
+  const { error, handleError } = useErrorHandler();
+  const [data, setData] = React.useState&lt;string | null&gt;(null);
+
+  const fetchData = async () =&gt; {
+    try {
+      const response = await fetch('https://api.example.com/data');
+      if (!response.ok) {
+        throw new Error('Failed to fetch data');
+      }
+      const result = await response.text();
+      setData(result);
+    } catch (err) {
+      handleError(err);
+    }
+  };
+
+  React.useEffect(() =&gt; {
+    fetchData();
+  }, []);
+
+  if (error) {
+    return &lt;p&gt;Error: {error}&lt;/p&gt;;
+  }
+
+  return &lt;div&gt;{data ? &lt;p&gt;Data: {data}&lt;/p&gt; : &lt;p&gt;Loading...&lt;/p&gt;}&lt;/div&gt;;
+};
+
+export default FetchData;
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li>The <code>useErrorHandler</code> hook centralizes error handling logic.</li>
+<li>It provides a reusable mechanism for managing errors in functional components.</li>
+</ul>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>Optimizing performance and handling errors effectively are essential for delivering a seamless user experience in React applications. Techniques like memoization and code-splitting help streamline rendering and reduce load times, while error boundaries and graceful error-handling strategies ensure applications remain stable and resilient. By incorporating these practices into your development workflow, you can build applications that are not only fast and efficient but also robust and user-friendly. These skills empower you to tackle real-world challenges and deliver high-quality React applications that meet modern web standards.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Setting Up React Project With Vite</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-setting-up-a-react-project-with-vite">Lesson: Setting Up a React Project with Vite</h1></header>
+<section><h2 id="introduction"><strong>Introduction</strong></h2>
+<p>Setting up a React project from scratch is an essential skill for modern web developers. In this lesson, we will guide you step-by-step through the process of creating a React application using <strong>Vite</strong>, a modern and fast development tool. By the end of this lesson, you will have a fully functional React project ready for development, complete with a streamlined workflow and efficient styling capabilities.</p>
+</section><section><h2 id="learning-outcomes"><strong>Learning Outcomes</strong></h2>
+<p>By completing this lesson, you will be able to:</p>
+<ol>
+<li><strong>Set up a development environment</strong> by installing Node.js, Vite, and React.</li>
+<li><strong>Understand the structure</strong> of a React project created with Vite and identify key files and their roles.</li>
+<li><strong>Run and debug</strong> your React application using modern tools like browser developer tools and React DevTools.</li>
+<li>Gain hands-on experience with essential tools and frameworks used in modern web development.</li>
+</ol>
+<hr>
+</section><section><h2 id="installing-node.js-vite-and-react"><strong>Installing Node.js, Vite, and React</strong></h2>
+<p>To build modern frontend applications using tools like <strong>Vite</strong> and <strong>React</strong>, you'll need to set up your development environment properly.</p>
+<h3 id="node.js"><strong>Node.js</strong></h3>
+<p><strong>Node.js</strong> is a JavaScript runtime that allows you to run JavaScript on your machine outside the browser.</p>
+<p><img src="../_assets/lesson-2-node-js.PNG" alt="Frontend"></p>
+<p>Node.js is a JavaScript runtime built on Chrome's V8 engine. It allows developers to run JavaScript outside the browser (on the server side) and provides access to a powerful package manager called <strong>npm</strong> (Node Package Manager). This tool is essential for installing libraries, frameworks, and other tools required for modern JavaScript development.</p>
+<p>In simpler terms, Node.js enables you to use JavaScript for both frontend and backend development.</p>
+<hr>
+<h3 id="installation-steps"><strong>Installation Steps</strong></h3>
+<ol>
+<li>Visit the official Node.js website: <a href="https://nodejs.org">https://nodejs.org</a>.</li>
+<li>Download the <strong>LTS (Long-Term Support)</strong> version for stability or the <strong>Current</strong> version for the latest features.</li>
+<li>Run the installer and follow the on-screen instructions.</li>
+<li>Verify the installation by opening your terminal (or command prompt) and running:<pre><code class="language-bash">node -vnpm -v</code></pre>These commands should display the installed versions of Node.js and npm. For example:<pre><code>v18.17.09.8.1</code></pre></li>
+</ol>
+<hr>
+<h3 id="vite"><strong>Vite</strong></h3>
+<p>Vite is a modern build tool and development server designed to make development faster and more efficient. Unlike traditional bundlers like Webpack, Vite uses native ES modules to provide Hot Module Replacement (HMR). It a feature that updates your app in the browser almost instantly without requiring a full page reload.</p>
+<p>Vite supports popular frameworks like React, Vue, and Angular out of the box, making it an excellent choice for modern web development.</p>
+<p><img src="../_assets/lesson-2-frontend-vite.PNG" alt="Frontend"></p>
+<hr>
+<h3 id="installing-vite"><strong>Installing Vite</strong></h3>
+<p>Once Node.js is installed, you can create a new React project using Vite’s CLI. Run the following command:</p>
+<pre><code class="language-bash">npm create vite@latest my-react-app --template react
+</code></pre>
+<p>Replace <code>my-react-app</code> with your desired project name. The <code>--template react</code> flag specifies that you want to use React as the framework.</p>
+<p>Navigate to your project directory:</p>
+<pre><code class="language-bash">cd my-react-app
+</code></pre>
+<p>Install the project dependencies:</p>
+<pre><code class="language-bash">npm install
+</code></pre>
+<hr>
+<h3 id="react"><strong>React</strong></h3>
+<p>React is a JavaScript library for building user interfaces. It follows a component-based architecture, meaning you can create reusable UI elements (called components) that encapsulate their own logic and styling. This makes it easier to manage complex applications.</p>
+<p><img src="../_assets/lesson-1-frontend-react.PNG" alt="Frontend"></p>
+<h3 id="dependencies-installed-by-vite"><strong>Dependencies Installed by Vite</strong></h3>
+<p>When you use Vite with the React template, React and React DOM are automatically included in your project. You can verify this by checking the <code>package.json</code> file:</p>
+<pre><code class="language-json">&quot;dependencies&quot;: {
+  &quot;react&quot;: &quot;^18.x.x&quot;,
+  &quot;react-dom&quot;: &quot;^18.x.x&quot;
+}
+</code></pre>
+<hr>
+</section><section><h2 id="understanding-the-vite-development-environment"><strong>Understanding the Vite Development Environment</strong></h2>
+<p>When you scaffold a new project with Vite (e.g., using the React template), Vite sets up a lightweight, modern development environment with a focus on speed, modularity, and simplicity. Understanding the default file structure will help you navigate and extend your project efficiently.</p>
+<h3 id="project-structure"><strong>Project Structure</strong></h3>
+<p>After setting up your React project with Vite, the directory structure will look like this:</p>
+<pre><code>my-react-app/
+├── node_modules/       # Installed dependencies
+├── public/             # Static assets (e.g., images, favicons)
+├── src/                # Source code
+│   ├── App.jsx         # Main React component
+│   ├── main.jsx        # Entry point for the app
+│   └── index.css       # Global styles
+├── .gitignore          # Files ignored by Git
+├── index.html          # HTML entry point
+├── package.json        # Project metadata and dependencies
+├── vite.config.js      # Vite configuration file
+└── README.md           # Project documentation
+</code></pre>
+<h4 id="key-files"><strong>Key Files</strong></h4>
+<p><strong><code>index.html</code></strong>: This is the root HTML file where your React app is mounted. It contains a <code>&lt;div id=&quot;root&quot;&gt;</code> element, which serves as the container for your React application.</p>
+<p><strong><code>main.jsx</code></strong>: This is the entry point for your React application. It imports the <code>App</code> component and renders it into the DOM using <code>ReactDOM.createRoot</code>.</p>
+<p><strong><code>App.jsx</code></strong>: The main React component that serves as the starting point for your UI. You can customize this file to build your application.</p>
+<p><strong><code>vite.config.js</code></strong>: A configuration file for Vite. You can customize settings like port numbers, aliases, and plugins here.</p>
+<p><strong>Development Server</strong></p>
+<ul>
+<li>Vite provides a lightning-fast development server with <strong>Hot Module Replacement (HMR)</strong>. This means changes to your code are reflected in the browser almost instantly without requiring a full page reload.</li>
+<li>To start the development server, run:<pre><code class="language-bash">npm run dev</code></pre></li>
+<li>Vite will display a local URL (e.g., <code>http://localhost:5173</code>) where your app is running.</li>
+</ul>
+<hr>
+</section><section><h2 id="running-and-debugging-a-react-project"><strong>Running and Debugging a React Project</strong></h2>
+<p>Once your React project is set up (e.g., via Vite), running and debugging it efficiently is key to a smooth development experience. This section walks you through starting the project and introduces tools and techniques for effective debugging.</p>
+<h3 id="running-the-project"><strong>Running the Project</strong></h3>
+<p>After starting the development server, open the provided URL in your browser to view your React app. The default React app created by Vite displays a simple welcome message. You can modify the <code>App.jsx</code> file to customize the UI.</p>
+<h3 id="debugging"><strong>Debugging</strong></h3>
+<p>Modern browsers like Chrome and Firefox come with developer tools that allow you to debug your React app. Here are some common debugging techniques:</p>
+<p><strong>Console Logging</strong>: Use <code>console.log()</code> to print values and debug issues in your components. For example:</p>
+<pre><code class="language-jsx">function App() {
+  console.log(&quot;Rendering App component&quot;);
+  return &lt;h1&gt;Hello, World!&lt;/h1&gt;;
+}
+</code></pre>
+<p><strong>React DevTools</strong>: Install the <a href="https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi">React Developer Tools</a> browser extension to inspect and debug React components directly in the browser.</p>
+<p><strong>Error Boundaries</strong>: Error boundaries are React components that catch JavaScript errors anywhere in their child component tree, log those errors, and display a fallback UI. Here’s an example:</p>
+<pre><code class="language-jsx">class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return &lt;h1&gt;Something went wrong.&lt;/h1&gt;;
+    }
+    return this.props.children;
+  }
+}
+</code></pre>
+<hr>
+</section><section><h2 id="conclusion"><strong>Conclusion</strong></h2>
+<p>This lesson has equipped you with the foundational knowledge and practical skills to set up a React project using Vite and Tailwind CSS. You now understand how to install and configure Node.js, Vite, and React to create a robust development environment. Navigate and work with the project structure provided by Vite. Run and debug your React application effectively. Style your application quickly and efficiently using Tailwind CSS. With this setup, you are well-prepared to start building dynamic and visually appealing web applications. Whether prototyping a new idea or working on a full-scale project, the combination of React, Vite, and Tailwind CSS provides a powerful and efficient workflow to bring your ideas to life.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

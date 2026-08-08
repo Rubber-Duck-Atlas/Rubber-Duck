@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Fasttext For Subword Embeddings</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-fasttext-for-subword-embeddings">Lesson: FastText for Subword Embeddings</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Word embeddings like Word2Vec and GloVe give each word its own vector, like a unique address in space that captures its meaning. But what happens when we come across <strong>rare words</strong> or <strong>out-of-vocabulary (OOV) words</strong> (words that our model hasn’t seen before?) These models often struggle because they treat each word as a single, unbreakable piece.</p>
+<p><strong>FastText</strong> addresses this limitation by incorporating <strong>subword</strong> information. It decomposes words into character <strong>n-grams</strong> and represents each word as a sum of its <strong>subword vectors</strong>. This method enables the model to generate meaningful embeddings for rare or even misspelled words, making it particularly effective for morphologically rich and multilingual contexts.</p>
+<p>This lesson outlines the structure and mechanisms of FastText, emphasizing its advantages in handling linguistic variability and its applicability to multilingual natural language processing tasks.</p>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you’ll be able to:</p>
+<ol>
+<li><strong>Describe the process</strong> through which FastText constructs word vectors using character n-grams.</li>
+<li><strong>Analyze the advantages of FastText</strong> in representing rare and OOV words compared to traditional word embedding methods.</li>
+<li><strong>Identify real-world applications of FastText</strong> in multilingual and low-resource natural language processing scenarios.</li>
+</ol>
+<hr>
+</section><section><h2 id="how-fasttext-handles-rare-and-out-of-vocabulary-words">How FastText Handles Rare and Out-of-Vocabulary Words</h2>
+<p>FastText improves on earlier word embedding models by addressing a key limitation: the inability to handle rare or unseen words. Traditional models like Word2Vec and GloVe break down when encountering such cases, but FastText solves this by modeling words as combinations of smaller character-level units. To understand this solution, we’ll first look at the limitations of whole-word embeddings, and then explore how FastText uses subword modeling to overcome them.</p>
+</section><section><h2 id="limitations-of-whole-word-embeddings">Limitations of Whole-Word Embeddings</h2>
+<p>Let’s start by understanding the problem. Traditional models like Word2Vec and GloVe treat words as <strong>whole units</strong>. If a word wasn’t in the training data—like a rare word or a typo—the model doesn’t know what to do with it. It can’t give that word a vector, which is a big problem in situations like:</p>
+<ul>
+<li><strong>Rare words</strong>: Words that show up only a few times in the data.</li>
+<li><strong>New or misspelled words</strong>: Words the model has never seen, like &quot;helo&quot; instead of &quot;hello.&quot;</li>
+<li><strong>Languages with lots of word forms</strong>: Some languages, like Arabic or Turkish, create many versions of a word by adding prefixes or suffixes.</li>
+</ul>
+<p>FastText solves this by looking at the <strong>smaller pieces</strong> that make up a word. Instead of treating a word as one big unit, it breaks it into parts, which lets it guess the meaning of new or rare words based on those shared pieces.</p>
+<hr>
+</section><section><h2 id="subword-modeling-with-fasttext">Subword Modeling with FastText</h2>
+<p>FastText enhances word representation by breaking each word into smaller, overlapping sequences of characters. This subword modeling approach allows the system to capture shared linguistic patterns across words and construct embeddings even for those it has never seen before. This process is implemented using <strong>character n-grams</strong>, which we explore next.</p>
+<h3 id="character-n-grams-breaking-words-into-pieces">Character N-Grams: Breaking Words into Pieces</h3>
+<p>FastText doesn’t treat a word as a single thing. Instead, it breaks each word into smaller chunks called <strong>character n-grams</strong>. These are short sequences of letters, usually 3 to 6 characters long. For example, let’s take the word <code>where</code>:</p>
+<ul>
+<li>If we use 3-grams (sequences of 3 letters), FastText breaks <code>where</code> into:<ul><li><code>&lt;wh</code>, <code>whe</code>, <code>her</code>, <code>ere</code>, <code>re&gt;</code></li></ul></li>
+</ul>
+<p>FastText adds special symbols, <code>&lt;</code> at the start and <code>&gt;</code> at the end, to show where the word begins and ends. This helps it tell the difference between the start of a word (like <code>&lt;wh</code>) and the middle (like <code>whe</code>).</p>
+<p>Each of these n-grams gets its own vector—a kind of mini-address in space. FastText then sums up all these mini-vectors to create the final vector for the whole word.</p>
+<h3 id="mathematical-formulation">Mathematical Formulation</h3>
+<p>Let us formalize how FastText constructs word embeddings using subword information. Suppose we have a word <span class="math">\(w\)</span>, and let <span class="math">\(G_w\)</span> denote the set of all its character n-grams (e.g., <code>&lt;wh</code>, <code>whe</code>,<code> her</code>, etc.). Each n-gram is associated with a vector <span class="math">\(z_g\)</span> , where is the embedding dimension. FastText computes the vector representation of the word <span class="math">\(w\)</span>, denoted <span class="math">\(w_w\)</span>, by summing the vectors of its n-grams:</p>
+<div class="math">
+\[
+v_w = \sum_{g \in G_w} z_g
+\]</div>
+<p><strong>Where:</strong></p>
+<ul>
+<li><span class="math">\(G_w\)</span>: The set of n-grams extracted from word</li>
+<li><span class="math">\(z_g\)</span>: The embedding vector corresponding to n-gram</li>
+<li><span class="math">\(v_w\)</span>: The resulting word embedding for word</li>
+</ul>
+<p>This formulation is powerful because it naturally encodes <strong>morphological similarity</strong>. Words like <em>run</em>, <em>runner</em>, and <em>running</em> will share overlapping subword units (e.g., <code>run</code>, <code>unn</code>, <code>nni</code>), resulting in <strong>similar overall word vectors</strong>, even if some of the words are rare or previously unseen. By leveraging subword information, FastText improves generalization and robustness, especially in low-resource or noisy text environments.</p>
+<h3 id="illustrative-example-embedding-construction-for-play">Illustrative Example: Embedding Construction for <em>play</em></h3>
+<p>Let’s demonstrate how FastText constructs a word embedding using <strong>character-level 3-grams</strong>.</p>
+<p><strong>Step 1: Generate Character N-Grams</strong></p>
+<p>FastText augments the word boundaries and then extracts all 3-character n-grams. For the word <code>play</code>:</p>
+<div class="math">
+\[
+G_{\text{play}} = \{\texttt{&lt;pl},\ \texttt{pla},\ \texttt{lay},\ \texttt{ay&gt;}\}
+\]</div>
+<p><strong>Step 2: Retrieve N-Gram Vectors</strong></p>
+<p>Assume the model has learned the following one-dimensional vectors (for simplicity):</p>
+<div class="math">
+\[
+\begin{aligned}
+z_{\texttt{&lt;pl}} &amp;= 0.5 \\
+z_{\texttt{pla}} &amp;= 0.9 \\
+z_{\texttt{lay}} &amp;= 0.7 \\
+z_{\texttt{ay&gt;}} &amp;= 0.4
+\end{aligned}
+\]</div>
+<p><strong>Step 3: Compute the Word Embedding</strong></p>
+<p>The final embedding for the word <code>play</code> is computed as the sum of its n-gram vectors:</p>
+<div class="math">
+\[
+v_{\text{play}} = \sum_{g \in G_{\text{play}}} z_g = z_{\texttt{&lt;pl}} + z_{\texttt{pla}} + z_{\texttt{lay}} + z_{\texttt{ay&gt;}} = 0.5 + 0.9 + 0.7 + 0.4 = 2.5
+\]</div>
+<p r="">In practice, $$( z_g \in \mathbb^d )$, and the sum is performed element-wise across vector dimensions.</p>
+<p><strong>Insights</strong></p>
+<p>If another word like <code>playing</code> shares n-grams such as <code>pla</code>, <code>lay</code>, or <code>ay</code>, their embeddings will partially overlap, resulting in <strong>similar vector representations</strong>, even if one of the words was rare or unseen during training.</p>
+<hr>
+</section><section><h2 id="fasttext-vs.word2vec-comparative-analysis">FastText vs. Word2Vec: Comparative Analysis</h2>
+<p>Let’s compare FastText to Word2Vec to see how they’re different. Word2Vec is great, but it has some limitations that FastText improves on. Here’s a simple table to break it down:</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Word2Vec</th>
+<th>FastText</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Vocabulary coverage</strong></td>
+<td>Only words seen during training</td>
+<td>Can handle new or unseen words</td>
+</tr>
+<tr>
+<td><strong>Representation</strong></td>
+<td>One vector per whole word</td>
+<td>Adds up vectors of word pieces</td>
+</tr>
+<tr>
+<td><strong>Handling rare words</strong></td>
+<td>Struggles—no vector for rare words</td>
+<td>Works well using shared word pieces</td>
+</tr>
+<tr>
+<td><strong>Understanding word forms</strong></td>
+<td>Doesn’t look at word structure</td>
+<td>Understands prefixes and suffixes</td>
+</tr>
+<tr>
+<td><strong>Multilingual support</strong></td>
+<td>Not as strong</td>
+<td>Great for many languages</td>
+</tr>
+</tbody>
+</table>
+<p>FastText is better because it uses <strong>subword sharing</strong>. For example, if the model knows the word <code>play</code>, it can still understand <code>playing</code> or even a typo like <code>plaing</code> by looking at their shared pieces. This makes FastText really good for <strong>languages with lots of word forms</strong>, <strong>messy text</strong> (like social media posts with typos), or <strong>smaller datasets</strong> where some words might be missing.</p>
+<hr>
+</section><section><h2 id="illustration-of-oov-handling-handling-new-words-with-subword-units">Illustration of OOV Handling: Handling New Words with Subword Units</h2>
+<p>Let’s see FastText in action with an example. Imagine your model was trained on the word <code>where</code>, but now it sees a new word, <code>wheres</code>, which it hasn’t seen before. Word2Vec would give up because <code>wheres</code> isn’t in its vocabulary. But FastText can handle it!</p>
+<p>FastText breaks <code>wheres</code> into its 3-grams:</p>
+<ul>
+<li><code>&lt;wh</code>, <code>whe</code>, <code>her</code>, <code>ere</code>, <code>res</code>, <code>es&gt;</code></li>
+</ul>
+<p>Many of these pieces—like <code>&lt;wh</code>, <code>whe</code>, <code>her</code>, and <code>ere</code>—are the same as in <code>where</code>. Since FastText already learned vectors for these n-grams from other words, it can add them up to create a vector for <code>wheres</code>. This way, even though <code>wheres</code> is new, FastText can still guess its meaning based on its parts.</p>
+<hr>
+</section><section><h2 id="applications-of-fasttext-in-multilingual-nlp">Applications of FastText in Multilingual NLP</h2>
+<p>FastText is particularly effective in multilingual natural language processing due to its ability to model <strong>subword information</strong>, which is especially valuable in languages with rich morphology. Many languages, such as German, Finnish, or Arabic, create numerous word forms through affixation. For example, the German word <em>Haus</em> (“house”) can appear as <em>Häuser</em> (“houses”) or <em>Häuschen</em> (“little house”). FastText is able to generalize across these forms by recognizing and leveraging shared subword units.</p>
+<h3 id="why-fasttext-excels-in-multilingual-settings">Why FastText Excels in Multilingual Settings</h3>
+<ol>
+<li><strong>Learns morphological patterns across languages</strong><br>FastText captures roots, prefixes, and suffixes that are common across many languages, making it well-suited to model linguistic variation.</li>
+<li><strong>Handles unseen words in any language</strong>Even when encountering rare or new words, FastText can construct embeddings by combining known subword vectors, enabling strong generalization.</li>
+<li><strong>Wide language support</strong>FastText provides pre-trained word vectors for over <strong>157 languages</strong>, making it a valuable tool for:<ul><li><strong>Code-switching</strong>: Handling texts that mix multiple languages.</li><li><strong>Low-resource language processing</strong>: Working effectively with languages that lack large annotated corpora.</li><li><strong>Cross-lingual applications</strong>: Supporting tasks like multilingual retrieval or translation through aligned embeddings.</li></ul></li>
+</ol>
+<hr>
+<h3 id="practical-applications">Practical Applications</h3>
+<p>FastText is used in a variety of multilingual NLP systems and pipelines, including:</p>
+<p><strong>Machine Translation</strong></p>
+<p>FastText embeddings support translation models by providing reliable vector representations for morphologically complex or rare words, especially in low-resource settings.</p>
+<pre><code class="language-python">import fasttext
+import fasttext.util
+
+# Download and load pre-trained vectors (e.g., German and English)
+fasttext.util.download_model('de', if_exists='ignore')  # German
+fasttext.util.download_model('en', if_exists='ignore')  # English
+
+de_model = fasttext.load_model('cc.de.300.bin')
+en_model = fasttext.load_model('cc.en.300.bin')
+
+# Compare similarity of &quot;Haus&quot; and &quot;house&quot;
+from numpy import dot
+from numpy.linalg import norm
+
+def cosine_similarity(vec1, vec2):
+    return dot(vec1, vec2) / (norm(vec1) * norm(vec2))
+
+vec_de = de_model.get_word_vector(&quot;Haus&quot;)
+vec_en = en_model.get_word_vector(&quot;house&quot;)
+print(f&quot;Similarity between 'Haus' and 'house': {cosine_similarity(vec_de, vec_en):.4f}&quot;)
+</code></pre>
+<p><strong>Named Entity Recognition (NER)</strong>
+Because FastText can infer representations for unseen words based on subword patterns, it is effective in recognizing entities such as names, locations, and organizations—even if they were not present during training</p>
+<pre><code class="language-python"># Assume we're using English pre-trained vectors
+model = fasttext.load_model('cc.en.300.bin')
+
+# New, unseen name
+print(&quot;Vector for 'McGreen':&quot;)
+print(model.get_word_vector(&quot;McGreen&quot;))
+</code></pre>
+<p>Even if <code>&quot;McGreen&quot;</code> never appeared in training, FastText builds its vector using fragments like <code>&quot;McG&quot;</code>, <code>&quot;Gre&quot;</code>, <code>&quot;ree&quot;</code>, <code>&quot;een&quot;</code>.</p>
+<p><strong>Spelling Correction and Normalization</strong></p>
+<p>FastText can suggest corrections for misspelled words by finding vector-nearest neighbors in the embedding space, enabling systems to recover intended words based on form similarity.</p>
+<pre><code class="language-python"># Misspelled word
+misspelled = &quot;enviroment&quot;
+
+# Find nearest neighbors in vector space
+print(&quot;Suggestions for 'enviroment':&quot;)
+print(model.get_nearest_neighbors(misspelled))
+</code></pre>
+<p>This returns words like <code>&quot;environment&quot;</code>, <code>&quot;environments&quot;</code>, etc., based on vector similarity—not just character edit distance—making corrections context-aware and linguistically informed.</p>
+<hr>
+</section><section><h2 id="technical-summary-model-training-overview">Technical Summary: Model Training Overview</h2>
+<p>FastText builds on the <strong>Skip-Gram</strong> method from Word2Vec, but with a twist. Let’s break down how it learns:</p>
+<ul>
+<li><strong>Training pairs</strong>: It looks at pairs of words in a sentence, like a center word and a context word (e.g., in &quot;I like to run,&quot; the pair might be &quot;like&quot; and &quot;to&quot;).</li>
+<li><strong>Negative sampling</strong>: It also creates fake pairs by picking random words that aren’t in the context, to teach the model what doesn’t belong.</li>
+<li><strong>Word representation</strong>: Instead of using one vector for the center word, FastText breaks the word into n-grams and adds up their vectors to represent the word.</li>
+<li><strong>Goal</strong>: Make the center word’s vector (from its n-grams) similar to the context word’s vector for real pairs, and different for fake pairs.</li>
+</ul>
+<p>The similarity between an n-gram vector <span class="math">\(z_g\)</span> (from the center word) and a context word vector <span class="math">\(v_c\)</span> is measured using a scoring function:</p>
+<div class="math">
+\[
+\sigma(z_g^T \cdot v_c)
+\]</div>
+<p>Here, <span class="math">\(\sigma\)</span> is a function that turns the dot product into a probability, helping the model decide how similar the vectors are. By learning vectors for n-grams instead of whole words, FastText can build embeddings for any word, even ones it hasn’t seen before.</p>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>In this lesson, we explored how FastText solves a big problem in traditional word embeddings: dealing with rare and new words. By breaking words into smaller pieces called character n-grams and adding up their vectors, FastText can understand words it has never seen before. This makes it especially great for messy text, languages with lots of word forms, and working with multiple languages at once.</p>
+<p>FastText is a simple but powerful upgrade to Word2Vec, giving us word representations that are more <strong>flexible</strong>, <strong>reliable</strong>, and <strong>useful</strong> across different languages and tasks. It’s widely used in research and real-world applications, from translation to spelling correction, making it a fantastic tool for anyone working in NLP.
+Next, you'll compare it to Word2Vec and GloVe on a similarity task to evaluate which embeddings perform best.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

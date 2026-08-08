@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Rnns Vs Transformers</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-rnns-vs.transformers">Lesson: RNNs vs. Transformers</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Recurrent Neural Networks (RNNs), including their variants like LSTMs and GRUs, have long served as the foundational architecture for sequence modeling in Natural Language Processing (NLP). They process input tokens sequentially, maintaining a hidden state that captures context over time. However, due to several limitations—especially their difficulty handling long-range dependencies—RNNs have been largely supplanted in modern NLP by Transformers.</p>
+<p>This lesson introduces the core differences between RNNs and Transformers and explains why <strong>Transformers</strong> now dominate state-of-the-art NLP systems. We will also explore the attention mechanism, which underlies the success of the Transformer architecture, laying the foundation for deeper coverage in Week 4.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you should be able to:</p>
+<ol>
+<li>Describe the sequential processing strategy of RNNs and its limitations.</li>
+<li>Explain the motivation and structure behind the Transformer architecture.</li>
+<li>Understand the core idea of attention mechanisms and how they address the bottleneck in RNNs.</li>
+<li>Compare RNNs and Transformers in terms of performance, scalability, and suitability for NLP tasks.</li>
+</ol>
+<hr>
+</section><section><h2 id="rnn-review-and-limitations">RNN Review and Limitations</h2>
+<p>Before we examine why Transformers replaced RNNs in modern NLP, it is useful to briefly revisit what RNNs were designed to solve and where they ultimately fall short. Recurrent Neural Networks (RNNs), including their gated variants such as LSTMs and GRUs, were developed to handle sequential data. Unlike feedforward networks, RNNs process inputs one step at a time, maintaining a hidden state that is updated at each time step:</p>
+<div class="math">
+\[
+h_t  = \sigma(W_{xh}x_t + W_{hh}h_{t−1} +b)
+\]</div>
+<p>This recurrence enables the network to capture temporal patterns by maintaining a memory of past inputs. It’s particularly useful for tasks where the meaning of a current token depends on those that came before such as in language modeling, speech recognition, or time-series forecasting.</p>
+<h3 id="sequential-bottlenecks">Sequential Bottlenecks</h3>
+<p>While RNNs were a major breakthrough in modeling sequences, they introduced structural constraints that became increasingly problematic as NLP tasks grew in complexity:</p>
+<ul>
+<li><strong>Sequential Processing</strong>: RNNs process tokens one by one. This makes them inherently slow to train, as computation at time step t cannot begin until step t−1 is complete. This bottleneck prevents parallelization during training and inference. The figure below shows how context is compressed into a single vector <code>c</code>.</li>
+<li><strong>Difficulty with Long-Range Dependencies</strong>: Even with LSTM and GRU improvements, RNNs often struggle to maintain meaningful information across long sequences. The vanishing gradient problem and memory saturation cause them to forget distant context, especially in long documents or conversations.</li>
+<li><strong>Limited Scalability</strong>: As datasets and sequence lengths grow, training deep RNNs becomes unstable or inefficient. Backpropagation through many time steps becomes costly and error-prone.</li>
+<li><img src="../_assets/bottle-neck.png" alt=""><blockquote>Bottleneck in the encoder-decoder architecture</blockquote></li>
+</ul>
+<p>These limitations highlighted the need for a fundamentally different approach—one that could:</p>
+<ul>
+<li>Access all tokens in a sequence at once</li>
+<li>Enable parallel computation across all time steps</li>
+<li>Model relationships between distant tokens directly, without relying solely on intermediate states</li>
+</ul>
+<p>This architectural shift led to the development of the Transformer, which eliminates recurrence altogether in favor of attention-based mechanisms.</p>
+<hr>
+</section><section><h2 id="why-transformers">Why Transformers?</h2>
+<p>As sequence modeling tasks grew in complexity and scale, the limitations of Recurrent Neural Networks (RNNs), even with improvements like LSTMs and GRUs, became increasingly apparent. In response to these challenges, a new architecture was introduced that redefined how sequences are processed: the <strong>Transformer</strong>. Proposed by Vaswani et al. in 2017 in the seminal paper <em>“Attention Is All You Need”</em>, the Transformer architecture eliminates recurrence entirely. Instead of processing tokens one at a time, Transformers operate over the entire sequence simultaneously, using a mechanism known as attention to determine how each token interacts with others.</p>
+<h3 id="moving-beyond-sequential-computation">Moving Beyond Sequential Computation</h3>
+<p>Traditional RNNs compute hidden states recursively, where each token depends on the one before it. This inherently sequential nature limits both training efficiency and parallelism. In contrast, Transformers abandon this constraint. Every token in a sequence can access all other tokens at once, enabling parallel computation during both training and inference. This change addresses several core limitations of RNN-based models:</p>
+<ul>
+<li><strong>Inefficient training</strong> due to token-by-token processing</li>
+<li><strong>Difficulty capturing long-range dependencies</strong> through gradient propagation</li>
+<li><strong>Poor scalability</strong> when applied to large datasets and long input sequences</li>
+</ul>
+<blockquote>
+<p>Transformers do not model sequences by recurrence, they model <strong>relationships</strong> through attention.</p>
+</blockquote>
+<h3 id="architectural-shift-from-recurrence-to-attention">Architectural Shift: From Recurrence to Attention</h3>
+<p>Rather than relying on a chain of hidden states to propagate information, Transformers use attention layers to compute pairwise relationships between tokens. Each token in the input sequence generates three vectors: a query, a key, and a value. These vectors are compared and combined to determine what each token should “attend to” when forming its contextual representation. This allows the model to learn dependencies regardless of their distance in the sequence. A word at the beginning of a paragraph can influence the representation of a word at the end without degradation in signal strength. The following figure sketches the transformer architecture:</p>
+<p><img src="../_assets/transformer-arch.png" alt="transformer-arch"></p>
+<blockquote>
+<p>The architecture of a (left-to-right) transformer, showing how each input token get encoded, passed through a set of stacked transformer blocks, and then a language model head that predicts the next token.</p>
+</blockquote>
+<p>A Transformer consists of three main parts: an input encoding layer that converts tokens into embeddings and adds positional information; a stack of transformer blocks (typically 12 to 96 layers) that apply multi-head self-attention, feedforward networks, and normalization to process the entire sequence in parallel; and a language modeling head that transforms each output vector into a vocabulary distribution via an unembedding matrix and softmax, predicting the next token for each position.</p>
+<hr>
+<h3 id="structural-advantages-of-transformers">Structural Advantages of Transformers</h3>
+<p>Transformers introduce several practical advantages that contributed to their widespread adoption:</p>
+<table>
+<thead>
+<tr>
+<th><strong>Aspect</strong></th>
+<th><strong>RNNs (LSTM/GRU)</strong></th>
+<th><strong>Transformers</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Computation</td>
+<td>Sequential (step-by-step)</td>
+<td>Fully parallel (sequence-level)</td>
+</tr>
+<tr>
+<td>Context propagation</td>
+<td>Through hidden state</td>
+<td>Through direct token-to-token attention</td>
+</tr>
+<tr>
+<td>Gradient flow</td>
+<td>Across time steps</td>
+<td>Across attention layers</td>
+</tr>
+<tr>
+<td>Long-range dependencies</td>
+<td>Hard to capture</td>
+<td>Explicit and efficient</td>
+</tr>
+<tr>
+<td>Training speed</td>
+<td>Slower</td>
+<td>Significantly faster</td>
+</tr>
+<tr>
+<td>Scalability</td>
+<td>Limited (unstable with depth)</td>
+<td>Highly scalable (pretraining-friendly)</td>
+</tr>
+</tbody>
+</table>
+<p>These improvements make Transformers ideal for pretraining on massive corpora, and they are the foundation of models such as BERT, GPT, T5, and RoBERTa—all of which rely on attention as their central mechanism.</p>
+<hr>
+<h3 id="new-paradigm-for-sequence-modeling">New Paradigm for Sequence Modeling</h3>
+<p>The rise of Transformers represents a fundamental shift: from encoding input order implicitly through recurrence to learning relationships directly through attention. This change has led to state-of-the-art performance across nearly every NLP benchmark.</p>
+<blockquote>
+<p>Rather than processing one word at a time, Transformers evaluate relationships across the entire sequence—allowing models to reason globally, not just locally.</p>
+</blockquote>
+<p>At the heart of this architecture lies the <strong>attention mechanism</strong>, which dynamically determines how much influence each token should exert on others. In the next section, we will begin unpacking this concept at a high level introducing the foundational ideas that power modern Transformer-based models.</p>
+<hr>
+</section><section><h2 id="introduction-to-attention-mechanisms">Introduction to Attention Mechanisms</h2>
+<p>The attention mechanism is a foundational innovation in modern NLP. Unlike RNNs, which compress all prior context into a single hidden state, attention enables the model to dynamically focus on relevant parts of the input sequence, assigning greater weight to more important tokens. Originally developed to enhance RNN encoder-decoder models, attention addressed the limitations of passing only the final hidden state to the decoder. Instead, the decoder learns to access all encoder states, weighting them based on relevance to the current output step.</p>
+<blockquote>
+<p>Attention replaces fixed memory with flexible context access letting the model decide what to focus on, when it needs it.</p>
+</blockquote>
+<p>The figure below shows how attention was originally integrated into RNN-based encoder-decoder architectures. Rather than relying solely on the final encoder hidden state to guide decoding, the model computes a context vector $c_i$​ for each output step. This vector is a weighted sum over all encoder hidden states, where the weights are dynamically learned based on how relevant each input token is to the current decoding step. This mechanism allows the decoder to selectively retrieve contextual information from the entire input sequence at each time step.</p>
+<p><img src="../_assets/attention.png" alt="Attention-based decoding"></p>
+<p><strong>Figure:</strong> Attention-based decoding in a sequence-to-sequence model. Each output token <span class="math">\(y_i\)</span> is generated from the decoder state <span class="math">\(h^d_i\)</span> and a context vector <span class="math">\(c_i\)</span>, which is dynamically computed as a weighted sum over encoder hidden states. This allows each decoding step to access the most relevant input information directly.</p>
+<h3 id="motivation">Motivation</h3>
+<p>Imagine reading a complex sentence. As a human, you don’t always process words strictly in order. When you encounter a pronoun like <em>“it”</em>, you naturally scan the earlier sentence to determine what <em>“it”</em> refers to. The meaning of <em>“it”</em> changes depending on context, and crucially, you attend to the relevant part of the sentence to resolve that ambiguity.</p>
+<p>Attention mechanisms give neural networks a similar ability: to look back across the entire sequence and weigh the importance of each word when producing a new representation.</p>
+<blockquote>
+<p>Rather than forcing the model to memorize everything sequentially, attention lets it “look around” at what it needs, when it needs it.</p>
+</blockquote>
+<h3 id="core-intuition">Core Intuition</h3>
+<p>At a high level, attention computes how much each token should contribute to the representation of another token. The model compares every token with every other token in the sequence using a set of learned projections:</p>
+<ul>
+<li><strong>Query</strong>: What the model is trying to find (e.g., &quot;Who does <em>it</em> refer to?&quot;)</li>
+<li><strong>Key</strong>: What each token offers as context (e.g., &quot;I'm <em>the animal</em>&quot;)</li>
+<li><strong>Value</strong>: The actual content carried by each token</li>
+</ul>
+<p>The attention mechanism returns a weighted sum of values, where the weights are based on similarities between the query and each key.</p>
+<h3 id="attention-formula">Attention Formula</h3>
+<p>The most widely used formulation is scaled dot-product attention:</p>
+<div class="math">
+\[
+\text{Attention}(Q, K, V) = \text{softmax} \left( \frac{QK^\top}{\sqrt{d_k}} \right) V
+\]</div>
+<p>Where:</p>
+<ul>
+<li><span class="math">\(Q\)</span> = query matrix</li>
+<li><span class="math">\(K\)</span> = key matrix</li>
+<li><span class="math">\(V\)</span> = value matrix</li>
+<li><span class="math">\(d_k\)</span> = dimensionality of the key vectors (used for scaling)</li>
+</ul>
+<p>This operation computes attention scores by comparing the query with all keys. These scores determine how much attention should be paid to each value when generating the output.</p>
+<h3 id="representation-in-practice">Representation in Practice</h3>
+<p>Consider the sentence:<em>“The animal didn’t cross the street because it was too tired.”</em> To understand what <em>“it”</em> refers to, a Transformer assigns high attention weights to the token <em>“animal”</em>. This allows the model to generate a context-aware embedding for <em>“it”</em> that reflects its referential meaning something static or sequential models would often miss. Attention maps often show interpretable structures:</p>
+<ul>
+<li>Verbs attending to their subjects</li>
+<li>Pronouns linked to antecedents</li>
+<li>Modifiers focusing on the nouns they describe</li>
+</ul>
+<p>These are not manually encoded rules, they emerge naturally during training. This high-level understanding of attention prepares us to explore the multi-head self-attention mechanism, the core operation within Transformer layers. In Week 4, we will:</p>
+<ul>
+<li>Break down how attention heads work internally</li>
+<li>Analyze encoder and decoder attention flows</li>
+<li>Visualize learned attention patterns in real models</li>
+</ul>
+<p>For now, it is important to recognize that attention provides a way to model dependencies and structure without recurrence a breakthrough that enables faster, deeper, and more expressive language models.</p>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>While RNNs were foundational in early neural NLP systems, their limitations in handling long-range dependencies and parallelization have led to the widespread adoption of Transformer architectures. Transformers, powered by attention, address these limitations and form the backbone of today’s most powerful NLP systems.</p>
+<p>In this lesson, we introduced the main motivations behind Transformers and the idea of attention without diving into the math. In Week 4, you’ll explore exactly how self-attention works, learn its equations, and implement your own Transformer-based models.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Understanding Transformer Architecture</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-understanding-transformer-architecture">Lesson: Understanding Transformer Architecture</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>So far, we have worked with RNN-based Sequence-to-Sequence (Seq2Seq) models with and without attention. While attention helped overcome the fixed-length bottleneck, RNNs remain sequential in nature, making training and inference slow and difficult to parallelize, especially with long sequences. To address these challenges, researchers at Google introduced the Transformer architecture in 2017. Unlike RNNs, Transformers do not use recurrence at all. Instead, they rely entirely on self-attention mechanisms, allowing for parallel computation, long-range context modeling, and scalable training. In this lesson, we will explore how the Transformer architecture is structured, how it solves the limitations of RNNs, and how its components, self-attention, positional encoding, and feed-forward layers work together to process text efficiently and effectively.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Explain</strong> how the Transformer architecture eliminates the limitations of RNN-based models.</li>
+<li><strong>Describe</strong> the key components of the Transformer, including self-attention, positional encoding, and feed-forward layers.</li>
+<li><strong>Compare</strong> RNN-based sequence models and Transformer models in terms of design, performance, and scalability.</li>
+</ol>
+<hr>
+</section><section><h2 id="limitations-of-rnns-revisited">Limitations of RNNs Revisited</h2>
+<p>Before we dive into the Transformer architecture, it’s important to revisit the foundational challenges that motivated its development. Recurrent Neural Networks (RNNs) and Long Short-Term Memory networks (LSTMs) were once the dominant architectures for sequential data. While they brought major advances in tasks like machine translation, they also exposed core limitations, especially as models scaled to longer sequences and more complex tasks.</p>
+<p>RNN-based architectures process input sequences <strong>token-by-token</strong>, passing hidden states from one time step to the next. This design introduces several constraints:</p>
+<ul>
+<li><strong>Long-Range Dependency Degradation</strong>As the input sequence grows, early tokens struggle to influence distant outputs. Even with LSTMs, which mitigate vanishing gradients, the signal weakens over time.</li>
+<li><strong>Sequential Computation Bottleneck</strong>RNNs cannot compute all time steps in parallel. Each token’s output depends on the one before it, preventing hardware-level parallelism during both training and inference.</li>
+<li><strong>Weak Global Context Modeling</strong>Since each output is primarily driven by local context (the current token and recent states), RNNs struggle with tasks requiring an understanding of the entire sequence, such as document-level translation or summarization.</li>
+</ul>
+<h3 id="transformer-solution">Transformer Solution</h3>
+<p>Transformers address all of these limitations through a non-recurrent, fully attention-based architecture. By replacing recurrence with self-attention, Transformers:</p>
+<ul>
+<li>Capture global dependencies regardless of sequence length.</li>
+<li>Allow parallel computation across all tokens.</li>
+<li>Dynamically compute contextual relationships between all pairs of tokens.</li>
+</ul>
+<p>This paradigm shift enables faster training, better scalability, and higher performance across nearly all sequence modeling tasks in NLP and beyond.</p>
+<hr>
+</section><section><h2 id="parallelism-in-transformers">Parallelism in Transformers</h2>
+<p>One of the most transformative advantages of the Transformer architecture over RNNs lies in its ability to process sequences in parallel. Traditional RNNs rely on sequential computation, where each token's processing depends on the completion of the previous one. This inherently limits training speed and makes long-sequence modeling inefficient. Transformers overcome this bottleneck by eliminating recurrence entirely, enabling parallel computation across all tokens in both the input and output sequences.</p>
+<h3 id="how-transformers-achieve-parallelism">How Transformers Achieve Parallelism</h3>
+<p>Transformers rely on two key innovations to support non-sequential processing:</p>
+<ul>
+<li><strong>Self-Attention Mechanism</strong>: Each token in the input sequence can attend to all other tokens simultaneously. This means the model does not need to wait for previous tokens to be processed before computing the current token's representation.</li>
+<li><strong>Positional Encoding</strong>: Because the model has no built-in notion of sequence order (unlike RNNs), positional encodings are added to input embeddings. These encodings inject information about the relative or absolute position of each token, allowing the model to preserve sequential structure without recurrence.</li>
+</ul>
+<p><img src="../_assets/transformer.png" alt=""></p>
+<blockquote>
+<p>The architecture of Transformer</p>
+</blockquote>
+<h3 id="benefits-of-parallelism">Benefits of Parallelism</h3>
+<ul>
+<li><strong>Significant Speedup</strong>All tokens are processed in parallel, enabling faster training on modern hardware (e.g., GPUs and TPUs) and better scalability to long sequences.</li>
+<li><strong>Improved Long-Range Dependency Modeling</strong>Since every token can directly access all others in a single layer, the model can capture global context more effectively than architectures limited by stepwise recurrence.</li>
+</ul>
+<p>Transformers shift the paradigm from sequential to parallel processing. By leveraging self-attention and positional encodings, they not only achieve faster computation but also unlock the ability to model complex, long-range relationships in a fundamentally different and more efficient way.</p>
+<hr>
+</section><section><h2 id="component-1-self-attention">Component 1: Self-Attention</h2>
+<p>Now that we've seen how Transformers enable parallelism through the removal of recurrence, we turn to the core mechanism that makes this possible: self-attention. This mechanism allows the model to capture dependencies between all tokens in a sequence regardless of their distance from one another while preserving the flexibility to compute representations in parallel.</p>
+<p>Self-attention is a mechanism that enables each token in the input sequence to compute a weighted representation of all other tokens, including itself. These weights are learned dynamically, allowing the model to &quot;attend&quot; to the most relevant parts of the sequence when encoding a particular token. This is especially powerful for tasks involving context, coreference, or long-distance relationships.</p>
+<h3 id="query-key-and-value">Query, Key, and Value</h3>
+<p>To compute attention, each input token is projected into three learned vectors:</p>
+<ul>
+<li><strong>Query (Q)</strong>: Represents what the current token is looking for.</li>
+<li><strong>Key (K)</strong>: Represents what each token offers to other tokens.</li>
+<li><strong>Value (V)</strong>: Contains the actual information passed to the output based on attention scores.</li>
+</ul>
+<p>These vectors are learned through linear transformations applied to the input embeddings.</p>
+<h3 id="attention-computation">Attention Computation</h3>
+<p>The attention score between a query and a set of keys is calculated using the <strong>scaled dot-product</strong> formula. The attention score between tokens <span class="math">\(i\)</span> and <span class="math">\(j\)</span> is computed as:</p>
+<div class="math">
+\[
+\text{Attention}(Q, K, V) = \text{softmax} \left( \frac{QK^\top}{\sqrt{d_k}} \right) V
+\]</div>
+<p>Where:</p>
+<ul>
+<li><span class="math">\(Q \in \mathbb{R}^{n \times d_k}\)</span> is the matrix of queries.</li>
+<li><span class="math">\(K \in \mathbb{R}^{n \times d_k}\)</span> is the matrix of keys.</li>
+<li><span class="math">\(V \in \mathbb{R}^{n \times d_v}\)</span> is the matrix of values.</li>
+<li><span class="math">\(d_k\)</span> is the dimension of the key vectors, used to scale the dot products for numerical stability.</li>
+</ul>
+<p>The softmax operation ensures that attention weights are positive and sum to 1, forming a probability distribution over all tokens. This allows modeling of both local and global dependencies.</p>
+<h3 id="benefits-of-self-attention">Benefits of Self-Attention</h3>
+<p>Self-attention enables the model to:</p>
+<ul>
+<li>Capture local and global dependencies in a single layer.</li>
+<li>Weight different parts of the input based on their relevance to the current token.</li>
+<li>Model token relationships bidirectionally and simultaneously.</li>
+</ul>
+<hr>
+</section><section><h2 id="component-2-multi-head-attention-mh-att">Component 2: Multi-Head Attention (MH-ATT)</h2>
+<p>While a single self-attention mechanism allows each token to attend to others in the sequence, it may not be sufficient to capture the full range of relationships—especially in complex sentences with multiple linguistic cues. To address this, Transformers use multiple self-attention mechanisms in parallel, allowing the model to learn diverse types of dependencies simultaneously. This extension is known as Multi-Head Attention.</p>
+<p>Rather than computing a single set of attention weights, the Transformer splits the input into multiple attention heads. Each head independently performs self-attention with its own set of learned projections. This allows each head to specialize:</p>
+<ul>
+<li>Some heads may capture syntactic structures (e.g., subject–verb agreement).</li>
+<li>Others may focus on semantic relationships (e.g., co-reference or synonymy).</li>
+<li>Some may emphasize positional or contextual patterns.</li>
+</ul>
+<h3 id="formal-definition">Formal Definition</h3>
+<p>Each attention head is computed using distinct projections of <span class="math">\(Q\)</span>, <span class="math">\(K\)</span>, and <span class="math">\(V\)</span>:</p>
+<div class="math">
+\[
+\text{head}_i = \text{Attention}(QW^Q_i, KW^K_i, VW^V_i)
+\]</div>
+<p>The outputs from all heads are then concatenated and projected through a final linear layer:</p>
+<div class="math">
+\[
+\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, ..., \text{head}_h) W^O
+\]</div>
+<p>Where:</p>
+<ul>
+<li><span class="math">\(W^Q_i\)</span>, <span class="math">\(W^K_i\)</span>, <span class="math">\(W^V_i\)</span> are learned weight matrices for the <span class="math">\(i\)</span>‑th head.</li>
+<li><span class="math">\(W^O\)</span> is the output projection matrix applied after concatenation.</li>
+</ul>
+<h3 id="benefits-of-multi-head-attention">Benefits of Multi-Head Attention</h3>
+<ul>
+<li><strong>Richer Representations</strong>: Each head learns a distinct attention pattern, capturing different aspects of language structure.</li>
+<li><strong>Parallel Processing</strong>: All heads compute in parallel, maintaining the transformer's efficiency.</li>
+<li><strong>Enhanced Generalization</strong>: The model becomes more robust to variation in syntax, phrasing, and context.</li>
+</ul>
+<hr>
+</section><section><h2 id="component-3-positional-encoding">Component 3: Positional Encoding</h2>
+<p>While multi-head self-attention enables Transformers to learn complex dependencies across tokens, it has one critical limitation: it is position-agnostic. Since all tokens are processed simultaneously, the model lacks any built-in understanding of sequence order, a crucial element in natural language.To address this, Transformers introduce positional encoding, a method for injecting information about token positions directly into the model’s input representations.</p>
+<p>Unlike RNNs or CNNs, Transformers do not process input sequentially or locally. Without additional information, the model would treat &quot;cat sat on mat&quot; and &quot;mat sat on cat&quot; identically, even though their meanings differ entirely due to word order. To solve this, a positional encoding vector is added to each input embedding. These encodings are deterministic, fixed-length vectors based on the position of each token in the sequence.</p>
+<h3 id="mathematical-formulation">Mathematical Formulation</h3>
+<p>The positional encoding for each position <span class="math">\(pos\)</span> and each embedding dimension <span class="math">\(i\)</span> is defined as:</p>
+<div class="math">
+\[
+PE_{(pos, 2i)} = \sin\left(\frac{pos}{10000^{2i/d_{model}}}\right), \quad
+PE_{(pos, 2i+1)} = \cos\left(\frac{pos}{10000^{2i/d_{model}}}\right)
+\]</div>
+<p>Where:</p>
+<ul>
+<li><span class="math">\(pos\)</span> is the position index (starting from 0),</li>
+<li><span class="math">\(i\)</span> is the dimension index,</li>
+<li><span class="math">\(d_{\text{model}}\)</span> is the total dimension of the model's embeddings.</li>
+</ul>
+<p>These sinusoidal encodings produce values that vary smoothly across positions and dimensions, allowing the model to infer relative and absolute positions through attention.</p>
+<h3 id="key-properties">Key Properties</h3>
+<ul>
+<li><strong>Fixed and Non-Trainable</strong>: Unlike embeddings, these encodings are not learned—they are computed using sine and cosine functions.</li>
+<li><strong>Generalizable</strong>: The periodic nature of sinusoids allows the model to extrapolate to longer sequences than those seen during training.</li>
+<li><strong>Additive</strong>: Positional encodings are added directly to the input token embeddings before they enter the first attention layer.</li>
+</ul>
+<p>Positional encoding gives the Transformer a sense of order, enabling it to interpret the sequence of words despite its fully parallel architecture. Combined with self-attention and multi-head attention, this forms the foundation for the model’s ability to understand and generate structured text.</p>
+<hr>
+</section><section><h2 id="component-4-feed-forward-network-ffn">Component 4: Feed-Forward Network (FFN)</h2>
+<p>After the model encodes relationships between tokens through self-attention and integrates position information via positional encoding, each token representation is passed through a fully connected feed-forward network. This component allows the model to perform non-linear transformations independently at each position, enabling richer token-level representations.</p>
+<p>Within each Transformer layer, a position-wise feed-forward network (FFN) is applied to the output of the multi-head attention mechanism. Unlike traditional neural networks where layers operate on the entire input collectively, here the same FFN is applied identically and independently to each token embedding in the sequence.</p>
+<h3 id="mathematical-definition">Mathematical Definition</h3>
+<p>The feed-forward network consists of two linear transformations with a ReLU activation in between:</p>
+<div class="math">
+\[
+\text{FFN}(x) = \max(0, xW_1 + b_1)W_2 + b_2
+\]</div>
+<p>Where:</p>
+<ul>
+<li><span class="math">\(x\)</span> is the input vector at a given position,</li>
+<li><span class="math">\(W_1\)</span> and <span class="math">\(W_2\)</span> are learned weight matrices,</li>
+<li><span class="math">\(b_1\)</span> and <span class="math">\(b_2\)</span> are learned bias vectors,</li>
+<li><span class="math">\(\max(0, \cdot)\)</span> denotes the ReLU activation function.</li>
+</ul>
+<p>Each <span class="math">\(x\)</span> is transformed individually and identically, making the operation position-wise but not sequence-dependent.</p>
+<h3 id="purpose-and-benefits">Purpose and Benefits</h3>
+<ul>
+<li><strong>Increased Representation Capacity</strong>: The FFN adds depth and non-linearity, enabling the model to learn more complex transformations beyond what attention alone can capture.</li>
+<li><strong>Token-Level Processing</strong>: Since it's applied per position, the FFN enhances each token's representation after contextual relationships have been captured through attention.</li>
+<li><strong>Modular Simplicity</strong>: The FFN is simple and highly parallelizable, contributing to the Transformer's computational efficiency.</li>
+</ul>
+<p>The feed-forward network provides an essential non-linear transformation stage within each Transformer block. By applying it individually to each token, the model boosts its ability to learn nuanced semantic features without compromising its parallel structure.</p>
+<hr>
+</section><section><h2 id="encoder-and-decoder-stacks">Encoder and Decoder Stacks</h2>
+<p>After understanding the core components of the Transformer, self-attention, multi-head attention, positional encoding, and feed-forward networks, we now examine how these elements are organized into full model architectures. The Transformer is composed of two primary modules: the encoder stack and the decoder stack, each built by repeating the core components in structured layers.</p>
+<h3 id="transformer-architecture-overview">Transformer Architecture Overview</h3>
+<p>The Transformer consists of:</p>
+<p><strong>Encoder Stack</strong>: A sequence of <span class="math">\(N\)</span> identical layers, where each layer contains:</p>
+<ol>
+<li>Multi-head self-attention</li>
+<li>Position-wise feed-forward network</li>
+<li>Residual connections and layer normalization (applied after each sub-layer)</li>
+</ol>
+<p><strong>Decoder Stack</strong>: Also composed of <span class="math">\(N\)</span> identical layers, but with three sub-layers:</p>
+<ol>
+<li><strong>Masked multi-head self-attention</strong>: Ensures the decoder can only attend to earlier positions in the output sequence (important for autoregressive generation).</li>
+<li><strong>Encoder–decoder attention</strong>: Enables the decoder to attend to the encoder’s outputs, allowing alignment between input and output sequences.</li>
+<li><strong>Feed-forward network</strong>, followed again by residual connections and normalization.</li>
+</ol>
+<p>This enables <strong>auto-regressive generation</strong> in tasks like translation, where the decoder only sees past tokens during training.</p>
+<p><img src="../_assets/TT5.png" alt="Transformer encoder-decoder Architecture"></p>
+<blockquote>
+<p>Full encoder-decoder Transformer architecture</p>
+</blockquote>
+<h3 id="key-differences-between-encoder-and-decoder">Key Differences Between Encoder and Decoder</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Encoder</th>
+<th>Decoder</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Self-Attention</td>
+<td>Full</td>
+<td>Masked (causal)</td>
+</tr>
+<tr>
+<td>Encoder–Decoder Attention</td>
+<td>Not present</td>
+<td>Present (attends to encoder outputs)</td>
+</tr>
+<tr>
+<td>Positional Encoding</td>
+<td>Applied</td>
+<td>Applied</td>
+</tr>
+<tr>
+<td>Feed-Forward Network</td>
+<td>Present</td>
+<td>Present</td>
+</tr>
+<tr>
+<td>Residual + LayerNorm</td>
+<td>After each sub-layer</td>
+<td>After each sub-layer</td>
+</tr>
+</tbody>
+</table>
+<h3 id="auto-regressive-generation">Auto-Regressive Generation</h3>
+<p>The decoder is designed for auto-regressive tasks like machine translation or text generation.</p>
+<p><strong>During training</strong>:</p>
+<ul>
+<li>The decoder can only attend to <strong>past tokens</strong> (due to masking).</li>
+<li>This prevents it from &quot;cheating&quot; by looking at future words.</li>
+</ul>
+<p><strong>During inference</strong>:</p>
+<ul>
+<li>The model generates one token at a time, feeding the output back into the decoder for the next step.</li>
+</ul>
+<p>The Transformer’s encoder–decoder structure supports both input encoding and autoregressive output generation. This modular stacking of attention and feed-forward layers with masking and cross-attention in the decoder enables powerful sequence modeling across many tasks.</p>
+<hr>
+</section><section><h2 id="comparing-rnns-and-transformers">Comparing RNNs and Transformers</h2>
+<p>Having examined the structure and components of the Transformer, it’s instructive to compare it with traditional sequence models—particularly Recurrent Neural Networks (RNNs) and their variants like LSTMs and GRUs. While RNNs dominated sequence learning tasks for many years, Transformers represent a fundamental shift in architecture and learning capabilities.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>RNN-Based Models</th>
+<th>Transformers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Architecture</strong></td>
+<td>Sequential (time-step by time-step)</td>
+<td>Parallel across the full sequence</td>
+</tr>
+<tr>
+<td><strong>Context Propagation</strong></td>
+<td>Through hidden states</td>
+<td>Through attention over all positions</td>
+</tr>
+<tr>
+<td><strong>Sequence Processing</strong></td>
+<td>Left-to-right (or bidirectional with effort)</td>
+<td>All-at-once (no recurrence)</td>
+</tr>
+<tr>
+<td><strong>Training Efficiency</strong></td>
+<td>Slower (no parallelism)</td>
+<td>Faster due to full parallelism</td>
+</tr>
+<tr>
+<td><strong>Long-Range Dependency Capture</strong></td>
+<td>Limited (vanishing gradients)</td>
+<td>Excellent (global attention)</td>
+</tr>
+<tr>
+<td><strong>Positional Awareness</strong></td>
+<td>Implicit in sequence</td>
+<td>Requires explicit positional encoding</td>
+</tr>
+<tr>
+<td><strong>Scalability</strong></td>
+<td>Poor for long sequences</td>
+<td>Highly scalable to long sequences</td>
+</tr>
+<tr>
+<td><strong>Memory Usage</strong></td>
+<td>Low</td>
+<td>High (especially with long inputs)</td>
+</tr>
+<tr>
+<td><strong>Hardware Utilization</strong></td>
+<td>Less efficient (sequential)</td>
+<td>Highly optimized for GPUs/TPUs</td>
+</tr>
+</tbody>
+</table>
+<h3 id="summary">Summary</h3>
+<ul>
+<li>RNNs process input tokens sequentially, carrying information via a hidden state from one step to the next. While this allows them to model temporal sequences, it also makes them slow and difficult to parallelize, and limits their ability to capture long-range dependencies.</li>
+<li>Transformers, in contrast, process entire sequences in parallel using self-attention. Each token can attend to all others, allowing for better context modeling and faster training, especially on modern hardware.</li>
+</ul>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>In this lesson, you explored the Transformer architecture, a landmark innovation in NLP. We studied how Transformers eliminate recurrence using self-attention, capture global context with multi-head attention, preserve word order with positional encodings, and enhance expressiveness through feed-forward layers.</p>
+<p>You also compared Transformers to RNN-based models, identifying key advantages in speed, parallelism, and performance. This architecture has become the foundation for nearly all modern NLP systems, including BERT, GPT, and T5.</p>
+<p>In the next lesson, we will build a Transformer model and apply it to real-world tasks such as text classification and summarization.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

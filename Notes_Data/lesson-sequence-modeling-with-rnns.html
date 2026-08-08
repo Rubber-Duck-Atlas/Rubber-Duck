@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Sequence Modeling With Rnns</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-sequence-modeling-with-rnns">Lesson: Sequence Modeling with RNNs</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Recurrent Neural Networks (RNNs) are designed to handle sequential data by maintaining a hidden state that evolves as each new element of the sequence is processed. This allows RNNs to capture patterns not only within single inputs but also across entire sequences—making them ideal for tasks where context and order matter.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Identify</strong> the four fundamental RNN sequence‐to‐sequence architectures (one‑to‑one, one‑to‑many, many‑to‑one, many‑to‑many).</li>
+<li><strong>Describe</strong> key NLP applications that leverage each of these architectures.</li>
+<li><strong>Explain</strong> how Google Translate originally used RNN‐based sequence modeling and its practical impact.</li>
+</ol>
+<hr>
+<h3 id="motivation-why-sequences-need-specialized-models">Motivation: Why Sequences Need Specialized Models</h3>
+<p>Most data used in natural language processing and speech recognition exists in the form of sequences ordered collections of elements where meaning depends on position and context. A sentence is not just a bag of words; the order in which words appear is essential to its meaning. For instance, compare:</p>
+<ul>
+<li><em>“The dog chased the cat.”</em></li>
+<li><em>“The cat chased the dog.”</em></li>
+</ul>
+<p>Although the words are the same, the meaning changes entirely due to sequence. Traditional neural networks, such as multilayer perceptrons or convolutional networks, are not inherently designed to model order. They assume each input is independent, and their architecture lacks a mechanism to remember what came before. This independence assumption works well for tasks like image classification but fails for language, audio, or any data where temporal dynamics matter.</p>
+<p>To model sequences effectively, we need architectures that can retain memory of past elements and use that memory to influence current decisions. Recurrent Neural Networks (RNNs) were introduced to solve this problem. At each time step, RNNs maintain a hidden state that carries forward contextual information from previous inputs, allowing the model to build an understanding of the sequence as it progresses.</p>
+<p>RNNs were among the first architectures capable of handling variable-length input and output, making them suitable for tasks like translation, transcription, and generation.</p>
+<hr>
+<h3 id="core-applications-of-rnns">Core Applications of RNNs</h3>
+<p>Recurrent Neural Networks are designed to handle problems where input and/or output are sequences. Unlike standard models that assume inputs are independent, RNNs can process variable-length data while maintaining a form of memory through their hidden states. This makes them well suited for tasks that depend on temporal, syntactic, or semantic order. Below are three core applications where RNNs have been widely adopted</p>
+<ul>
+<li><strong>Machine Translation</strong>: RNNs were foundational in early neural machine translation systems. A model reads a sentence in one language and generates a translation in another, word by word. This task requires understanding both sentence-level structure and word-level dependencies.  Example: <em>“How are you?” → “Comment ça va ?”</em>. This falls under a many-to-many (asynchronous) configuration, where input and output lengths differ.</li>
+<li><strong>Text Summarization</strong>: Summarization involves producing a condensed version of a longer document while preserving the original meaning. RNNs learn to generate summaries by first encoding the document into a fixed representation, then decoding it into a shorter sequence. This requires capturing long-range dependencies and relevance across many tokens. Example:  Input: <em>“The film follows a retired detective investigating a serial killer in post-war Berlin.”</em>  Output: <em>“Detective hunts killer in post-war Berlin.”</em></li>
+<li><strong>Speech Recognition</strong>: Speech is a time-varying signal, and RNNs are naturally equipped to handle such input. In automatic speech recognition (ASR), RNNs map a sequence of acoustic features (e.g., MFCCs) to a sequence of characters or words. The output length varies with speaking rate and audio quality. Example: Input: Audio waveform of “Call John at 5”. Output: <em>“Call John at 5”</em> (text)</li>
+</ul>
+<p>These applications share a fundamental requirement: the need to model the structure within and across sequences. In each case, the RNN captures both local and long-range relationships, making it a powerful backbone for early language and signal modeling systems. In the next section, we’ll explore how these applications are implemented using encoder–decoder architectures, beginning with a closer look at machine translation systems like Google Translate.</p>
+<hr>
+</section><section><h2 id="sequence-modeling-architectures">Sequence Modeling Architectures</h2>
+<p>While RNNs are widely used for handling sequences, not all sequence-based tasks follow the same input–output structure. Depending on the nature of the problem, RNNs can be arranged in different architectural patterns. These configurations define how information flows through the network and how predictions are generated. Understanding these common modeling patterns is essential before diving into encoder–decoder architectures and real-world implementations.</p>
+<h3 id="onetoone">One‑to‑One</h3>
+<p>A single input produces a single output.</p>
+<p><img src="../_assets/one-to-one.png" alt=""></p>
+<ul>
+<li><strong>Example:</strong> Classifying a single feature vector (e.g., predicting winning team).</li>
+</ul>
+<hr>
+<h3 id="manytoone">Many‑to‑One</h3>
+<p>This configuration is used when the input is a sequence, but the output is a single value, typically a class label or decision. The model processes the entire sequence and produces one prediction at the end.</p>
+<ul>
+<li><strong>Task type</strong>: Sequence classification</li>
+<li><strong>Description</strong>: The model reads an input sequence (e.g., a sentence) and outputs a single label (e.g., positive/negative sentiment). Only the final hidden state is used for prediction.</li>
+</ul>
+<p><img src="../_assets/many-to-one.png" alt=""></p>
+<ul>
+<li><strong>Use Case:</strong> Sentiment analysis of a sentence—each word in “ I am very happy ! ” feeds into an RNN, and the final hidden state predicts “Positive.”</li>
+</ul>
+<hr>
+<h3 id="onetomany">One‑to‑Many</h3>
+<p>This setup is used when a single input is used to generate a sequence of outputs. The output unfolds over time, with each step conditioned on the previous one.</p>
+<ul>
+<li><strong>Task type</strong>: Sequence generation</li>
+<li><strong>Description</strong>: A single input vector (e.g., an image feature) is used to produce a sequence of outputs, one step at a time. Common in cases where the input is not inherently sequential..<img src="../_assets/one-to-many.png" alt=""></li>
+<li><strong>Use Case:</strong> Image captioning—an image embedding is input to an RNN, which then generates a sequence of words (&quot; A Brown Puppy&quot;).</li>
+</ul>
+<hr>
+<h3 id="manytomany-asynchronous">Many‑to‑Many (Asynchronous)</h3>
+<p>This architecture handles tasks where input and output sequences are both variable-length but not aligned one-to-one. The model encodes the input sequence and generates the output sequence step by step.</p>
+<ul>
+<li><strong>Task type</strong>: Sequence transformation</li>
+<li><strong>Description</strong>: The model processes the entire input sequence and then generates a separate output sequence, which may be shorter or longer. Typically implemented with an encoder–decoder architecture.<img src="../_assets/many-to-many.png" alt=""></li>
+<li><strong>Use Case:</strong> Machine translation, an English sentence is encoded by one RNN and decoded into a French sentence by another.</li>
+</ul>
+<h3 id="many-to-many-synchronized"><strong>Many-to-Many (Synchronized)</strong></h3>
+<p>In synchronized many-to-many tasks, each input token has a corresponding output token. Input and output lengths are the same, and predictions are made at every time step.</p>
+<ul>
+<li><strong>Task type</strong>: Sequence labeling</li>
+<li><strong>Example</strong>: Part-of-speech tagging, named entity recognition</li>
+<li><strong>Description</strong>: Each input token maps directly to an output token. The input and output sequences are the same length and predictions are made at each step.</li>
+</ul>
+<hr>
+</section><section><h2 id="realworld-use-case-google-translate"><strong>Real‑World Use Case: Google Translate</strong></h2>
+<p>Machine translation is one of the most widely recognized and impactful applications of sequence-to-sequence modeling. Before the rise of Transformer models, Google Neural Machine Translation (GNMT), introduced in 2016, represented a major advancement in applying recurrent neural networks (RNNs) to language generation at scale. GNMT demonstrated how deep encoder–decoder architectures, enhanced with attention and trained on massive multilingual corpora, could outperform traditional phrase-based systems and operate reliably across more than 100 language pairs.</p>
+<p><img src="../_assets/google.png" alt="google"></p>
+<hr>
+<h3 id="gnmt-architecture-deep-rnns-for-translation">GNMT Architecture: Deep RNNs for Translation</h3>
+<p>At its core, GNMT used a multi-layer LSTM encoder–decoder framework. The encoder read the input sentence token by token, processing it into a fixed-length context vector. This vector captured the semantic content of the source sentence and served as the starting point for the decoder, which generated the target-language output, one word at a time. This model followed a <strong>many-to-many (asynchronous)</strong> structure, where input and output sequences differ in both length and alignment. While powerful, this setup had a critical limitation: all of the input information had to be compressed into a single vector, which led to degradation in translation quality as input length increased.</p>
+<h3 id="overcoming-the-bottleneck-attention-in-gnmt">Overcoming the Bottleneck: Attention in GNMT</h3>
+<p>To address the limitations of fixed-length encoding, GNMT integrated an attention mechanism directly into the decoder. Rather than relying solely on a single context vector, the decoder learned to attend to specific parts of the input sequence at each generation step. At each decoding time step, a weighted sum over all encoder hidden states was computed. This allowed the model to dynamically focus on the most relevant words in the source sentence helping it resolve ambiguities, preserve syntax, and improve fluency. This attention-enhanced RNN structure significantly improved translation performance, especially on longer or more complex inputs. It also served as the architectural bridge that led to the development of fully attention-based models like the Transformer.</p>
+<h3 id="scaling-to-global-use">Scaling to Global Use</h3>
+<p>GNMT’s impact went beyond architecture. It demonstrated that RNN-based models could be trained and deployed at internet scale, with the following key innovations:</p>
+<ul>
+<li><strong>Multilingual scalability</strong>: GNMT supported over 100 language pairs.</li>
+<li><strong>Large-scale training</strong>: Trained on hundreds of millions of sentence pairs using distributed infrastructure.</li>
+<li><strong>Subword modeling</strong>: Used <strong>Byte-Pair Encoding (BPE)</strong> and <strong>WordPiece</strong> to reduce vocabulary size, handle rare words, and support morphologically rich languages.</li>
+</ul>
+<p>These advances made it possible for the system to translate diverse linguistic inputs effectively and robustly.</p>
+<h3 id="legacy-and-impact-of-rnn-based-gnmt">Legacy and Impact of RNN-Based GNMT</h3>
+<p>Although Google Translate has since transitioned to Transformer-based architectures, the GNMT system remains a milestone in the development of neural sequence modeling. It was among the first production-scale systems to demonstrate that RNNs, when scaled deeply, trained on multilingual corpora, and combined with attention mechanisms, could outperform traditional statistical translation methods across a wide range of languages. Moreover, the architectural innovations introduced by GNMT, including the encoder–decoder framework, dynamic attention, and subword tokenization, laid the foundation for many of the core design principles used in modern NLP. These contributions continue to influence the structure of contemporary models, from low-latency mobile translation apps to massive pre-trained multilingual transformers.</p>
+<p>GNMT’s success illustrated the practical viability of end-to-end neural translation at internet scale and remains a cornerstone example of RNNs applied in real-world sequence modeling.</p>
+<hr>
+</section><section><h2 id="realworld-use-case-speech-to-text-systems"><strong>Real‑World Use Case: Speech-to-Text Systems</strong></h2>
+<p>Another prominent application of RNN-based sequence modeling is speech recognition, where the goal is to convert spoken language into text. This task requires handling continuous, time-dependent input, often with variable duration, noise, and subtle temporal cues. Traditional models struggled with these challenges, but RNNs and particularly Long Short-Term Memory (LSTM) networks offered a breakthrough by introducing memory into the learning process.</p>
+<hr>
+<h3 id="why-speech-recognition-needs-rnns">Why Speech Recognition Needs RNNs</h3>
+<p>Spoken language is a temporal sequence of sounds that unfold over time. The meaning of a word or phoneme is often dependent on what was spoken before and how it was pronounced in context. Unlike static inputs like text or images, audio signals vary in speed, intonation, and clarity. RNNs are well-suited to this task because they process input one frame at a time, maintaining a hidden state that evolves as the audio progresses. This gives them the ability to capture temporal dependencies and model co-articulation effects where the pronunciation of a sound is influenced by surrounding sounds.</p>
+<h3 id="typical-architecture">Typical Architecture</h3>
+<p>A modern RNN-based speech recognition system includes several stages:</p>
+<ol>
+<li><strong>Feature Extraction</strong>: The raw waveform is first transformed into a more compact, informative representation such as MFCCs (Mel-frequency cepstral coefficients) or log-mel spectrograms.</li>
+<li><strong>Sequence Modeling with RNNs</strong>: The extracted features are passed to a bidirectional LSTM or stacked GRU network, which models the temporal structure of the audio. Bidirectional layers help capture context from both past and future frames.</li>
+<li><strong>Connectionist Temporal Classification (CTC)</strong>: Many systems use CTC loss to align input audio with output transcripts, enabling training without requiring frame-by-frame labeled alignments.</li>
+<li><strong>Decoding</strong>: The output probabilities are decoded into text using beam search or greedy decoding, sometimes with a language model to improve fluency and accuracy.</li>
+</ol>
+<p><strong>Example: Mobile Voice Assistants and Call Analytics</strong></p>
+<p>RNN-based ASR (Automatic Speech Recognition) has been widely deployed in:</p>
+<ul>
+<li><strong>Smartphone voice assistants</strong> (e.g., Siri, Google Assistant, Alexa)</li>
+<li><strong>Real-time transcription tools</strong> (e.g., Zoom captions, Otter.ai)</li>
+<li><strong>Customer service analytics</strong> (e.g., call center logs, keyword detection)</li>
+</ul>
+<p>These systems often combine RNNs with external language models or integrate attention-based mechanisms for refinement. More recently, large-scale systems such as Whisper (by OpenAI) have adopted Transformer architectures, but many on-device and embedded systems still use lightweight RNNs for real-time inference with limited resources.</p>
+<h3 id="importance-of-rnns-in-speech-processing">Importance of RNNs in Speech Processing</h3>
+<p>While Transformers have become dominant in large-scale ASR, RNNs still play an essential role in scenarios where:</p>
+<ul>
+<li>Low latency is critical</li>
+<li>Memory and compute budgets are constrained</li>
+<li>Training data is limited or noisy</li>
+<li>Streaming input must be processed frame-by-frame</li>
+</ul>
+<p>RNN-based speech recognition systems helped bridge the gap between traditional signal processing methods and today’s end-to-end neural pipelines.</p>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>RNNs, with their flexible encoder‑decoder arrangements, have powered core NLP applications—machine translation, summarization, and speech recognition—by modeling arbitrary sequence mappings (one‑to‑one, many‑to‑one, one‑to‑many, many‑to‑many). Google Translate’s GNMT system exemplifies how RNNs (enhanced with attention and scale‑up) transformed real‑world translation services. As you progress, you’ll study how attention mechanisms evolved into full <strong>Transformer</strong> architectures, further advancing sequence modeling.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

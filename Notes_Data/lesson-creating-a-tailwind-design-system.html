@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Creating A Tailwind Design System</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-creating-a-tailwind-design-system">Lesson: Creating a Tailwind Design System</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Tailwind CSS is a utility-first framework that allows developers to create unique, responsive, and optimized designs. One of its most powerful features is the ability to customize its default theme through the <code>tailwind.config.js</code> file. This lesson explores how to tailor Tailwind’s design system to match your project’s specific needs by customizing colors, typography, spacing, and implementing dark mode. By mastering these configurations, you can establish a consistent and scalable design system for your application.</p>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li>Modify or extend default settings for colors, typography, and spacing in the <code>tailwind.config.js</code> file to align with your brand identity.</li>
+<li>Enable and configure dark mode using class-based or media query approaches, ensuring seamless adaptation between light and dark themes.</li>
+<li>Configure the <code>content</code> section to ensure only used styles are included, reducing file size and improving performance.</li>
+<li>Use global variables, utility classes, and thorough testing to ensure all components adapt harmoniously to your custom theme.</li>
+<li>ynamically toggle dark mode using JavaScript, empowering users to choose their preferred theme.</li>
+</ol>
+<hr>
+</section><section><h2 id="customizing-theme-in-tailwind.config.js-colors-typography-spacing">Customizing Theme in <code>tailwind.config.js</code> (Colors, Typography, Spacing)</h2>
+<p>We’ll explore how to customize the default Tailwind CSS theme by modifying the <code>tailwind.config.js</code> file. Tailwind CSS is a highly flexible, utility-first framework that empowers developers to create unique, responsive, and optimized designs tailored to their project's specific needs. By customizing its configuration, you can establish a design system that ensures consistency and scalability across your application.</p>
+<p>We’ll focus on three essential aspects of customization:</p>
+<ol>
+<li><strong>Colors</strong>: Define or extend color palettes to match your brand identity.</li>
+<li><strong>Typography</strong>: Adjust font sizes, weights, and line heights for cohesive and readable text.</li>
+<li><strong>Spacing</strong>: Customize padding, margins, and gaps to maintain a harmonious layout.</li>
+</ol>
+<h3 id="getting-started-with-tailwind.config.js">Getting Started with <code>tailwind.config.js</code></h3>
+<p>The <code>tailwind.config.js</code> file serves as the central hub for configuring Tailwind CSS. It allows you to override or extend Tailwind’s default settings, such as colors, spacing, typography, breakpoints, and more. This flexibility makes it easy to adapt Tailwind to your project’s unique requirements.</p>
+<p><img src="../_assets/lesson-4-tailwind-config.PNG" alt="Frontend"></p>
+<h3 id="generating-the-configuration-file">Generating the Configuration File</h3>
+<p>To create a <code>tailwind.config.js</code> file, run the following command in your terminal:</p>
+<pre><code class="language-bash">npx tailwindcss init
+</code></pre>
+<p>This command generates a minimal configuration file with the following structure:</p>
+<pre><code class="language-javascript">/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [], // Specifies the files Tailwind should scan for class names
+  theme: {
+    extend: {}, // Allows extending the default theme
+  },
+  plugins: [], // Adds third-party or custom plugins
+};
+</code></pre>
+<h3 id="important-sections-in-tailwind.config.js">Important Sections in <code>tailwind.config.js</code></h3>
+<p><strong><code>content</code></strong>: Defines the paths to the files where Tailwind should look for class names. This ensures unused styles are purged during production builds, resulting in a smaller and more efficient CSS file.</p>
+<p><strong><code>theme</code></strong>: Contains the default design tokens (e.g., colors, spacing, typography) that you can override or extend to create a custom theme.</p>
+<p><strong><code>plugins</code></strong>: Allows you to integrate third-party plugins or create custom utilities to enhance Tailwind’s functionality.</p>
+</section><section><h2 id="configuring-content-paths">Configuring Content Paths</h2>
+<p>The <code>content</code> section plays a crucial role in optimizing Tailwind CSS by ensuring only the styles you use are included in the final CSS bundle. Properly configuring this section helps reduce file size and improves performance.</p>
+<h3 id="example-configuration">Example Configuration</h3>
+<p>Update the <code>content</code> array to include all relevant files in your project:</p>
+<pre><code class="language-javascript">/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ['./src/**/*.{html,js}', './components/**/*.{html,js}'],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li><code>./src/**/*.{html,js}</code>: Scans all <code>.html</code> and <code>.js</code> files in the <code>src</code> directory.</li>
+<li><code>./components/**/*.{html,js}</code>: Scans all <code>.html</code> and <code>.js</code> files in the <code>components</code> directory.</li>
+</ul>
+<hr>
+</section><section><h2 id="customizing-colors">Customizing Colors</h2>
+<p>Tailwind CSS comes with a robust default color palette, but customizing it allows you to align the design with your brand or project requirements. Whether you’re replacing the defaults entirely or extending them with new colors, Tailwind provides the flexibility to make your theme truly unique.</p>
+<p><img src="../_assets/lesson-4-customizing-color.PNG" alt="Frontend"></p>
+<h3 id="overriding-default-colors">Overriding Default Colors</h3>
+<p>To replace Tailwind’s default color palette with your own, modify the <code>colors</code> key in the <code>theme</code> section:</p>
+<pre><code class="language-javascript">/** @type {import('tailwindcss').Config} */
+module.exports = {
+  theme: {
+    colors: {
+      primary: '#1a202c',
+      secondary: '#2d3748',
+      accent: '#4a5568',
+      white: '#ffffff',
+      black: '#000000',
+    },
+  },
+  plugins: [],
+};
+</code></pre>
+<p><strong>Breakdown</strong>:</p>
+<ul>
+<li>This approach completely replaces the default color palette with your custom definitions (<code>primary</code>, <code>secondary</code>, <code>accent</code>, etc.).</li>
+<li>Use this method when you want full control over every color used in your project, ensuring consistency across all components.</li>
+</ul>
+<h3 id="extending-default-colors">Extending Default Colors</h3>
+<p>If you’d like to retain Tailwind’s default colors while adding your own, use the <code>extend</code> key:</p>
+<pre><code class="language-javascript">/** @type {import('tailwindcss').Config} */
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        'brand-blue': '#5c6ac4',
+        'brand-pink': '#ed64a6',
+      },
+    },
+  },
+  plugins: [],
+};
+</code></pre>
+<p><strong>Breakdown</strong>:</p>
+<ul>
+<li>The <code>extend</code> key adds <code>brand-blue</code> and <code>brand-pink</code> to the existing color palette without removing the defaults.</li>
+<li>This approach allows you to leverage Tailwind’s built-in colors while introducing custom ones for specific use cases.</li>
+</ul>
+</section><section><h2 id="customizing-typography">Customizing Typography</h2>
+<p>Typography plays a critical role in creating a consistent and professional design. By customizing font sizes, weights, line heights, and font families, you can ensure that text elements across your application feel cohesive and intentional.</p>
+<p><img src="../_assets/lesson-4-customizing-font.PNG" alt="Frontend"></p>
+<h3 id="overriding-default-font-sizes">Overriding Default Font Sizes</h3>
+<p>To define your own font sizes, modify the <code>fontSize</code> key in the <code>theme</code> section:</p>
+<pre><code class="language-javascript">/** @type {import('tailwindcss').Config} */
+module.exports = {
+  theme: {
+    fontSize: {
+      xs: '0.75rem', // 12px
+      sm: '0.875rem', // 14px
+      base: '1rem', // 16px
+      lg: '1.125rem', // 18px
+      xl: '1.25rem', // 20px
+      '2xl': '1.5rem', // 24px
+      '3xl': '1.875rem', // 30px
+      '4xl': '2.25rem', // 36px
+      '5xl': '3rem', // 48px
+    },
+  },
+  plugins: [],
+};
+</code></pre>
+<p><strong>Breakdown</strong>:</p>
+<ul>
+<li>Each key-value pair defines a font size and its corresponding value in <code>rem</code> units.</li>
+<li>Overriding the default font sizes ensures that all text elements adhere to your design system’s typography scale.</li>
+</ul>
+<h3 id="extending-typography">Extending Typography</h3>
+<p>To add custom typography settings while keeping the defaults intact, use the <code>extend</code> key:</p>
+<pre><code class="language-javascript">/** @type {import('tailwindcss').Config} */
+module.exports = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'], // Adds a custom sans-serif font
+      },
+    },
+  },
+  plugins: [],
+};
+</code></pre>
+<p><strong>Breakdown</strong>:</p>
+<ul>
+<li>The <code>fontFamily</code> key introduces a custom font (<code>Inter</code>) into the default font stack.</li>
+<li>Default fonts remain available, allowing you to maintain backward compatibility while incorporating your brand’s typography.</li>
+</ul>
+</section><section><h2 id="customizing-spacing">Customizing Spacing</h2>
+<p>Spacing is a cornerstone of a well-designed layout, controlling padding, margins, and gaps between elements. Tailwind’s default spacing scale is based on a 4px grid, but you can customize it to match your design system’s rhythm.</p>
+<p><img src="../_assets/lesson-4-customizing-spacing.PNG" alt="Frontend"></p>
+<h3 id="overriding-default-spacing">Overriding Default Spacing</h3>
+<p>To replace the default spacing scale with your own, modify the <code>spacing</code> key:</p>
+<pre><code class="language-javascript">/** @type {import('tailwindcss').Config} */
+module.exports = {
+  theme: {
+    spacing: {
+      1: '8px',
+      2: '16px',
+      3: '24px',
+      4: '32px',
+      5: '40px',
+    },
+  },
+  plugins: [],
+};
+</code></pre>
+<p><strong>Breakdown</strong>:</p>
+<ul>
+<li>The <code>spacing</code> key defines a custom spacing scale based on an 8px grid.</li>
+<li>Use this approach when your project requires a different rhythm than the default 4px scale, ensuring consistency in layout spacing.</li>
+</ul>
+<h3 id="extending-default-spacing">Extending Default Spacing</h3>
+<p>To add custom spacing values while retaining the default scale, use the <code>extend</code> key:</p>
+<pre><code class="language-javascript">/** @type {import('tailwindcss').Config} */
+module.exports = {
+  theme: {
+    extend: {
+      spacing: {
+        72: '18rem', // 288px
+        84: '21rem', // 336px
+        96: '24rem', // 384px
+      },
+    },
+  },
+  plugins: [],
+};
+</code></pre>
+<p><strong>Breakdown</strong>:</p>
+<ul>
+<li>The <code>extend</code> key adds three new spacing options (<code>72</code>, <code>84</code>, and <code>96</code>) to the default scale.</li>
+<li>Default spacing values remain available, providing flexibility for both small and large layout adjustments.</li>
+</ul>
+</section><section><h2 id="putting-it-all-together">Putting It All Together</h2>
+<p>Now that we’ve explored how to customize colors, typography, and spacing, let’s bring it all together in a complete <code>tailwind.config.js</code> file:</p>
+<pre><code class="language-javascript">/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ['./src/**/*.{html,js}', './components/**/*.{html,js}'],
+  theme: {
+    colors: {
+      primary: '#1a202c',
+      secondary: '#2d3748',
+      accent: '#4a5568',
+      white: '#ffffff',
+      black: '#000000',
+    },
+    fontSize: {
+      xs: '0.75rem',
+      sm: '0.875rem',
+      base: '1rem',
+      lg: '1.125rem',
+      xl: '1.25rem',
+      '2xl': '1.5rem',
+      '3xl': '1.875rem',
+      '4xl': '2.25rem',
+      '5xl': '3rem',
+    },
+    spacing: {
+      1: '8px',
+      2: '16px',
+      3: '24px',
+      4: '32px',
+      5: '40px',
+    },
+    extend: {
+      colors: {
+        'brand-blue': '#5c6ac4',
+        'brand-pink': '#ed64a6',
+      },
+      spacing: {
+        72: '18rem',
+        84: '21rem',
+        96: '24rem',
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+      },
+    },
+  },
+  plugins: [],
+};
+</code></pre>
+<p><strong>Notes</strong>:</p>
+<ul>
+<li><strong>Colors</strong>: Customize or extend the palette to reflect your brand identity.</li>
+<li><strong>Typography</strong>: Standardize font sizes and introduce custom fonts for consistency.</li>
+<li><strong>Spacing</strong>: Adjust spacing scales to create rhythmic and harmonious layouts.</li>
+<li><strong>Extend vs Override</strong>: Use <code>extend</code> to build upon Tailwind’s defaults or override them entirely for precise control.</li>
+</ul>
+<hr>
+</section><section><h2 id="dark-mode">Dark Mode</h2>
+<p>Dark mode has become a standard feature in modern web design, offering users a visually comfortable alternative to the default light theme. Tailwind CSS provides built-in utilities for implementing dark mode, ensuring seamless integration with your existing design system. In this lesson, we’ll explore how to enable and customize dark mode while maintaining consistency across all components.</p>
+<p><img src="../_assets/lesson-4-dark-mode.PNG" alt="Frontend"></p>
+<h3 id="enabling-dark-mode-in-tailwind-css">Enabling Dark Mode in Tailwind CSS</h3>
+<p>Tailwind CSS supports two approaches for enabling dark mode:</p>
+<ol>
+<li><strong>Class-based dark mode</strong>: Activated by adding a <code>dark</code> class to the <code>&lt;html&gt;</code> or <code>&lt;body&gt;</code> element.</li>
+<li><strong>Media query-based dark mode</strong>: Automatically enabled based on the user’s system preferences.</li>
+</ol>
+<h4 id="configuring-dark-mode">Configuring Dark Mode</h4>
+<p>To enable dark mode, update the <code>darkMode</code> key in the <code>tailwind.config.js</code> file:</p>
+<pre><code class="language-javascript">/** @type {import('tailwindcss').Config} */
+module.exports = {
+  darkMode: 'class', // Enables class-based dark mode
+  content: ['./src/**/*.{html,js}', './components/**/*.{html,js}'],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li>Setting <code>darkMode: 'class'</code> allows you to toggle dark mode by adding the <code>dark</code> class to the <code>&lt;html&gt;</code> or <code>&lt;body&gt;</code> element.</li>
+<li>Alternatively, use <code>darkMode: 'media'</code> to enable dark mode based on the user’s system preferences.</li>
+</ul>
+<h3 id="customizing-colors-for-dark-mode">Customizing Colors for Dark Mode</h3>
+<p>To create a visually appealing and consistent dark mode, customize the color palette specifically for dark mode using the <code>dark:</code> prefix. This ensures that your application adapts seamlessly between light and dark themes.</p>
+<p><strong>Example Configuration</strong></p>
+<p>Update the <code>colors</code> section in the <code>tailwind.config.js</code> file to define separate colors for light and dark modes:</p>
+<pre><code class="language-javascript">/** @type {import('tailwindcss').Config} */
+module.exports = {
+  darkMode: 'class',
+  content: ['./src/**/*.{html,js}', './components/**/*.{html,js}'],
+  theme: {
+    extend: {
+      colors: {
+        background: {
+          DEFAULT: '#ffffff', // Light mode background
+          dark: '#1a202c', // Dark mode background
+        },
+        text: {
+          DEFAULT: '#000000', // Light mode text
+          dark: '#ffffff', // Dark mode text
+        },
+        primary: {
+          DEFAULT: '#3b82f6', // Light mode primary color
+          dark: '#2563eb', // Dark mode primary color
+        },
+      },
+    },
+  },
+  plugins: [],
+};
+</code></pre>
+<p><strong>Breakdown</strong>:</p>
+<ul>
+<li>The <code>background</code>, <code>text</code>, and <code>primary</code> colors are defined for both light and dark modes.</li>
+<li>Use the <code>dark:</code> prefix in your HTML to apply these styles dynamically.</li>
+</ul>
+<h4 id="applying-dark-mode-styles">Applying Dark Mode Styles</h4>
+<p>Use the <code>dark:</code> prefix in your HTML to apply dark mode-specific styles:</p>
+<pre><code class="language-html">&lt;div class=&quot;bg-background text-text&quot;&gt;
+  &lt;p class=&quot;text-primary&quot;&gt;This text adapts to light and dark modes.&lt;/p&gt;
+&lt;/div&gt;
+</code></pre>
+<p>In dark mode, the <code>dark:</code> prefix ensures the correct styles are applied:</p>
+<ul>
+<li><code>bg-background</code> becomes <code>bg-[#1a202c]</code>.</li>
+<li><code>text-text</code> becomes <code>text-[#ffffff]</code>.</li>
+</ul>
+<h3 id="maintaining-consistency-across-components">Maintaining Consistency Across Components</h3>
+<p>Consistency is key when implementing dark mode. To ensure all components adapt seamlessly, follow these best practices:</p>
+<p><strong>Use Global Variables</strong></p>
+<p>Define global variables for colors, typography, and spacing in the <code>tailwind.config.js</code> file. Centralizing these definitions ensures consistency across all components.</p>
+<pre><code class="language-javascript">/** @type {import('tailwindcss').Config} */
+module.exports = {
+  darkMode: 'class',
+  content: ['./src/**/*.{html,js}', './components/**/*.{html,js}'],
+  theme: {
+    extend: {
+      colors: {
+        background: {
+          DEFAULT: '#ffffff',
+          dark: '#1a202c',
+        },
+        text: {
+          DEFAULT: '#000000',
+          dark: '#ffffff',
+        },
+        primary: {
+          DEFAULT: '#3b82f6',
+          dark: '#2563eb',
+        },
+      },
+    },
+  },
+  plugins: [],
+};
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li>Centralize color definitions in the <code>tailwind.config.js</code> file to avoid inconsistencies.</li>
+<li>Use these variables consistently across all components.</li>
+</ul>
+<p><strong>Leverage Utility Classes</strong></p>
+<p>Tailwind’s utility-first approach makes it easy to apply consistent styles across components. Use utility classes like <code>bg-background</code>, <code>text-text</code>, and <code>text-primary</code> to ensure uniformity.</p>
+<pre><code class="language-html">&lt;button class=&quot;bg-primary text-white px-4 py-2 rounded&quot;&gt;
+  Click Me
+&lt;/button&gt;
+</code></pre>
+<p><strong>Breakdown</strong>:</p>
+<ul>
+<li>The <code>bg-primary</code> class ensures the button uses the correct color for both light and dark modes.</li>
+<li>The <code>text-white</code> class ensures the text remains legible.</li>
+</ul>
+<p>By relying on utility classes, you reduce the risk of inconsistencies and simplify maintenance.</p>
+<p><strong>Test Across Components</strong></p>
+<p>Test dark mode on all components to ensure they adapt correctly. Pay special attention to:</p>
+<ul>
+<li>Background colors.</li>
+<li>Text colors.</li>
+<li>Borders and shadows.</li>
+</ul>
+<p>Thorough testing ensures that your application looks polished and professional in both light and dark modes.</p>
+<h3 id="automating-dark-mode-toggle">Automating Dark Mode Toggle</h3>
+<p>To enhance user experience, allow users to toggle between light and dark modes dynamically. Implementing a simple toggle mechanism using JavaScript ensures flexibility and accessibility.</p>
+<p><strong>Example Implementation</strong></p>
+<p>Add a button to toggle the <code>dark</code> class on the <code>&lt;html&gt;</code> element:</p>
+<pre><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot; class=&quot;light&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;UTF-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+  &lt;title&gt;Dark Mode Toggle&lt;/title&gt;
+  &lt;link href=&quot;/output.css&quot; rel=&quot;stylesheet&quot;&gt;
+&lt;/head&gt;
+&lt;body class=&quot;bg-background text-text&quot;&gt;
+  &lt;button id=&quot;toggle-dark-mode&quot; class=&quot;px-4 py-2 bg-primary text-white rounded&quot;&gt;
+    Toggle Dark Mode
+  &lt;/button&gt;
+
+  &lt;script&gt;
+    const toggleButton = document.getElementById('toggle-dark-mode');
+    const htmlElement = document.documentElement;
+
+    toggleButton.addEventListener('click', () =&gt; {
+      htmlElement.classList.toggle('dark');
+    });
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<p><strong>Breakdown</strong>:</p>
+<ul>
+<li>The <code>dark</code> class toggles dark mode when added or removed from the <code>&lt;html&gt;</code> element.</li>
+<li>The button dynamically switches between light and dark modes.</li>
+</ul>
+<p>This implementation empowers users to choose their preferred theme while maintaining a smooth and responsive experience.</p>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>Customizing Tailwind CSS through the <code>tailwind.config.js</code> file empowers developers to create a tailored design system that reflects their brand identity while maintaining consistency and scalability. By mastering the customization of colors, typography, spacing, and dark mode, you can build professional, user-friendly applications that adapt seamlessly to different preferences and environments. With the flexibility and power of Tailwind CSS, you’re equipped to craft modern, responsive designs efficiently and effectively.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

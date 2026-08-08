@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Performance Best Practices</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-performance-best-practices">Lesson: Performance &amp; Best Practices</h1></header>
+<section><h2 id="introduction"><strong>Introduction</strong></h2>
+<p>In web development, managing state efficiently is crucial for building high-performing and maintainable applications. Whether you're working with libraries like Zustand or React hooks such as <code>useMemo</code> and <code>useCallback</code>, understanding how to optimize state management can significantly enhance your application's performance. This lesson explores various techniques to prevent excessive re-renders, split large global states into manageable slices, and use middleware to extend functionality. By the end of this lesson, you’ll have a solid understanding of how to organize and optimize your application’s state effectively.</p>
+</section><section><h2 id="learning-outcomes"><strong>Learning Outcomes</strong></h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li>Use selective state subscriptions in Zustand to ensure components only update when necessary, minimizing unnecessary computational overhead.</li>
+<li>Apply <code>useMemo</code> to cache expensive computations and <code>useCallback</code> to stabilize function references, reducing redundant re-renders in React applications.</li>
+<li>Break down large global states into modular slices using Redux Toolkit, improving code organization and scalability.</li>
+<li>Implement logging and persistence middleware in Zustand to track state changes during development and ensure data continuity across page reloads.</li>
+<li>Integrate multiple optimization strategies, such as combining middleware or splitting stores, to create a robust and developer-friendly state management system.</li>
+</ol>
+<hr>
+<h3 id="preventing-excessive-re-renders-with-selective-state-usage">Preventing Excessive Re-Renders with Selective State Usage</h3>
+<p>One of the most common performance challenges in state management is <strong>excessive re-renders</strong>, where components update unnecessarily even when unrelated parts of the state change. This issue can slow down your application and make it feel sluggish. To address this, Zustand provides a solution by allowing components to subscribe only to specific slices of the state rather than the entire store. This approach ensures that a component re-renders only when the part of the state it depends on changes, minimizing unnecessary updates.</p>
+<p>Here’s how it works: Zustand’s <code>useStore</code> hook lets you extract only the state properties your component needs. By doing so, the component becomes more efficient because it doesn’t react to unrelated state changes. For example:</p>
+<pre><code class="language-javascript">import create from 'zustand';
+
+// Create a Zustand store
+const useStore = create((set) =&gt; ({
+  count: 0,
+  title: 'My App',
+  increment: () =&gt; set((state) =&gt; ({ count: state.count + 1 })),
+}));
+
+// Component A: Only subscribes to `count`
+function Counter() {
+  const count = useStore((state) =&gt; state.count);
+  return &lt;h1&gt;Count: {count}&lt;/h1&gt;;
+}
+
+// Component B: Only subscribes to `title`
+function Title() {
+  const title = useStore((state) =&gt; state.title);
+  return &lt;h2&gt;{title}&lt;/h2&gt;;
+}
+</code></pre>
+<p>In this example:</p>
+<ul>
+<li>The <code>Counter</code> component listens only to changes in the <code>count</code> property.</li>
+<li>The <code>Title</code> component listens only to changes in the <code>title</code> property.</li>
+<li>When <code>count</code> is updated, only the <code>Counter</code> component re-renders, leaving the <code>Title</code> component unaffected.</li>
+</ul>
+<p>This <strong>selective state subscription</strong> reduces computational overhead and improves performance by ensuring that components respond only to relevant state changes.</p>
+<hr>
+</section><section><h2 id="react-specific-optimizations-usememo-and-usecallback">React-Specific Optimizations: useMemo and useCallback</h2>
+<p>When building React applications, optimizing performance is crucial for delivering a smooth and responsive user experience. Two powerful tools for achieving this are the <code>useMemo</code> and <code>useCallback</code> hooks. While both aim to enhance performance, they serve different purposes and are best suited for specific scenarios.</p>
+<h3 id="optimizing-expensive-calculations-with-usememo">Optimizing Expensive Calculations with <code>useMemo</code></h3>
+<p>The <code>useMemo</code> hook helps optimize performance by memoizing (or caching) the result of a function. This means that expensive computations—like complex calculations or data transformations—are performed only when necessary, rather than on every render. By storing the computed value, React avoids recalculating it unless its dependencies change.</p>
+<p>Here’s an example to illustrate how <code>useMemo</code> works:</p>
+<pre><code class="language-javascript">import { useMemo } from &quot;react&quot;;
+
+function ExpensiveCalculationComponent({ num }) {
+  const squaredNumber = useMemo(() =&gt; {
+    console.log(&quot;Computing square...&quot;);
+    return num * num;
+  }, [num]);
+
+  return &lt;p&gt;Squared Number: {squaredNumber}&lt;/p&gt;;
+}
+</code></pre>
+<p>In this example:</p>
+<ul>
+<li>The message <code>&quot;Computing square...&quot;</code> appears in the console only when the <code>num</code> prop changes.</li>
+<li>If <code>num</code> remains the same across renders, the cached result is reused, preventing unnecessary recalculations.</li>
+</ul>
+<p>By using <code>useMemo</code>, you can ensure that computationally intensive tasks don’t bog down your application, especially when dealing with large datasets or frequent updates.</p>
+<h3 id="stabilizing-function-references-with-usecallback">Stabilizing Function References with <code>useCallback</code></h3>
+<p>While <code>useMemo</code> focuses on caching computed values, the <code>useCallback</code> hook is used to memoize function references. This ensures that the same function instance is reused across renders unless its dependencies change. This is particularly useful when passing functions as props to child components, as it prevents unnecessary re-renders caused by new function instances being created on every render.</p>
+<p>Here’s an example to demonstrate <code>useCallback</code>:</p>
+<pre><code class="language-javascript">import { useCallback, useState } from &quot;react&quot;;
+
+function Button({ handleClick }) {
+  return &lt;button onClick={handleClick}&gt;Click Me&lt;/button&gt;;
+}
+
+function ParentComponent() {
+  const [count, setCount] = useState(0);
+
+  const increment = useCallback(() =&gt; {
+    setCount((prev) =&gt; prev + 1);
+  }, []);
+
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Count: {count}&lt;/p&gt;
+      &lt;Button handleClick={increment} /&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<p>In this example:</p>
+<ul>
+<li>The <code>increment</code> function is memoized using <code>useCallback</code>.</li>
+<li>Since the function reference remains stable between renders, the <code>Button</code> component won’t re-render unnecessarily.</li>
+</ul>
+<p>By stabilizing function references, <code>useCallback</code> helps maintain performance, especially in larger applications with deeply nested components.</p>
+<hr>
+</section><section><h2 id="splitting-large-stores-into-slices-for-better-organization">Splitting Large Stores into Slices for Better Organization</h2>
+<p>As applications grow in complexity, managing a single large global state can become overwhelming. To address this, modern state management libraries like Redux Toolkit allow you to break down the global state into smaller, modular pieces called <strong>slices</strong>. Each slice represents a specific part of the application’s state and encapsulates its own logic for managing that state. This approach not only improves code organization but also makes it easier to maintain and scale your application.</p>
+<h3 id="why-splitting-stores-into-slices-matters">Why Splitting Stores into Slices Matters</h3>
+<p>Imagine building an e-commerce application with features like user authentication, a shopping cart, and a product catalog. If all the state for these features is stored in one place, it becomes difficult to locate and manage specific parts of the state. For example, debugging issues related to the shopping cart might require sifting through unrelated data about products or user sessions. This lack of structure can slow down development and make the code harder to understand.</p>
+<p>By dividing the state into slices—such as <code>auth</code> for user authentication, <code>cart</code> for shopping cart data, and <code>products</code> for the product catalog—you create a clear separation of concerns. Each slice focuses on a specific domain, making it easier to locate, update, and debug related logic. Additionally, this modular approach allows teams to work on different features independently without interfering with each other’s code.</p>
+<h3 id="how-to-split-a-store-into-slices">How to Split a Store into Slices</h3>
+<p>Let’s walk through the process of splitting a store into slices using <strong>Redux Toolkit</strong>, which simplifies state management in React applications. We’ll use an e-commerce application as an example, with three main features: user authentication (<code>auth</code>), shopping cart (<code>cart</code>), and product catalog (<code>products</code>).</p>
+<h4 id="step-1-install-redux-toolkit">Step 1: Install Redux Toolkit</h4>
+<p>Before we begin, ensure you have Redux Toolkit installed in your project. You can install it using npm or yarn:</p>
+<pre><code class="language-bash">npm install @reduxjs/toolkit react-redux
+</code></pre>
+<p>This toolkit includes everything you need to manage state efficiently, including utilities for creating slices and combining them into a single store.</p>
+<h4 id="step-2-create-feature-specific-slices">Step 2: Create Feature-Specific Slices</h4>
+<p>Each slice defines its initial state, reducers (functions that handle state updates), and actions (functions that trigger state changes). Let’s create slices for <code>auth</code>, <code>cart</code>, and <code>products</code>.</p>
+<h5 id="auth-slice-authslice.js">Auth Slice (<code>authSlice.js</code>)</h5>
+<p>The <code>auth</code> slice manages user authentication-related state, such as whether the user is logged in and their profile information.</p>
+<pre><code class="language-javascript">import { createSlice } from '@reduxjs/toolkit';
+
+const authSlice = createSlice({
+  name: 'auth', // Name of the slice
+  initialState: {
+    isLoggedIn: false,
+    user: null,
+  },
+  reducers: {
+    login(state, action) {
+      state.isLoggedIn = true;
+      state.user = action.payload; // Update state with user data
+    },
+    logout(state) {
+      state.isLoggedIn = false;
+      state.user = null; // Clear user data
+    },
+  },
+});
+
+export const { login, logout } = authSlice.actions; // Export actions for use in components
+export default authSlice.reducer; // Export reducer to combine with other slices
+</code></pre>
+<p>Here, the <code>login</code> and <code>logout</code> actions allow us to update the authentication state. These actions are automatically generated by <code>createSlice</code>, eliminating the need for boilerplate code.</p>
+<h5 id="cart-slice-cartslice.js">Cart Slice (<code>cartSlice.js</code>)</h5>
+<p>The <code>cart</code> slice handles the shopping cart, including items and their quantities. It ensures that adding or removing items updates the total cost correctly.</p>
+<pre><code class="language-javascript">import { createSlice } from '@reduxjs/toolkit';
+
+const cartSlice = createSlice({
+  name: 'cart',
+  initialState: {
+    items: [],
+    total: 0,
+  },
+  reducers: {
+    addItem(state, action) {
+      const item = action.payload;
+      const existingItem = state.items.find((i) =&gt; i.id === item.id);
+      if (existingItem) {
+        existingItem.quantity += 1; // Increment quantity if item already exists
+      } else {
+        state.items.push({ ...item, quantity: 1 }); // Add new item with quantity 1
+      }
+      state.total += item.price; // Update total cost
+    },
+    removeItem(state, action) {
+      const itemId = action.payload;
+      const item = state.items.find((i) =&gt; i.id === itemId);
+      if (item) {
+        state.total -= item.price * item.quantity; // Subtract item’s total cost
+        state.items = state.items.filter((i) =&gt; i.id !== itemId); // Remove item
+      }
+    },
+  },
+});
+
+export const { addItem, removeItem } = cartSlice.actions;
+export default cartSlice.reducer;
+</code></pre>
+<p>In this slice, the <code>addItem</code> and <code>removeItem</code> actions ensure that the cart state is updated correctly whenever a user adds or removes an item. The logic for calculating the total cost is handled within the slice, keeping the component code clean and focused on rendering.</p>
+<h5 id="products-slice-productsslice.js">Products Slice (<code>productsSlice.js</code>)</h5>
+<p>The <code>products</code> slice manages the product catalog, including fetching products from an API. Since fetching data involves asynchronous operations, we’ll use <code>createAsyncThunk</code> to handle this.</p>
+<pre><code class="language-javascript">import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+
+// Async thunk to fetch products
+export const fetchProducts = createAsyncThunk('products/fetchProducts', async () =&gt; {
+  const response = await fetch('/api/products');
+  const data = await response.json();
+  return data; // Return fetched products
+});
+
+const productsSlice = createSlice({
+  name: 'products',
+  initialState: {
+    products: [],
+    loading: false,
+    error: null,
+  },
+  reducers: {},
+  extraReducers: (builder) =&gt; {
+    builder
+      .addCase(fetchProducts.pending, (state) =&gt; {
+        state.loading = true; // Set loading to true when fetching starts
+      })
+      .addCase(fetchProducts.fulfilled, (state, action) =&gt; {
+        state.loading = false; // Set loading to false when fetching succeeds
+        state.products = action.payload; // Update state with fetched products
+      })
+      .addCase(fetchProducts.rejected, (state, action) =&gt; {
+        state.loading = false; // Set loading to false when fetching fails
+        state.error = action.error.message; // Store error message
+      });
+  },
+});
+
+export default productsSlice.reducer;
+</code></pre>
+<p>Here, <code>fetchProducts</code> is an asynchronous action that fetches product data from an API. The <code>extraReducers</code> field handles the different stages of the asynchronous operation (<code>pending</code>, <code>fulfilled</code>, and <code>rejected</code>), updating the state accordingly.</p>
+<h4 id="step-3-combine-slices-into-a-single-store">Step 3: Combine Slices into a Single Store</h4>
+<p>Once the slices are created, you need to combine them into a single Redux store. This is done using <code>configureStore</code>, which simplifies the process of setting up the store.</p>
+<pre><code class="language-javascript">import { configureStore } from '@reduxjs/toolkit';
+import authReducer from './authSlice';
+import cartReducer from './cartSlice';
+import productsReducer from './productsSlice';
+
+const store = configureStore({
+  reducer: {
+    auth: authReducer,
+    cart: cartReducer,
+    products: productsReducer,
+  },
+});
+
+export default store;
+</code></pre>
+<p>The <code>configureStore</code> function automatically sets up middleware (like support for asynchronous actions) and enables Redux DevTools for debugging.</p>
+<h4 id="step-4-provide-the-store-to-your-application">Step 4: Provide the Store to Your Application</h4>
+<p>To make the store available throughout your application, wrap your app with the <code>Provider</code> component from <code>react-redux</code>.</p>
+<pre><code class="language-javascript">import React from 'react';
+import ReactDOM from 'react-dom';
+import { Provider } from 'react-redux';
+import store from './store';
+import App from './App';
+
+ReactDOM.render(
+  &lt;Provider store={store}&gt;
+    &lt;App /&gt;
+  &lt;/Provider&gt;,
+  document.getElementById('root')
+);
+</code></pre>
+<p>With this setup, any component in your application can access the global state or dispatch actions to update it.</p>
+<h3 id="accessing-state-and-dispatching-actions">Accessing State and Dispatching Actions</h3>
+<p>To interact with the state in your components, you can use the <code>useSelector</code> and <code>useDispatch</code> hooks from <code>react-redux</code>. These hooks allow you to retrieve specific parts of the state and trigger actions.</p>
+<h5 id="example-displaying-cart-items">Example: Displaying Cart Items</h5>
+<pre><code class="language-javascript">import React from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { addItem, removeItem } from './cartSlice';
+
+function Cart() {
+  const cart = useSelector((state) =&gt; state.cart); // Access cart state
+  const dispatch = useDispatch();
+
+  return (
+    &lt;div&gt;
+      &lt;h2&gt;Cart&lt;/h2&gt;
+      &lt;ul&gt;
+        {cart.items.map((item) =&gt; (
+          &lt;li key={item.id}&gt;
+            {item.name} - ${item.price} x {item.quantity}
+            &lt;button onClick={() =&gt; dispatch(removeItem(item.id))}&gt;Remove&lt;/button&gt;
+          &lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+      &lt;p&gt;Total: ${cart.total}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}
+
+export default Cart;
+</code></pre>
+<p>In this example:</p>
+<ul>
+<li>The <code>useSelector</code> hook retrieves the <code>cart</code> state.</li>
+<li>The <code>useDispatch</code> hook allows us to call the <code>removeItem</code> action when a user clicks the &quot;Remove&quot; button.</li>
+</ul>
+<hr>
+</section><section><h2 id="middleware-logging-and-persistence-in-zustand">Middleware: Logging and Persistence in Zustand</h2>
+<p>Zustand, a lightweight state management library, supports <strong>middleware</strong>, which extends your store’s functionality with features like logging and persistence. Middleware acts as an intermediary layer that intercepts state updates, allowing you to add custom behavior such as tracking changes or saving data to storage.</p>
+<h3 id="logging-middleware-track-state-changes-for-debugging">Logging Middleware: Track State Changes for Debugging</h3>
+<p>During development, tracking how your application’s state changes over time can be invaluable for debugging. <strong>Logging middleware</strong> helps by recording the state before and after each update, giving you insights into what’s happening under the hood.</p>
+<p>Here’s how you can implement logging middleware in Zustand:</p>
+<pre><code class="language-javascript">import create from 'zustand';
+
+// Define a logging middleware function
+const log = (config) =&gt; (set, get, api) =&gt;
+  config(
+    (...args) =&gt; {
+      console.log('State before:', get()); // Log the current state
+      set(...args); // Apply the state update
+      console.log('State after:', get()); // Log the updated state
+    },
+    get,
+    api
+  );
+
+// Create a store with logging middleware
+const useStore = create(
+  log((set) =&gt; ({
+    count: 0,
+    increment: () =&gt; set((state) =&gt; ({ count: state.count + 1 })),
+  }))
+);
+</code></pre>
+<p>In this example:</p>
+<ul>
+<li>The <code>log</code> function wraps the store’s <code>set</code> method to log the state before and after each update.</li>
+<li>When you call the <code>increment</code> function, the console displays the state before and after the change, helping you understand how the state evolves over time.</li>
+</ul>
+<h3 id="persistence-middleware-save-state-across-page-reloads">Persistence Middleware: Save State Across Page Reloads</h3>
+<p>Another powerful feature of middleware is <strong>persistence</strong>, which ensures that your application’s state survives page reloads. Without persistence, any state stored in memory is lost when the user refreshes the page. By saving the state to <code>localStorage</code> or <code>sessionStorage</code>, you can provide a seamless experience where users don’t lose their progress or preferences.</p>
+<p>Here’s how you can implement persistence middleware in Zustand:</p>
+<pre><code class="language-javascript">import create from 'zustand';
+import { persist } from 'zustand/middleware';
+
+// Create a store with persistence middleware
+const useStore = create(
+  persist(
+    (set) =&gt; ({
+      count: 0,
+      increment: () =&gt; set((state) =&gt; ({ count: state.count + 1 })),
+    }),
+    {
+      name: 'my-store', // Key used to identify the data in localStorage
+    }
+  )
+);
+</code></pre>
+<p>In this example:</p>
+<ul>
+<li>The <code>persist</code> middleware saves the store’s state to <code>localStorage</code> under the key <code>'my-store'</code>.</li>
+<li>When the user reloads the page, the state is automatically restored from <code>localStorage</code>, ensuring continuity.</li>
+</ul>
+<p>For instance, if the <code>count</code> value was incremented to <code>5</code> before the page reload, it will remain <code>5</code> after the reload, thanks to persistence. You can also customize the storage mechanism by specifying options like <code>storage: sessionStorage</code> if you prefer session-based persistence.</p>
+<h3 id="combining-middleware-for-enhanced-functionality">Combining Middleware for Enhanced Functionality</h3>
+<p>Zustand allows you to combine multiple middleware functions to achieve more advanced functionality. For example, you can use both logging and persistence together to track state changes while ensuring they persist across sessions.</p>
+<pre><code class="language-javascript">import create from 'zustand';
+import { devtools, persist } from 'zustand/middleware';
+
+// Combine logging and persistence middleware
+const useStore = create(
+  persist(
+    log((set) =&gt; ({
+      count: 0,
+      increment: () =&gt; set((state) =&gt; ({ count: state.count + 1 })),
+    })),
+    {
+      name: 'my-store',
+    }
+  )
+);
+</code></pre>
+<p>In this setup:</p>
+<ul>
+<li>The <code>log</code> middleware tracks state changes for debugging purposes.</li>
+<li>The <code>persist</code> middleware ensures the state is saved to <code>localStorage</code> and restored on page reloads.</li>
+</ul>
+<p>By combining middleware, you can build a store that’s both developer-friendly and resilient to page reloads.</p>
+<hr>
+</section><section><h2 id="conclusion"><strong>Conclusion</strong></h2>
+<p>Efficient state management is the backbone of any performant and scalable web application. Through techniques like selective state subscriptions, React-specific optimizations, and modular state slicing, you can significantly reduce unnecessary re-renders and improve your application’s responsiveness. Additionally, leveraging middleware for logging and persistence ensures that your application remains both developer-friendly and resilient to real-world challenges like page reloads. By applying these strategies, you’ll not only enhance your application’s performance but also make it easier to maintain and extend as your project grows.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

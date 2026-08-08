@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Understanding Seq2seq Architecture</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-understanding-seq2seq-architecture">Lesson: Understanding Seq2Seq Architecture</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In the past weeks, we explored the foundations of Natural Language Processing (Week 1), delved into word representations and vector semantics (Week 2), and studied neural word embeddings and recurrent neural networks (Week 3), including architectures like LSTMs and GRUs. These models enabled us to handle sequential data and learn meaningful patterns over time. However, we now need more advanced architectures to support complex tasks like translation, summarization, and dialogue generation, where both inputs and outputs are sequences of variable lengths.</p>
+<p>This week, we move to <strong>Sequence-to-Sequence (Seq2Seq) models, attention mechanisms, and Transformers</strong>. These architectures form the backbone of many modern NLP applications. We examine the core Seq2Seq architecture, understand how it encodes and decodes sequences, and analyze where it succeeds and fails.</p>
+<p>Many natural language processing tasks involve transforming one sequence into another, such as translating a sentence from English to French or summarizing a document. Sequence-to-Sequence (Seq2Seq) models provide a unified neural framework to handle these problems.</p>
+<p>Seq2Seq models offer a unified neural approach to transforming input sequences into output sequences of potentially different lengths. This lesson will dissect the Seq2Seq architecture, explore its workflow and applications, and critically analyze its major limitations, especially in handling long input sequences. These limitations provide the motivation for our next major topic: attention mechanisms.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Describe</strong> the architecture and workflow of encoder-decoder models in Seq2Seq.</li>
+<li><strong>Illustrate</strong> key NLP applications that use Seq2Seq such as translation and summarization.</li>
+<li><strong>Analyze</strong> the limitations of vanilla Seq2Seq models including the fixed-length bottleneck.</li>
+</ol>
+<hr>
+</section><section><h2 id="sequence-to-sequence-architecture">Sequence-to-Sequence Architecture</h2>
+<p>The Sequence-to-Sequence (Seq2Seq) architecture represents a foundational paradigm in the field of deep learning, particularly in natural language processing (NLP). Developed by researchers at Google in 2014, Seq2Seq models are designed to handle tasks where both the input and output consist of sequences that may differ in length. Examples of such tasks include machine translation, text summarization, and conversational modeling. The flexibility and generality of Seq2Seq models have made them a cornerstone in the development of advanced language systems.</p>
+<h3 id="overview-of-seq2seq">Overview of Seq2Seq</h3>
+<p>At its core, the Seq2Seq architecture comprises two primary components:</p>
+<ul>
+<li><strong>Encoder</strong>: The encoder processes the input sequence and compresses it into a fixed-length context vector, often referred to as the hidden state. This vector is intended to encapsulate all relevant information from the input.</li>
+<li><strong>Decoder</strong>: The decoder takes the context vector produced by the encoder and generates the output sequence one element (e.g., word or token) at a time. It produces each output step conditionally, based on the previously generated output and the context vector.</li>
+</ul>
+<p>This architectural design enables the model to handle sequences of arbitrary length and structure, making it particularly suitable for sequence transduction tasks where a direct one-to-one alignment between input and output elements is not feasible.</p>
+<p><img src="../_assets/seq2seq.png" alt=""></p>
+<blockquote>
+<p>Simple Seq2Seq Model Architecture</p>
+</blockquote>
+<hr>
+</section><section><h2 id="breakdown-of-encoder-and-decoder">Breakdown of Encoder and Decoder</h2>
+<p>In a Sequence-to-Sequence (Seq2Seq) model, the architecture is divided into two fundamental components: the encoder and the decoder. These two modules work in tandem to transform an input sequence into a meaningful output sequence, even when their lengths differ. The encoder is tasked with comprehending and compressing the input into a fixed-length representation, while the decoder utilizes this representation to construct the output sequence in a step-by-step manner. Understanding the roles and inner workings of both components is essential to grasp the functioning and versatility of Seq2Seq models.</p>
+<h3 id="encoder"><strong>Encoder</strong></h3>
+<p>The <strong>encoder</strong> is responsible for transforming the input sequence into a rich, fixed-length representation that captures the essential semantics of the entire sequence. It operates as follows:</p>
+<ul>
+<li><strong>Token Processing</strong>: The input sequence is first tokenized, converting each word or subword unit into a corresponding token.</li>
+<li><strong>Embedding Layer</strong>: Each token is mapped to a dense vector representation (embedding) that captures syntactic and semantic information.</li>
+<li><strong>Stacked LSTM Layers</strong>: The embedded tokens are fed sequentially into a stack of Long Short-Term Memory (LSTM) layers. At each time step, the LSTM updates its internal cell state and hidden state based on the current token and its prior states.</li>
+<li><strong>Final Hidden State</strong>: Upon processing the entire input sequence, the final hidden state (and sometimes the cell state) of the topmost LSTM layer is extracted. This state acts as a summary or context vector, encapsulating the overall meaning of the input sentence.</li>
+</ul>
+<p>This encoded representation is then passed to the decoder, which uses it to generate the output sequence.</p>
+<p><img src="../_assets/seq2seq-encoder.png" alt=""></p>
+<blockquote>
+<p>Flow of embeddings and hidden states in the encoder.</p>
+</blockquote>
+<h3 id="decoder">Decoder</h3>
+<p>The <strong>decoder</strong> is the counterpart to the encoder in a Seq2Seq model. Its primary role is to generate the output sequence, one element at a time, using the encoded representation of the input as a guide. While the encoder reads and compresses the input, the decoder performs sequence generation by predicting each output token conditionally, based on the context and previously generated tokens. The decoder operates in the following stages:</p>
+<ul>
+<li><strong>Initialization with Encoder State</strong>: The decoder is initialized with the final hidden (and optionally cell) state produced by the encoder. This state serves as the initial context for decoding, containing information about the entire input sequence.</li>
+<li><strong>Input Embedding</strong>: At each time step, the decoder takes as input the embedding of the previously generated token. During training, this is often the ground-truth token from the target sequence (a method known as <em>teacher forcing</em>), whereas during inference, the model uses its own previously generated output.</li>
+<li><strong>Recurrent Processing with LSTM</strong>: Like the encoder, the decoder also employs a stack of LSTM layers. The input embedding, combined with the current hidden and cell states, is processed to produce a new hidden state, which in turn is used to predict the next token.</li>
+<li><strong>Output Generation</strong>: The output of the topmost LSTM layer is passed through a linear layer followed by a softmax activation to produce a probability distribution over the vocabulary. The token with the highest probability is selected as the next output.</li>
+<li><strong>Autoregressive Feedback Loop</strong>: The decoder continues this process iteratively, feeding the output from the previous step as input to the next, until a special end-of-sequence token is generated or a predefined maximum length is reached.</li>
+</ul>
+<p>By leveraging the context vector and its own recurrent dynamics, the decoder constructs a coherent output sequence that reflects the semantics of the original input.</p>
+<p><img src="../_assets/seq2seq-decoder.png" alt=""></p>
+<blockquote>
+<p>Decoder LSTM generating output one token at a time.</p>
+</blockquote>
+<hr>
+<h3 id="mathematical-formulation">Mathematical Formulation</h3>
+<p>Given an input sequence <span class="math">\(x = (x_1, x_2, ..., x_T)\)</span>, the model generates an output sequence <span class="math">\(y = (y_1, y_2, ..., y_T)\)</span>. The encoder computes a hidden representation <span class="math">\(h_T\)</span>, and the decoder generates:</p>
+<div class="math">
+\[
+P(y|x) = \prod_{t=1}^{T} P(y_t | y_1, ..., y_{t-1}, x)
+\]</div>
+<p>This formulation assumes conditional generation where each output token depends on the entire input sequence and the previously generated tokens.</p>
+<p>During inference, the decoder typically uses <strong>greedy decoding</strong>, selecting the most probable token at each step. Errors made early in the sequence cannot be corrected later, leading to compounding inaccuracies.</p>
+<p>This reflects a conditional language model: each word in the output depends on all previous outputs and the encoded input.</p>
+<p>At inference time, greedy decoding is often used: at each step, the most probable next word is selected. However, errors made early in the sequence can propagate, leading to reduced quality.</p>
+<p><img src="../_assets/math-seq2seq.png" alt=""></p>
+<blockquote>
+<p>Seq2Seq Deep Architecture</p>
+</blockquote>
+<hr>
+</section><section><h2 id="applications-of-sequence-to-sequence-seq2seq-models">Applications of Sequence-to-Sequence (Seq2Seq) Models</h2>
+<p>Sequence-to-Sequence (Seq2Seq) models have become integral to a variety of tasks in natural language processing and beyond. Their core strength lies in their ability to learn mappings between input and output sequences of variable lengths. This versatility allows them to be applied to numerous real-world applications, ranging from language translation to automated code generation. Below are some of the most prominent use cases where Seq2Seq architectures are employed.</p>
+<h3 id="machine-translation">1. Machine Translation</h3>
+<p>One of the earliest and most impactful applications of Seq2Seq models is machine translation. In this context, the model receives a sentence in a source language and generates its equivalent in a target language. The encoder encodes the semantic and syntactic structure of the source sentence, while the decoder translates this internal representation into the target language.</p>
+<p><strong>Example</strong>:</p>
+<ul>
+<li><strong>Input</strong>: <em>“It's time for tea.”</em></li>
+<li><strong>Output</strong>: <em>“C’est l’heure du thé.”</em></li>
+</ul>
+<p>This task demonstrates the model’s capacity to handle grammatical differences and varying sentence lengths across languages.</p>
+<h3 id="text-summarization">2. Text Summarization</h3>
+<p>Text summarization involves generating a concise version of a longer document while preserving the most essential information. The Seq2Seq model reads the full document via the encoder and produces a brief summary through the decoder. It is particularly valuable in domains like news aggregation, legal document processing, and automatic report generation.</p>
+<h3 id="chatbots-and-dialogue-systems">3. Chatbots and Dialogue Systems</h3>
+<p>Seq2Seq models are frequently used in the development of conversational agents. In this scenario, the encoder processes the user’s input message, and the decoder generates an appropriate and contextually relevant response. By training on large conversational datasets, the model can learn natural and coherent dialogue patterns.</p>
+<p><strong>Example</strong>:</p>
+<ul>
+<li><strong>User Input</strong>: <em>“What’s the weather like today?”</em></li>
+<li><strong>Model Output</strong>: <em>“It’s sunny and 25 degrees Celsius.”</em></li>
+</ul>
+<h3 id="code-generation">4. Code Generation</h3>
+<p>Another emerging application is the generation of source code from natural language descriptions. In software development and automation contexts, a Seq2Seq model can be trained to interpret instructions and generate corresponding code snippets. This task requires the model to learn both natural language semantics and the syntax of programming languages.</p>
+<p><strong>Example</strong>:</p>
+<ul>
+<li><strong>Input</strong>: <em>“Create a Python function to add two numbers.”</em></li>
+<li><strong>Output</strong>:<pre><code class="language-python">def add(a, b):    return a + b</code></pre></li>
+</ul>
+<hr>
+</section><section><h2 id="limitations-of-basic-seq2seq-models">Limitations of Basic Seq2Seq Models</h2>
+<p>While traditional Seq2Seq models, particularly those based on Recurrent Neural Networks (RNNs) such as LSTMs or GRUs, have demonstrated strong performance in a variety of sequence transduction tasks, they suffer from several inherent limitations. These challenges become especially pronounced when dealing with long or information-rich sequences. Understanding these limitations is crucial for motivating more advanced architectures such as attention mechanisms and transformer models.</p>
+<h3 id="lack-of-parallelism">1. Lack of Parallelism</h3>
+<p>A significant drawback of RNN-based Seq2Seq models is their inherently sequential nature. Both the encoder and the decoder process tokens one at a time, with each step depending on the previous one. This dependency chain has two major implications:</p>
+<ul>
+<li><strong>Slow Training and Inference</strong>: Since tokens must be processed in order, parallel computation across time steps is not possible. This serial execution becomes a bottleneck in both training speed and runtime efficiency.</li>
+<li><strong>Inefficient Hardware Utilization</strong>: Modern accelerators such as GPUs and TPUs thrive on parallelism. The sequential architecture of RNNs prevents full exploitation of these hardware capabilities.</li>
+</ul>
+<p>As sequence lengths grow, the computational cost scales linearly, reducing the scalability of basic Seq2Seq models.</p>
+<p><img src="../_assets/no-parallel.png" alt=""></p>
+<blockquote>
+<p>Neural machine translation with no parallel computing!</p>
+</blockquote>
+<h3 id="fixed-length-context-bottleneck">2. Fixed-Length Context Bottleneck</h3>
+<p>Another critical limitation lies in the <strong>fixed-length context vector</strong> produced by the encoder. Regardless of the input sequence’s length or complexity, the encoder must distill all relevant information into a single vector that is then passed to the decoder. This leads to:</p>
+<ul>
+<li><strong>Information Compression</strong>: For short sequences, this representation may capture sufficient context. However, for long or complex inputs, important details may be lost due to over-compression.</li>
+<li><strong>Performance Degradation</strong>: As the input length increases, the model’s ability to retain and reconstruct the necessary information deteriorates, resulting in poor output quality.</li>
+</ul>
+<p>This issue is often described as a <strong>bottleneck problem</strong>, where:</p>
+<blockquote>
+<p>Variable-length input sequences + fixed-length memory = information bottleneck.</p>
+</blockquote>
+<p>In essence, the decoder is constrained to generate output based solely on a limited, lossy representation of the input, leading to reduced accuracy, particularly for tasks requiring fine-grained understanding or long-term dependencies.</p>
+<p><img src="../_assets/bottle.png" alt=""></p>
+<blockquote>
+<p>Variable-length input sequences gets compressed into fixed-size memory.</p>
+</blockquote>
+<p>As shown below, source sentence encoding needs to capture all information about source sentence</p>
+<p><img src="../_assets/bottlenick.png" alt=""></p>
+<blockquote>
+<p>Conditioning bottleneck! Model performance decreases as input length increases</p>
+</blockquote>
+<hr>
+</section><section><h2 id="overcoming-the-bottleneck-utilizing-all-encoder-hidden-states">Overcoming the Bottleneck: Utilizing All Encoder Hidden States</h2>
+<p>A natural and effective solution to the fixed-length bottleneck problem is to allow the decoder to access <strong>all</strong> of the encoder’s hidden states, rather than relying solely on a single, compressed context vector. By doing so, the decoder can dynamically focus on different parts of the input sequence at each decoding step, depending on which information is most relevant at that moment.</p>
+<p>This intuition leads to the development of <strong>attention mechanisms</strong>, which provide a way for the decoder to selectively &quot;attend&quot; to specific encoder hidden states during the generation process. Instead of compressing the entire input sequence into one vector, attention allows the model to form a weighted combination of all encoder outputs, adapting flexibly to the needs of each decoding step.</p>
+<blockquote>
+<p>In essence, attention addresses the question: <em>“Which part of the input should the decoder focus on right now?”</em></p>
+</blockquote>
+<p>This mechanism not only mitigates the limitations of fixed-length encoding but also significantly improves the model’s performance on long or complex sequences. The principles and implementation of attention mechanisms will be explored in detail in the subsequent section.</p>
+<p><img src="../_assets/attention.png" alt=""></p>
+<blockquote>
+<p>Attention allows the model to focus on relevant encoder states.</p>
+</blockquote>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>In this lesson, we introduced the Sequence-to-Sequence architecture, a powerful framework used to convert input sequences to output sequences. We explored its encoder-decoder structure, discussed real-world applications, and analyzed the limitations that hinder its performance with long inputs and computational efficiency.</p>
+<p>Understanding these challenges is essential, as they motivate the development of <strong>attention mechanisms</strong>, which we will examine in few lessons. Attention allows models to focus on relevant parts of the input dynamically, overcoming the fixed-length bottleneck and improving accuracy across tasks.
+Next, we will implement Seq2Seq models and learn how it improves translation quality.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

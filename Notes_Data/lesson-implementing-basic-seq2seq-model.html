@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Implementing Basic Seq2seq Model</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-implementing-a-basic-seq2seq-model">Lesson: Implementing a Basic Seq2Seq Model</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In the previous lesson, we introduced the core architecture of Sequence-to-Sequence (Seq2Seq) models and analyzed their role in applications like machine translation and text summarization. We discussed how an encoder-decoder model transforms one sequence into another and explored its major limitation—the fixed-length bottleneck.</p>
+<p>In this lesson, you will implement a basic Seq2Seq model using TensorFlow and Keras. The model will be trained to translate English phrases into French using a small parallel dataset. You will learn how to tokenize and prepare text data, define encoder and decoder models, train the network, and generate predictions. Finally, we introduce BLEU score, a standard metric for evaluating the quality of machine translations.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Construct</strong> a basic Seq2Seq architecture using TensorFlow/Keras.</li>
+<li><strong>Train</strong> a model to perform English-to-French translation using a small parallel corpus.</li>
+<li><strong>Evaluate</strong> the output of a Seq2Seq model and the translation quality using BLEU score.</li>
+</ol>
+<hr>
+</section><section><h2 id="building-the-seq2seq-model-in-tensorflowkeras">Building the Seq2Seq Model in TensorFlow/Keras</h2>
+<p>To deepen the understanding of Sequence-to-Sequence (Seq2Seq) models, we now turn to a practical implementation using TensorFlow and Keras. This hands-on example demonstrates how to build and train a basic Seq2Seq model for machine translation. Specifically, we will translate English sentences into their French equivalents using a simplified parallel corpus. While this example uses a small dataset for instructional clarity and reduced computational cost, the principles extend directly to large-scale systems.</p>
+<hr>
+</section><section><h2 id="step-1-preparing-the-dataset">Step 1: Preparing the Dataset</h2>
+<p>For this implementation, we use a <strong>small English–French parallel corpus</strong> in which each data point is a pair of aligned sentences: one in English (source) and the other in French (target). This type of dataset is commonly used for supervised machine translation tasks.</p>
+<h3 id="characteristics-of-the-dataset">Characteristics of the Dataset</h3>
+<ul>
+<li><strong>Parallel Format</strong>: Each English sentence has a corresponding French translation.</li>
+<li><strong>Token-Level Granularity</strong>: Sentences are tokenized into word or subword units before training.</li>
+<li><strong>Size</strong>: The dataset is intentionally kept small to facilitate rapid prototyping and demonstration.</li>
+</ul>
+<p><strong>Example Sentence Pair</strong></p>
+<pre><code class="language-python"># Sample dataset: English-French sentence pairs
+# Each tuple contains (source sentence, target sentence)
+data = [
+    ('Good morning', 'bonjour'),
+    ('how are you', 'comment ça va'),
+    ('i am fine', 'je vais bien'),
+    ('thank you', 'merci'),
+    ('good night', 'bonne nuit')
+]
+
+
+</code></pre>
+<h3 id="splitting-and-marking-the-data">Splitting and Marking the Data</h3>
+<p>We separate the English and French sentences and prepare the target sentences for decoding by adding special tokens.</p>
+<pre><code class="language-python"># Separate the English and French sentences into two separate lists
+input_texts, target_texts = zip(*data)
+
+# Add special tokens to the target sentences:
+# &lt;sos&gt; marks the start of the target sequence
+# &lt;eos&gt; marks the end of the target sequence
+# These tokens help the decoder know when to start and stop generating words
+target_texts = ['&lt;sos&gt; ' + text + ' &lt;eos&gt;' for text in target_texts]
+</code></pre>
+<p><strong>Role of <code>&lt;sos&gt;</code> and <code>&lt;eos&gt;</code></strong></p>
+<ul>
+<li><strong><code>&lt;sos&gt;</code></strong> (<em>Start of Sequence</em>): Signals the decoder to begin generation.</li>
+<li><strong><code>&lt;eos&gt;</code></strong> (<em>End of Sequence</em>): Indicates when to stop decoding.</li>
+<li>These tokens are essential in training and inference, helping the model learn sequence boundaries.</li>
+</ul>
+<h3 id="tokenizing-the-text">Tokenizing the Text</h3>
+<p>Neural networks cannot operate on raw text; therefore, we convert each sentence into a sequence of integers using Keras' <code>Tokenizer</code>.</p>
+<pre><code class="language-python">from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+# Create tokenizers for both the input (English) and target (French) texts
+# Setting filters='' disables the default character filtering, which removes punctuation/special characters
+# This ensures special tokens like &lt;sos&gt; and &lt;eos&gt; are preserved
+input_tokenizer = Tokenizer(filters='')
+target_tokenizer = Tokenizer(filters='')
+
+# Fit the tokenizers on the text to create the word-index mappings
+# Each word gets assigned a unique integer
+input_tokenizer.fit_on_texts(input_texts)
+target_tokenizer.fit_on_texts(target_texts)
+
+# Convert the sentences into sequences of integers
+# e.g., &quot;hello&quot; -&gt; [2] or &quot;how are you&quot; -&gt; [3, 4, 5]
+input_sequences = input_tokenizer.texts_to_sequences(input_texts)
+target_sequences = target_tokenizer.texts_to_sequences(target_texts)
+</code></pre>
+<h3 id="padding-the-sequences">Padding the Sequences</h3>
+<p>All sequences must be padded to equal lengths for batching during training.</p>
+<pre><code class="language-python"># Determine the maximum sequence lengths for padding
+# Padding ensures that all sequences in a batch have the same length
+max_input_len = max(len(seq) for seq in input_sequences)
+max_target_len = max(len(seq) for seq in target_sequences)
+
+# Pad the encoder input sequences (English) with zeros at the end (post-padding)
+encoder_input_data = pad_sequences(input_sequences, maxlen=max_input_len, padding='post')
+
+# For the decoder, we need two sets of data:
+# 1. decoder_input_data: the input to the decoder at each time step (starts with &lt;sos&gt;)
+# 2. decoder_target_data: the expected output from the decoder (ends with &lt;eos&gt;)
+
+# We split target sequences:
+# - decoder_input_data gets everything *except* the last token (&lt;eos&gt;)
+# - decoder_target_data gets everything *except* the first token (&lt;sos&gt;)
+# This offset helps the model learn to predict the next word
+decoder_input_data = pad_sequences([seq[:-1] for seq in target_sequences],
+                                   maxlen=max_target_len - 1, padding='post')
+
+decoder_target_data = pad_sequences([seq[1:] for seq in target_sequences],
+                                    maxlen=max_target_len - 1, padding='post')
+</code></pre>
+<p><strong>Why the Shift?</strong></p>
+<p>This shifting technique supports <strong>teacher forcing</strong>, a training strategy where the model is guided using the actual target tokens rather than its own previous predictions. This accelerates learning and enhances convergence, especially in early training stages.</p>
+<hr>
+</section><section><h2 id="step-2-building-the-training-model">Step 2: Building the Training Model</h2>
+<p>With the dataset preprocessed and sequences prepared, we now construct the Seq2Seq model using TensorFlow and Keras. The architecture follows the classical Encoder–Decoder framework, where both encoder and decoder are composed of an <code>Embedding</code> layer followed by an <code>LSTM</code> layer. The final decoder output is produced using a dense (fully connected) layer with a softmax activation to generate token probabilities.</p>
+<h3 id="setting-model-parameters">Setting Model Parameters</h3>
+<p>We begin by defining key hyperparameters and determining vocabulary sizes for both the source and target languages.</p>
+<pre><code class="language-python">from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, LSTM, Embedding, Dense
+
+# Latent dimensionality of the embedding space and LSTM units
+latent_dim = 64
+
+# Vocabulary sizes (+1 for padding token at index 0)
+vocab_in_size = len(input_tokenizer.word_index) + 1  # English vocab size
+vocab_out_size = len(target_tokenizer.word_index) + 1  # French vocab size
+</code></pre>
+<h3 id="defining-the-encoder">Defining the Encoder</h3>
+<p>The encoder reads the input sentence and encodes it into two state vectors: the final hidden state and cell state of the LSTM. These vectors summarize the input and are passed to the decoder to provide contextual understanding.</p>
+<pre><code class="language-python"># Encoder input: a sequence of word indices (e.g., [2, 3, 4])
+encoder_inputs = Input(shape=(None,))
+
+# Embedding layer maps each word index to a dense vector
+enc_emb = Embedding(input_dim=vocab_in_size, output_dim=latent_dim)(encoder_inputs)
+
+# LSTM processes the embedded sequence and returns final states
+# We discard the sequence output (_) and keep only the last hidden state (state_h) and cell state (state_c)
+_, state_h, state_c = LSTM(latent_dim, return_state=True)(enc_emb)
+
+# These states summarize the input and are passed to the decoder to provide context
+encoder_states = [state_h, state_c]
+</code></pre>
+<h3 id="defining-the-decoder">Defining the Decoder</h3>
+<p>The decoder generates the output sequence step by step. It is initialized with the encoder's final states and uses teacher forcing during training.</p>
+<pre><code class="language-python"># Decoder input: a sequence starting with &lt;sos&gt; followed by the expected output words
+decoder_inputs = Input(shape=(None,))
+
+# We define a separate embedding layer for the decoder
+dec_emb_layer = Embedding(input_dim=vocab_out_size, output_dim=latent_dim)
+dec_emb = dec_emb_layer(decoder_inputs)
+
+# Decoder LSTM uses encoder's final states as initial state
+# We keep return_sequences=True to output a sequence (word-by-word prediction)
+decoder_lstm = LSTM(latent_dim, return_sequences=True, return_state=True)
+decoder_outputs, _, _ = decoder_lstm(dec_emb, initial_state=encoder_states)
+
+# Dense layer to convert LSTM output at each time step to a vocabulary-sized softmax output
+decoder_dense = Dense(vocab_out_size, activation='softmax')
+decoder_outputs = decoder_dense(decoder_outputs)
+</code></pre>
+<h3 id="compiling-and-training-the-model">Compiling and Training the Model</h3>
+<p>We now compile the combined encoder–decoder model and train it using teacher forcing. Since the target output is a sequence of integer class labels (not one-hot encoded), we use <code>sparse_categorical_crossentropy</code> as the loss function.</p>
+<pre><code class="language-python"># Define the full model that takes encoder and decoder inputs and outputs predicted tokens
+model = Model([encoder_inputs, decoder_inputs], decoder_outputs)
+
+# Compile with sparse categorical crossentropy because our target data consists of integer indices
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+
+# Fit the model
+# Note: decoder_target_data[..., None] expands the last dimension to match shape (samples, timesteps, 1)
+model.fit([encoder_input_data, decoder_input_data],
+          decoder_target_data[..., None],
+          epochs=300,
+          verbose=0)
+</code></pre>
+<h3 id="key-concepts-and-takeaways">Key Concepts and Takeaways</h3>
+<ul>
+<li><strong>Embedding Layers</strong>: Map tokens to dense vector spaces that capture semantic relationships.</li>
+<li><strong>Encoder LSTM</strong>: Processes the entire input sequence and outputs the final hidden and cell states, which serve as context for decoding.</li>
+<li><strong>Decoder LSTM</strong>: Initialized with the encoder’s states and generates the target sequence one token at a time.</li>
+<li><strong>Teacher Forcing</strong>: During training, the decoder receives the true previous token as input rather than its own prediction, helping the model converge faster.</li>
+<li><strong>Sparse Categorical Loss</strong>: Efficient for handling integer-encoded class labels, avoiding the need for one-hot encoding.</li>
+</ul>
+<p>After training, the model is expected to perform basic translation tasks on short English input sequences. The next step is to <strong>build inference models</strong> to generate translations at test time.</p>
+<hr>
+</section><section><h2 id="step-3-inference-and-decoding">Step 3: Inference and Decoding</h2>
+<p>Once the Seq2Seq model has been trained, it must be adapted for inference—i.e., generating translations or output sequences one token at a time. During training, the model has access to the entire target sequence through teacher forcing. In contrast, inference requires the decoder to generate one token at a time, feeding each predicted word back into itself until the full sequence is produced.</p>
+<h3 id="creating-the-inference-models">Creating the Inference Models</h3>
+<p>At inference time, the model is split into two components:</p>
+<ol>
+<li><strong>Encoder Inference Model</strong>: Encodes the input sequence and returns the final LSTM states.</li>
+<li><strong>Decoder Inference Model</strong>: Takes the previously predicted token and the previous LSTM states to predict the next token.</li>
+</ol>
+<pre><code class="language-python"># Encoder inference model: same structure as training encoder
+# Takes an input sequence and outputs internal LSTM states
+encoder_model = Model(encoder_inputs, encoder_states)
+
+# Decoder inference requires feeding previous state manually
+decoder_state_input_h = Input(shape=(latent_dim,))
+decoder_state_input_c = Input(shape=(latent_dim,))
+decoder_states_inputs = [decoder_state_input_h, decoder_state_input_c]
+
+# Decoder will now take only one timestep at a time (i.e., one word input)
+decoder_inputs_single = Input(shape=(1,))  # shape = (batch_size, 1)
+dec_emb2 = dec_emb_layer(decoder_inputs_single)
+
+# Use the same LSTM and Dense layers from training
+# Initialize decoder LSTM with previous states
+decoder_outputs2, state_h2, state_c2 = decoder_lstm(dec_emb2, initial_state=decoder_states_inputs)
+decoder_outputs2 = decoder_dense(decoder_outputs2)
+
+# Final inference decoder model
+# Inputs: current word + previous states
+# Outputs: predicted word + new states
+decoder_model = Model(
+    [decoder_inputs_single] + decoder_states_inputs,
+    [decoder_outputs2, state_h2, state_c2]
+)
+</code></pre>
+<h3 id="defining-the-translation-function">Defining the Translation Function</h3>
+<p>The decoding function works as follows:</p>
+<ol>
+<li>Encodes the input using the encoder model.</li>
+<li>Initializes the decoder with the <code>&lt;sos&gt;</code> token.</li>
+<li>Iteratively predicts one token at a time using the decoder model.</li>
+<li>Stops when the <code>&lt;eos&gt;</code> token is produced or when a maximum length is reached.</li>
+</ol>
+<pre><code class="language-python">import numpy as np
+
+# Reverse mapping from token index to word for the target language
+reverse_target_word_index = {v: k for k, v in target_tokenizer.word_index.items()}
+
+# Get integer values of the special tokens
+sos_token = target_tokenizer.word_index['&lt;sos&gt;']
+eos_token = target_tokenizer.word_index['&lt;eos&gt;']
+
+def decode_sequence(input_seq):
+    # Encode the input as state vectors
+    states_value = encoder_model.predict(input_seq)
+
+    # Generate empty target sequence with just the &lt;sos&gt; token
+    target_seq = np.array([[sos_token]])
+
+    decoded_sentence = []
+    stop_condition = False
+
+    while not stop_condition:
+        # Predict the next word and updated states
+        output_tokens, h, c = decoder_model.predict([target_seq] + states_value)
+
+        # Choose the most likely next word (highest probability)
+        sampled_token_index = np.argmax(output_tokens[0, -1, :])
+        sampled_word = reverse_target_word_index.get(sampled_token_index, '')
+
+        # Exit condition: either &lt;eos&gt; token or max length reached
+        if sampled_token_index == eos_token or len(decoded_sentence) &gt; max_target_len:
+            stop_condition = True
+        else:
+            decoded_sentence.append(sampled_word)
+
+        # Update target_seq to contain the last predicted word
+        target_seq = np.array([[sampled_token_index]])
+
+        # Update states for next iteration
+        states_value = [h, c]
+
+    return ' '.join(decoded_sentence)
+</code></pre>
+<h3 id="example-translating-a-sentence">Example: Translating a Sentence</h3>
+<p>We now use the trained model to translate a new input sentence from English to French.</p>
+<pre><code class="language-python">test_input = 'thank you'
+
+# Convert input sentence to sequence and pad to expected length
+test_seq = input_tokenizer.texts_to_sequences([test_input])
+test_seq = pad_sequences(test_seq, maxlen=max_input_len, padding='post')
+
+# Generate translation
+print(&quot;Input:&quot;, test_input)
+print(&quot;Predicted Translation:&quot;, decode_sequence(test_seq))
+</code></pre>
+<p><strong>Expected Output</strong></p>
+<pre><code class="language-yaml">Input: thank you
+Predicted Translation: merci
+</code></pre>
+<h3 id="summary">Summary</h3>
+<ul>
+<li>Inference separates the training model into encoder and decoder components.</li>
+<li>The decoder predicts one word at a time, using its own output as input for the next timestep.</li>
+<li>This approach closely mimics real-world usage, such as translating text or generating summaries without access to the full output during generation.</li>
+</ul>
+<hr>
+</section><section><h2 id="step-4-bleu-score-evaluation">Step 4: BLEU Score Evaluation</h2>
+<p>To evaluate the performance of a machine translation model, it is essential to use a quantitative metric that reflects the quality of the predicted translations. One of the most widely adopted metrics in this context is <strong>BLEU</strong> (Bilingual Evaluation Understudy). BLEU measures how closely the model’s output (the <em>hypothesis</em>) matches one or more correct <em>reference</em> translations.</p>
+<h3 id="understanding-bleu">Understanding BLEU</h3>
+<ul>
+<li><strong>BLEU Score Range</strong>: 0 to 1 (or 0% to 100%).</li>
+<li><strong>Higher Scores</strong>: Indicate a closer match to the reference translation.</li>
+<li><strong>Lower Scores</strong>: Reflect poor correspondence in terms of word choice and order.</li>
+<li><strong>N-gram Matching</strong>: BLEU uses precision over n-grams (typically unigrams to 4-grams) to quantify similarity between hypothesis and reference.</li>
+</ul>
+<p>BLEU is particularly useful in evaluating models that generate natural language output, such as in machine translation, text summarization, and dialogue generation.</p>
+<h3 id="evaluating-sentence-level-bleu-scores">Evaluating Sentence-Level BLEU Scores</h3>
+<p>We apply sentence-level BLEU evaluation using <code>nltk.translate.bleu_score</code>. Below is a minimal example using the test sentences from our toy dataset.</p>
+<pre><code class="language-python">from nltk.translate.bleu_score import sentence_bleu
+
+# Reference French translations (ground truth)
+references = [['merci'], ['comment ça va']]
+
+# Corresponding English test inputs
+tests = ['thank you', 'how are you']
+
+# Evaluate each sentence
+for sentence, ref in zip(tests, references):
+    # Tokenize and pad the input sentence
+    seq = input_tokenizer.texts_to_sequences([sentence])
+    seq = pad_sequences(seq, maxlen=max_input_len, padding='post')
+
+    # Generate prediction using the model
+    hyp = decode_sequence(seq)
+
+    # Display input, hypothesis and BLEU score
+    print(f&quot;Input: {sentence}&quot;)
+    print(f&quot;Hypothesis: {hyp}&quot;)
+    print(&quot;BLEU:&quot;, sentence_bleu([ref], hyp.split()))
+</code></pre>
+<h3 id="sample-output">Sample Output</h3>
+<pre><code class="language-makefile">Input: thank you  
+Hypothesis: merci  
+BLEU: 1.0
+
+Input: how are you  
+Hypothesis: comment ça va  
+BLEU: 1.0
+</code></pre>
+<p>These results indicate perfect matches between the predicted and reference translations, achievable in this case due to the small and deterministic nature of the dataset.</p>
+<h3 id="remarks-and-extensions">Remarks and Extensions</h3>
+<ul>
+<li><strong>Toy Dataset Performance</strong>: The high BLEU scores here are expected, as the model was trained and evaluated on a small, closed dataset with minimal variation.</li>
+<li><strong>Scalability</strong>: On real-world datasets, BLEU scores will vary and tend to be much lower, reflecting the challenges of generating fluent and accurate translations across diverse linguistic constructs.</li>
+<li><strong>Corpus-Level BLEU</strong>: For broader evaluation, BLEU can be computed across an entire corpus to assess overall model quality.</li>
+<li><strong>Complementary Metrics</strong>: BLEU is often used alongside metrics like <strong>METEOR</strong>, <strong>ROUGE</strong>, or <strong>chrF</strong> to capture fluency, recall, and character-level variation.</li>
+</ul>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>In this lesson, you implemented a basic Sequence-to-Sequence model using TensorFlow and Keras. You built the encoder and decoder, trained the model on a small English–French dataset, and generated translations through step-by-step decoding.</p>
+<p>Although the model was simplified for teaching purposes, it demonstrated the core ideas of sequence modeling. This foundation is essential as we move into the next lesson, where we will enhance the model by adding attention mechanisms, solving the bottleneck problem, and significantly improving translation quality.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

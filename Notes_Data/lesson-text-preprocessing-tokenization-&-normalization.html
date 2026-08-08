@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Text Preprocessing Tokenization & Normalization</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-tokenization-stemming-and-lemmatization">Lesson: Tokenization, Stemming, and Lemmatization</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Text preprocessing is a fundamental step in <strong>Natural Language Processing (NLP)</strong> that involves cleaning and transforming raw text into a structured format. Since raw text data contains noise such as punctuation, stopwords, different word forms, and complex sentence structures, preprocessing helps improve the efficiency of machine learning models by making the data more <strong>consistent, meaningful, and computationally manageable</strong>.</p>
+<p>This lesson covers the essential techniques of <strong>tokenization, stemming, lemmatization, and stopword removal</strong>. These methods ensure that text is broken down into its essential components while retaining its meaning, enabling various NLP applications such as:</p>
+<ul>
+<li><strong>Sentiment Analysis</strong> – Identifying emotions and opinions in text.</li>
+<li><strong>Topic Modeling</strong> – Detecting themes and trends in large text collections.</li>
+<li><strong>Machine Translation</strong> – Converting text between different languages.</li>
+<li><strong>Text Summarization</strong> – Automatically generating concise summaries.</li>
+</ul>
+<p>Understanding these preprocessing techniques is essential for working with NLP, machine learning, and text analytics.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Explain</strong> the importance of text preprocessing in NLP.</li>
+<li><strong>Demonstrate</strong> how tokenization splits text into meaningful components.</li>
+<li><strong>Differentiate</strong> between stemming and lemmatization, explaining their advantages and limitations.</li>
+<li><strong>Apply</strong> stopword removal to clean textual data and reduce computational complexity.</li>
+<li><strong>Utilize</strong> NLP libraries such as <strong>NLTK and SpaCy</strong> to perform text preprocessing efficiently.</li>
+</ol>
+<hr>
+</section><section><h2 id="tokenization">Tokenization</h2>
+<p><strong>Tokenization</strong> is the process of breaking down text into smaller, meaningful components known as <strong>tokens</strong>. Depending on the level of analysis, tokens can represent <strong>words</strong>, <strong>subwords</strong>, or even <strong>entire sentences</strong>.</p>
+<p>Tokenization is a fundamental preprocessing step in Natural Language Processing (NLP), forming the basis for many downstream tasks. It helps convert raw text into a structured format that machines can analyze.</p>
+<h4 id="tokenization-enables">Tokenization Enables:</h4>
+<p><strong>Word Frequency Analysis</strong>: Counting how often each word appears in a document.</p>
+<p><strong>Part-of-Speech Tagging</strong>: Assigning grammatical roles to words (e.g., noun, verb, adjective).</p>
+<p><strong>Named Entity Recognition (NER)</strong>: Identifying and classifying key entities such as people, organizations, locations, and dates.</p>
+<p>Tokenization is often the <strong>first step</strong> in turning unstructured text into analyzable data, making it essential for almost every NLP pipeline.</p>
+<hr>
+<h3 id="word-tokenization">Word Tokenization</h3>
+<p><strong>Word tokenization</strong> is the process of splitting a text into individual <strong>words</strong>, typically by using whitespace and punctuation as delimiters. This method discards punctuation and special characters, focusing only on the core word units.</p>
+<p>It’s one of the most commonly used tokenization techniques and serves as a foundation for many NLP tasks such as word frequency analysis, sentiment analysis, and text classification.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python">import nltk
+from nltk.tokenize import word_tokenize
+
+nltk.download('punkt')
+
+text = &quot;Natural Language Processing is an exciting field!&quot;
+tokens = word_tokenize(text)
+print(tokens)
+</code></pre>
+<p><strong>Output:</strong></p>
+<p><code>['Natural', 'Language', 'Processing', 'is', 'an', 'exciting', 'field', '!']</code></p>
+<p><strong>Explanation:</strong></p>
+<ul>
+<li>The function <code>word_tokenize()</code> splits the sentence into individual words.</li>
+<li>Punctuation (<code>!</code>) is treated as a separate token.</li>
+<li>Word tokenization is a foundational step for many NLP applications, such as text classification and speech recognition.</li>
+</ul>
+<hr>
+<h3 id="sentence-tokenization">Sentence Tokenization</h3>
+<p><strong>Sentence tokenization</strong> is the process of splitting a block of text into individual <strong>sentences</strong>. This is an important step in many NLP applications where the structure and flow of complete thoughts matter.</p>
+<p>It’s especially useful in tasks such as:</p>
+<ul>
+<li><strong>Text Summarization</strong> – Identifying and extracting key sentences from larger texts.</li>
+<li><strong>Discourse Analysis</strong> – Analyzing sentence relationships, coherence, and narrative flow.</li>
+<li><strong>Machine Translation</strong> – Translating one sentence at a time to preserve context and grammar.</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python">from nltk.tokenize import sent_tokenize
+
+text = &quot;NLP is a branch of AI. It focuses on human language.&quot;
+sentences = sent_tokenize(text)
+print(sentences)
+</code></pre>
+<p><strong>Output:</strong></p>
+<p><code>['NLP is a branch of AI.', 'It focuses on human language.']</code></p>
+<p><strong>Explanation:</strong></p>
+<ul>
+<li>The function <code>sent_tokenize()</code> detects sentence boundaries using punctuation.</li>
+<li>This is a critical step for applications like <strong>sentiment analysis and text coherence evaluation</strong>.</li>
+</ul>
+<hr>
+</section><section><h2 id="stemming-vs.lemmatization">Stemming vs. Lemmatization</h2>
+<p>Both <strong>stemming</strong> and <strong>lemmatization</strong> are techniques used to reduce words to their <strong>base or root form</strong>, which helps normalize text for analysis. However, they differ in <strong>approach, accuracy, and output</strong>.</p>
+<table>
+<thead>
+<tr>
+<th><strong>Feature</strong></th>
+<th><strong>Stemming</strong></th>
+<th><strong>Lemmatization</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Method</strong></td>
+<td>Applies simple rules to strip prefixes/suffixes</td>
+<td>Uses vocabulary and morphological analysis (dictionary-based)</td>
+</tr>
+<tr>
+<td><strong>Accuracy</strong></td>
+<td>Less accurate; may produce non-words</td>
+<td>More accurate; returns valid base forms</td>
+</tr>
+<tr>
+<td><strong>Speed</strong></td>
+<td>Faster (rule-based)</td>
+<td>Slower (requires linguistic lookup and parsing)</td>
+</tr>
+<tr>
+<td><strong>Example</strong></td>
+<td><code>&quot;running&quot;</code> → <code>&quot;run&quot;</code>, <code>&quot;flies&quot;</code> → <code>&quot;fli&quot;</code></td>
+<td><code>&quot;running&quot;</code> → <code>&quot;run&quot;</code>, <code>&quot;flies&quot;</code> → <code>&quot;fly&quot;</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Summary:</strong></p>
+<ul>
+<li><strong>Stemming</strong> is quick and crude—it chops off word endings but doesn’t always produce valid words.</li>
+<li><strong>Lemmatization</strong> is more sophisticated—it returns proper dictionary forms by considering a word’s part of speech and context.</li>
+</ul>
+<hr>
+<h3 id="stemming">Stemming</h3>
+<p><strong>Stemming</strong> is a <strong>rule-based technique</strong> used to reduce words to their root forms by <strong>stripping prefixes and suffixes</strong>. It operates without regard for grammatical correctness or word meaning, often resulting in <strong>non-standard or truncated stems</strong>.</p>
+<p>This approach is fast and useful for scenarios where approximate matching is acceptable, but it can lead to <strong>inaccurate base forms</strong> that are not actual words.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python">from nltk.stem import PorterStemmer
+
+stemmer = PorterStemmer()
+words = [&quot;running&quot;, &quot;flies&quot;, &quot;happily&quot;]
+stemmed_words = [stemmer.stem(word) for word in words]
+print(stemmed_words)
+</code></pre>
+<p><strong>Output:</strong></p>
+<p><code>['run', 'fli', 'happili']</code></p>
+<p><strong>Explanation:</strong></p>
+<ul>
+<li>The stemmer <strong>removes suffixes</strong> to obtain the root form of a word.</li>
+<li>However, some results may not be actual words (e.g., &quot;flies&quot; → &quot;fli&quot;).</li>
+<li>Stemming is commonly used in <strong>search engines</strong> to match variations of a word.</li>
+</ul>
+<h3 id="common-stemmer-algorithms">Common Stemmer Algorithms:</h3>
+<ul>
+<li><strong>Porter Stemmer</strong> – Popular and simple; uses a set of heuristic rules.</li>
+<li><strong>Snowball Stemmer</strong> – An improvement over Porter with better performance and language support.</li>
+<li><strong>Lancaster Stemmer</strong> – More aggressive and may over-stem.</li>
+</ul>
+<p>While stemming is efficient, it may reduce accuracy in tasks that require true linguistic understanding, such as language generation or semantic analysis.</p>
+<hr>
+<h3 id="lemmatization">Lemmatization</h3>
+<p><strong>Lemmatization</strong> is the process of reducing a word to its <strong>dictionary root form</strong>—known as the <strong>lemma</strong>—by considering both the <strong>word structure</strong> and its <strong>grammatical context</strong> (such as part of speech).</p>
+<p>Unlike stemming, lemmatization uses a <strong>vocabulary and morphological analysis</strong> to ensure that the resulting base form is a valid word. This makes it more accurate and linguistically meaningful, especially for applications where <strong>semantic precision</strong> matters.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python">from nltk.stem import WordNetLemmatizer
+
+nltk.download('wordnet')
+
+lemmatizer = WordNetLemmatizer()
+words = [&quot;running&quot;, &quot;flies&quot;, &quot;happily&quot;]
+lemmatized_words = [lemmatizer.lemmatize(word, pos=&quot;v&quot;) for word in words]
+print(lemmatized_words)
+</code></pre>
+<p><strong>Output:</strong></p>
+<p><code>['run', 'fly', 'happily']</code></p>
+<p><strong>Explanation:</strong></p>
+<ul>
+<li>Lemmatization <strong>analyzes the meaning of words</strong> before reducing them to their base form.</li>
+<li>Unlike stemming, it returns <strong>valid dictionary words</strong>.</li>
+<li>It is widely used in <strong>machine translation, speech recognition, and chatbots</strong>.</li>
+</ul>
+<h3 id="how-it-works">How It Works:</h3>
+<p>Lemmatization relies on:</p>
+<ul>
+<li><strong>Part-of-speech tagging</strong> to determine the correct lemma.</li>
+<li><strong>Lexical resources</strong> such as <strong>WordNet</strong> to look up valid root forms.</li>
+</ul>
+<hr>
+</section><section><h2 id="stopword-removal">Stopword Removal</h2>
+<p><strong>Stopwords</strong> are frequently occurring words in a language—such as <strong>&quot;the&quot;</strong>, <strong>&quot;is&quot;</strong>, <strong>&quot;in&quot;</strong>, <strong>&quot;and&quot;</strong>, and <strong>&quot;of&quot;</strong>—that typically carry <strong>little or no semantic value</strong> in many NLP tasks.</p>
+<p>While these words are essential for sentence structure and grammar, they often <strong>do not contribute meaningful information</strong> when analyzing the content of text. Therefore, removing them is a common preprocessing step.</p>
+<p><strong>Benefits of Stopword Removal:</strong></p>
+<ul>
+<li><strong>Reduces computational complexity</strong><br>By filtering out non-informative terms, we shrink the feature space and speed up processing.</li>
+<li><strong>Improves model focus and accuracy</strong><br>Models trained without stopwords tend to concentrate on words that are more relevant for classification, clustering, or understanding intent.</li>
+</ul>
+<p><strong>Note:</strong></p>
+<ul>
+<li>The list of stopwords is <strong>task- and language-dependent</strong>. For example, in sentiment analysis, words like <em>&quot;not&quot;</em> or <em>&quot;never&quot;</em> might carry strong meaning and <strong>should not</strong> be removed.</li>
+<li>Libraries like <strong>NLTK</strong>, <strong>spaCy</strong>, and <strong>Scikit-learn</strong> offer customizable stopword lists.</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python">from nltk.corpus import stopwords
+
+nltk.download('stopwords')
+
+text = &quot;This is an example of removing stopwords.&quot;
+words = word_tokenize(text)
+filtered_words = [word for word in words if word.lower() not in stopwords.words('english')]
+print(filtered_words)
+</code></pre>
+<p><strong>Output</strong>:</p>
+<p><code>['example', 'removing', 'stopwords', '.']</code></p>
+<p><strong>Explanation:</strong></p>
+<ul>
+<li>The function <code>stopwords.words('english')</code> loads a predefined list of stopwords.</li>
+<li>Removing stopwords helps in <strong>text classification and document summarization</strong>.</li>
+</ul>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>This lesson introduced essential text preprocessing techniques:</p>
+<ul>
+<li><strong>Tokenization</strong> – Splitting text into words and sentences for structured analysis.</li>
+<li><strong>Stemming</strong> – Reducing words using simple rules, often resulting in non-standard words.</li>
+<li><strong>Lemmatization</strong> – Converting words to their dictionary root form while maintaining accuracy.</li>
+<li><strong>Stopword Removal</strong> – Filtering out words that do not contribute significant meaning.</li>
+</ul>
+<p>These preprocessing steps are fundamental in building NLP applications such as <strong>document classification, speech recognition, and chatbot systems</strong>. Now that we understand how to break down text into its fundamental parts, we need to go a step further and clean the data. Our next lesson will focus on handling special characters, emojis, and unwanted elements in text.</p>
+<p>These techniques will be applied using real-world text data with <strong>NLTK and SpaCy</strong> in the next activity.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

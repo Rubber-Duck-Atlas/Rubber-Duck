@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Basics Of Recurrent Neural Networks</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-basics-of-recurrent-neural-networks">Lesson: Basics of Recurrent Neural Networks</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Many Natural Language Processing tasks, such as language modeling, text classification, and machine translation, require processing sequences of words or characters. Traditional feedforward networks and embeddings (as explored in Week 2 and earlier in Week 3) treat input words independently, failing to capture temporal dependencies and contextual flow. Recurrent Neural Networks (RNNs) are specifically designed to offer a solution by incorporating a mechanism to process data sequentially, maintaining a memory of previous inputs to inform future predictions.</p>
+<p>This lesson explores how RNNs address the challenge of sequential data processing and examines the foundational processes of forward and backward propagation that enable their functionality, setting the stage for understanding their applications in tasks like language modeling and sentiment analysis.</p>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Explain</strong> how RNNs process sequential data using a hidden state to capture temporal dependencies.</li>
+<li><strong>Describe</strong> the forward propagation process in RNNs, including the role of recurrent connections.</li>
+<li><strong>Understand</strong> the concept of backpropagation through time (BPTT) and its application in training RNNs.</li>
+</ol>
+</section><section><h2 id="processing-sequential-data-with-rnns">Processing Sequential Data with RNNs</h2>
+<p>RNNs are uniquely designed to handle sequential data, such as sentences or time series, by processing one element at a time while preserving information from prior elements. Unlike feedforward networks, which treat inputs independently or within a static window, RNNs maintain a hidden state that acts as a memory, updated at each time step to reflect the cumulative context of the sequence.</p>
+<p>Consider a sentence like:</p>
+<blockquote>
+<p><strong>I like cats.</strong></p>
+</blockquote>
+<p>In a feedforward network, each word might be processed independently or within a fixed context, missing the broader sequential relationship.
+RNNs, however, process this sentence incrementally: starting with &quot;I&quot; then &quot;like,&quot; and finally &quot;cats.&quot; with each step influencing the next through the hidden state. This hidden state, denoted as <span class="math">\(\mathbf{h}_t\)</span> at time <span class="math">\(t\)</span>, encapsulates information from all previous inputs, theoretically allowing the network to remember details from the sequence's beginning without a fixed-length constraint.</p>
+<p>The architecture of an RNN includes a recurrent connection, where the hidden layer at time <span class="math">\(t\)</span> receives input not only from the current input <span class="math">\(\mathbf{x}_ t\)</span> but also from the hidden layer at the previous time step, <span class="math">\(\mathbf{h}_{t-1}\)</span>. This loop enables the network to maintain a form of memory, making it adept at tasks where context matters, such as predicting the next word in a sentence.</p>
+<p><img src="../_assets/simple%20rnn.png" alt=""></p>
+<blockquote>
+<p>Simple recurrent neural network. The hidden layer includes a recurrent connection as part of its input.</p>
+</blockquote>
+<p>This figure illustrates the RNN structure, highlighting the recurrent link (dashed line) that integrates past context into current processing, a key departure from non-recurrent models.</p>
+<hr>
+</section><section><h2 id="forward-propagation-in-rnns">Forward Propagation in RNNs</h2>
+<p>Forward propagation in RNNs is the process by which the network computes outputs for a given sequence, step by step, leveraging both current inputs and past context. This process mirrors feedforward networks but incorporates the recurrent connection, making it sequential rather than simultaneous.</p>
+<p>The mathematical formulation is as follows:</p>
+<p><strong>Input Vector</strong>:  <span class="math">\(\mathbf{x}_t\)</span>, the input at time <span class="math">\(t\)</span>, (e.g., a one-hot encoded word).</p>
+<p><strong>Hidden State</strong>:
+<span class="math">\(\mathbf{h}_t\)</span>,</p>
+<p><em>computed as</em>:</p>
+<div class="math">
+\[
+\mathbf{h}_ t = g(\mathbf{U} \mathbf{h}_ {t-1} + \mathbf{W} \mathbf{x}_ t)
+\]</div>
+<p><em>where</em>:</p>
+<ul>
+<li><span class="math">\(\mathbf{U}\)</span> is the weight matrix for the recurrent connection from <span class="math">\(\mathbf{h}_{t-1}\)</span></li>
+<li><span class="math">\(\mathbf{W}\)</span> is the weight matrix for the input <span class="math">\(\mathbf{x}_t\)</span></li>
+<li><span class="math">\(g\)</span> is a non-linear activation function (e.g., tanh or ReLU)</li>
+</ul>
+<p><strong>Output Vector</strong>:</p>
+<div class="math">
+\[
+\mathbf{y}_t = f(\mathbf{V} \mathbf{h}_t)
+\]</div>
+<p>where <span class="math">\(\mathbf{V}\)</span> is the weight matrix to the output layer, and <span class="math">\(\(f\)</span>) is typically a softmax for probability distributions.</p>
+<p>To see this, consider the folowing figure which clarifies the nature of the recurrence and how it factors into the computation at the hidden layer:
+<img src="../_assets/fwrnn.png" alt=""></p>
+<blockquote>
+<p>Simple recurrent neural network illustrated as a feedforward network.</p>
+</blockquote>
+<p>The most significant change lies in the new set of weights, U, that connect the hidden layer from the previous time step to the current hidden layer. These weights determine how the network makes use of past context in calculating the output for the current input. As with the other weights in the network, these connections are trained via backpropagation.</p>
+<p>For the initial time step <span class="math">\((t=1\)</span>), <span class="math">\(\mathbf{h}_0\)</span> is often set to a zero vector since no prior context exists. Let’s apply this to our example, &quot;I like cats&quot;:</p>
+<p><strong>Time <span class="math">\(t=1\)</span></strong>: Input <span class="math">\(\mathbf{x}_1\)</span> represents &quot;I.&quot; The hidden state becomes:</p>
+<div class="math">
+\[
+\mathbf{h}_1 = g(\mathbf{U} \mathbf{h}_0 + \mathbf{W} \mathbf{x}_1)
+\]</div>
+<p>and the output:</p>
+<div class="math">
+\[
+\mathbf{y}_1 = f(\mathbf{V} \mathbf{h}_1)
+\]</div>
+<p>predicts the likelihood of the next word (e.g., &quot;like&quot;).</p>
+<p><strong>Time <span class="math">\(t=2\)</span></strong>: Input <span class="math">\(\text{x}_2\)</span> is &quot;like.&quot; Using <span class="math">\(\text{h}_1\)</span>, the network computes
+<span class="math">\(\mathbf{h}_1\)</span>, the network computes:</p>
+<div class="math">
+\[
+   \mathbf{h}_2 = g(\mathbf{U} \mathbf{h}_1 + \mathbf{W} \mathbf{x}_2)
+\]</div>
+<p>and predicts:</p>
+<div class="math">
+\[
+   \mathbf{y}_2 = f(\mathbf{V} \mathbf{h}_2)
+\]</div>
+<p><strong>Time <span class="math">\(t=3\)</span></strong>: Input <span class="math">\(\text{x}_3\)</span> is &quot;cats,&quot; updating <span class="math">\(\text{h}_3\)</span> and producing <span class="math">\(\text{y}_3\)</span>.</p>
+<p><img src="../_assets/cfwrnn.png" alt=""></p>
+<blockquote>
+<p>Forward inference in a simple recurrent network.</p>
+</blockquote>
+<p>This figure outlines the forward inference algorithm, showing how <span class="math">\(\text{h}t\)</span> and <span class="math">\(\text{y}_t\)</span> are calculated iteratively, with weight matrices <span class="math">\(\text{U}\)</span>, <span class="math">\(\text{V}\)</span>, and <span class="math">\(\text{W}\)</span> shared across time steps.</p>
+</section><section><h2 id="backward-propagation-through-time-bptt">Backward Propagation Through Time (BPTT)</h2>
+<p>Training RNNs requires adjusting the weights <span class="math">\(\text{W}\)</span>, <span class="math">\(\text{U}\)</span>, <span class="math">\(\mathbf{V}\)</span> to minimize prediction errors, using a loss function like cross-entropy. Since RNNs process sequences, standard backpropagation is extended to Backpropagation Through Time (BPTT), accounting for temporal dependencies.</p>
+<p>In BPTT, the network is conceptually &quot;unrolled&quot; over time, transforming it into a feedforward-like structure where each time step is a layer. This unrolling reveals that weights are shared across time steps, and the total loss is the sum of losses at each step. For a sequence of length <span class="math">\(\(T\)</span>), the loss is:</p>
+<p><span class="math">\(L = \sum_{t=1}^T L_t\)</span></p>
+<p>where <span class="math">\(L_t\)</span> is the loss at time <span class="math">\(t\)</span>. The gradient of <span class="math">\(L\)</span> with respect to a weight (e.g., <span class="math">\(\text{U}\)</span> is the sum of gradients across all time steps, computed by propagating the error backward from the end of the sequence to the beginning.</p>
+<p><img src="../_assets/brnn.png" alt=""></p>
+<blockquote>
+<p>A simple recurrent neural network shown unrolled in time.</p>
+</blockquote>
+<p>This figure depicts the unrolled network, illustrating how layers are replicated for each time step while weights remain shared, facilitating gradient computation via BPTT.</p>
+<p>For long sequences, unrolling the entire sequence can be resource-intensive, leading to truncated BPTT, where the sequence is processed in fixed-length segments. Modern frameworks like TensorFlow automate BPTT, simplifying implementation by handling the unrolling and gradient calculations internally when the recurrent structure is defined.</p>
+<hr>
+</section><section><h2 id="sequence-processing-with-rnns">Sequence Processing with RNNs</h2>
+<p><strong>RNNs are well-suited for various tasks including:</strong></p>
+<ul>
+<li>Language modeling</li>
+<li>Sentiment classification</li>
+<li>Named Entity Recognition</li>
+<li>Part-of-Speech tagging</li>
+<li>Machine translation</li>
+</ul>
+<h3 id="implementation-example">Implementation Example</h3>
+<p>A simple RNN can be implemented using PyTorch:</p>
+<pre><code class="language-python">import torch
+import torch.nn as nn
+
+rnn = nn.RNN(input_size=10, hidden_size=20, num_layers=1, batch_first=True)
+inputs = torch.randn(32, 5, 10)  # (batch, sequence, input_size)
+h0 = torch.zeros(1, 32, 20)
+
+output, hn = rnn(inputs, h0)
+print(output.shape)  # torch.Size([32, 5, 20])
+</code></pre>
+<p><strong>Output:</strong></p>
+<pre><code>torch.Size([32, 5, 20])
+</code></pre>
+<p>This output indicates that for each of the 5 time steps, the RNN produces a hidden state vector of size 20 for each of the 32 sequences.</p>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>This lesson has introduced the core principles of Recurrent Neural Networks, emphasizing their ability to process sequential data through a hidden state that captures temporal context, a capability that distinguishes them from traditional neural networks. We explored forward propagation, detailing how RNNs compute outputs incrementally using recurrent connections, and backward propagation through time, which adapts backpropagation to train these networks effectively. These concepts form the foundation for applying RNNs to real-world tasks, such as predicting the next word in a sentence or analyzing sentiment in text, providing you with the tools to understand and leverage their sequential processing power.</p>
+<p>Understanding these foundational concepts is essential before exploring more advanced RNN architectures like LSTMs and GRUs in the upcoming lessons.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

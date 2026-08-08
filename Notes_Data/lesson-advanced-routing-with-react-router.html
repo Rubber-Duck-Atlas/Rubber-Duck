@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Advanced Routing With React Router</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-advanced-routing-with-react-router">Lesson: Advanced Routing with React Router</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In modern single-page applications (SPAs), seamless navigation is crucial for a smooth user experience. React Router is a powerful library that enables dynamic routing in React applications, allowing developers to map URLs to components without page reloads. This lesson covers advanced routing concepts, including dynamic routes, nested routes, route protection, and handling 404 pages.</p>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li>Understand Dynamic Routing: Create flexible routes with URL parameters.</li>
+<li>Implement Navigation: Use Link, useNavigate, and redirects for seamless user transitions.</li>
+<li>Configure Nested Routes: Structure hierarchical layouts using Outlet.</li>
+<li>Protect Routes: Restrict access to authenticated users with route guards.</li>
+<li>Handle 404 Pages: Manage invalid routes gracefully.</li>
+</ol>
+<hr>
+</section><section><h2 id="routing-in-react">Routing in React</h2>
+<p>Routing in React refers to the process of navigating between different pages or views in a single-page application (SPA) without reloading the entire page. In traditional multi-page applications, navigating to a new page involves sending a request to the server, which then responds with a completely new HTML page. However, in SPAs like those built with React, the goal is to dynamically update the content of the application based on user interactions, making the experience faster and more seamless.</p>
+<p><img src="../_assets/lesson-5-react-router.PNG" alt="Frontend"></p>
+<p>React itself does not come with built-in routing capabilities. Instead, developers rely on libraries like <strong>React Router</strong> to handle routing. React Router allows you to define routes (URL paths) and map them to specific components, enabling navigation between different parts of your application while maintaining the SPA architecture.</p>
+<p><strong>Importance of Routing</strong>
+React doesn’t include built-in routing. Instead, developers use libraries like React Router to:</p>
+<ul>
+<li>Map URLs to specific components.</li>
+<li>Enable seamless navigation while maintaining SPA behavior.</li>
+<li>Support dynamic and nested routing for complex applications.</li>
+</ul>
+<p>React Router works by matching the current URL to a predefined set of routes. When a match is found, the corresponding component is rendered. Here's a high-level overview of how it works:</p>
+<ol>
+<li><strong>Define Routes</strong>: You specify routes using the <code>&lt;Route&gt;</code> component from React Router. Each route maps a URL path to a React component.</li>
+<li><strong>Navigate Between Routes</strong>: Use the <code>&lt;Link&gt;</code> or <code>useNavigate</code> hook to programmatically navigate between routes without reloading the page.</li>
+<li><strong>Render Components</strong>: When the URL changes, React Router updates the DOM by rendering the component associated with the matched route.</li>
+</ol>
+<p>For example:</p>
+<pre><code class="language-jsx">import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+
+function App() {
+  return (
+    &lt;Router&gt;
+      &lt;nav&gt;
+        &lt;Link to=&quot;/&quot;&gt;Home&lt;/Link&gt;
+        &lt;Link to=&quot;/about&quot;&gt;About&lt;/Link&gt;
+      &lt;/nav&gt;
+      &lt;Routes&gt;
+        &lt;Route path=&quot;/&quot; element={&lt;Home /&gt;} /&gt;
+        &lt;Route path=&quot;/about&quot; element={&lt;About /&gt;} /&gt;
+      &lt;/Routes&gt;
+    &lt;/Router&gt;
+  );
+}
+
+function Home() {
+  return &lt;h1&gt;Welcome to the Home Page&lt;/h1&gt;;
+}
+
+function About() {
+  return &lt;h1&gt;About Us&lt;/h1&gt;;
+}
+</code></pre>
+<p>In this example:</p>
+<ul>
+<li>The <code>Router</code> wraps the entire application.</li>
+<li>The <code>Routes</code> component contains individual <code>Route</code> components that define the mapping between URLs and components.</li>
+<li>The <code>Link</code> component is used for navigation.</li>
+</ul>
+<h3 id="setting-up-react-router">Setting Up React Router</h3>
+<p>Before setting up routes, ensure you have React Router installed in your project. For modern React applications, use <code>react-router-dom</code>:</p>
+<pre><code class="language-bash">npm install react-router-dom
+</code></pre>
+<h3 id="basic-route-configuration">Basic Route Configuration</h3>
+<p>To set up routes, wrap your application with the <code>BrowserRouter</code> component and define routes using the <code>Routes</code> and <code>Route</code> components.</p>
+<p><strong>Example</strong>:</p>
+<pre><code class="language-jsx">import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
+// Import your components
+import Home from './Pages/Home';
+import About from './Pages/About';
+import Products from './Pages/Products';
+
+function App() {
+  return (
+    &lt;Router&gt;
+      &lt;div&gt;
+        &lt;nav&gt;
+          &lt;ul&gt;
+            &lt;li&gt;&lt;a href=&quot;/&quot;&gt;Home&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;/about&quot;&gt;About&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;/products&quot;&gt;Products&lt;/a&gt;&lt;/li&gt;
+          &lt;/ul&gt;
+        &lt;/nav&gt;
+
+        {/* Define routes */}
+        &lt;Routes&gt;
+          &lt;Route path=&quot;/&quot; element={&lt;Home /&gt;} /&gt;
+          &lt;Route path=&quot;/about&quot; element={&lt;About /&gt;} /&gt;
+          &lt;Route path=&quot;/products&quot; element={&lt;Products /&gt;} /&gt;
+        &lt;/Routes&gt;
+      &lt;/div&gt;
+    &lt;/Router&gt;
+  );
+}
+
+export default App;
+</code></pre>
+<p><strong>Explination</strong>:</p>
+<ul>
+<li><strong><code>BrowserRouter</code></strong>: Wraps the entire application to enable routing.</li>
+<li><strong><code>Routes</code></strong>: Groups multiple <code>Route</code> components together.</li>
+<li><strong><code>Route</code></strong>: Defines a mapping between a URL path and a React component.</li>
+</ul>
+<p>In this example:</p>
+<ul>
+<li>The <code>BrowserRouter</code> component ensures that routing works within the React application.</li>
+<li>The <code>Routes</code> component groups all the <code>Route</code> definitions.</li>
+<li>Each <code>Route</code> specifies a <code>path</code> (URL) and an <code>element</code> (React component) to render when the URL matches the path.</li>
+</ul>
+</section><section><h2 id="dynamic-routing">Dynamic Routing</h2>
+<p>Dynamic routing allows you to create flexible and adaptable routes that can render components based on variable parts of the URL. These routes are particularly useful for scenarios where the exact path is not known ahead of time, such as user profiles or blog posts.</p>
+<p><strong>Static vs. Dynamic Routes</strong></p>
+<ul>
+<li>Static Routes: Fixed paths like <code>/home</code> or <code>/about</code>.</li>
+<li>Dynamic Routes: Paths with variable segments, such as <code>/user/:username</code> or <code>/posts/:year/:month</code>.</li>
+</ul>
+<p><strong>Example: Defining a Dynamic Route</strong></p>
+<pre><code class="language-javascript">import { Routes, Route } from 'react-router-dom';
+
+function App() {
+  return (
+    &lt;Routes&gt;
+      &lt;Route path=&quot;/user/:username&quot; element={&lt;User /&gt;} /&gt;
+    &lt;/Routes&gt;
+  );
+}
+</code></pre>
+<ul>
+<li>The <code>:username</code> segment is dynamic.</li>
+<li>The <code>User</code> component will render for any value of <code>username</code>, such as <code>/user/johnDoe</code> or <code>/user/maryJane</code>.</li>
+</ul>
+</section><section><h2 id="navigation">Navigation</h2>
+<p>Navigation is the process of moving between different routes in your application. React Router provides several tools for implementing navigation.</p>
+<h3 id="using-links">Using Links</h3>
+<p>The <code>Link</code> component is used to create clickable links that navigate between routes without reloading the page.</p>
+<p><strong>Example</strong>:</p>
+<pre><code class="language-jsx">import { Link } from 'react-router-dom';
+
+function Navbar() {
+  return (
+    &lt;nav&gt;
+      &lt;ul&gt;
+        &lt;li&gt;&lt;Link to=&quot;/&quot;&gt;Home&lt;/Link&gt;&lt;/li&gt;
+        &lt;li&gt;&lt;Link to=&quot;/about&quot;&gt;About&lt;/Link&gt;&lt;/li&gt;
+        &lt;li&gt;&lt;Link to=&quot;/products&quot;&gt;Products&lt;/Link&gt;&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/nav&gt;
+  );
+}
+</code></pre>
+<ul>
+<li><strong><code>Link</code></strong>: Replaces the traditional <code>&lt;a&gt;</code> tag and ensures navigation occurs within the React application.</li>
+</ul>
+<h3 id="programmatic-navigation">Programmatic Navigation</h3>
+<p>Sometimes, you may need to navigate programmatically, such as after submitting a form. Use the <code>useNavigate</code> hook for this purpose.</p>
+<p><strong>Example</strong>:</p>
+<pre><code class="language-jsx">import React from 'react';
+import { useNavigate } from 'react-router-dom';
+
+function LoginForm() {
+  const navigate = useNavigate();
+
+  const handleSubmit = () =&gt; {
+    // Perform login logic here
+    navigate('/dashboard'); // Navigate to the dashboard after login
+  };
+
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;button type=&quot;submit&quot;&gt;Login&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}
+
+export default LoginForm;
+</code></pre>
+<ul>
+<li><strong><code>useNavigate</code></strong>: A hook that returns a function to programmatically navigate to a new route.</li>
+<li>This is especially useful for redirects after form submissions or API calls.</li>
+</ul>
+<h3 id="redirects">Redirects</h3>
+<p>You can redirect users to a different route using the <code>Navigate</code> component or the <code>navigate</code> function.</p>
+<p><strong>Example with <code>Navigate</code>:</strong></p>
+<pre><code class="language-jsx">import { Navigate } from 'react-router-dom';
+
+function PrivateRoute({ isAuthenticated }) {
+  if (!isAuthenticated) {
+    return &lt;Navigate to=&quot;/login&quot; /&gt;;
+  }
+  return &lt;h1&gt;Private Content&lt;/h1&gt;;
+}
+</code></pre>
+<p><strong>Example with <code>navigate</code>:</strong></p>
+<pre><code class="language-jsx">if (!isAuthenticated) {
+  navigate('/login', { replace: true }); // Replace the current entry in the history stack
+}
+</code></pre>
+<ul>
+<li><strong><code>Navigate</code></strong>: Renders a redirection when a condition is met.</li>
+<li><strong><code>navigate</code> with <code>replace: true</code></strong>: Prevents users from going back to the previous route using the browser's back button.</li>
+</ul>
+<p>Redirects are commonly used for authentication checks, ensuring that unauthorized users cannot access restricted pages.</p>
+<hr>
+</section><section><h2 id="nested-routes-and-route-protection-in-react-router">Nested Routes and Route Protection in React Router</h2>
+<p>Nested routes allow you to define hierarchical routing structures where child components are rendered within a parent component. This is particularly useful for layouts that share common elements, such as headers, sidebars, or footers, while displaying unique content for each route. For example:</p>
+<ul>
+<li>A dashboard layout might include a shared navigation bar across pages like &quot;Home,&quot; &quot;Profile,&quot; and &quot;Settings.&quot;</li>
+<li>The <code>Outlet</code> component acts as a placeholder in the parent route to dynamically render its child routes.</li>
+</ul>
+<p>The <code>Outlet</code> component ensures that child routes are rendered within the parent layout. It dynamically displays the appropriate child component based on the current URL.</p>
+<p>Let’s create an application with a shared layout and nested routes for a dashboard.</p>
+<p><strong>Define Parent and Child Routes</strong></p>
+<pre><code class="language-jsx">import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
+
+// Import components
+import DashboardLayout from './components/DashboardLayout';
+import Home from './components/Home';
+import Profile from './components/Profile';
+import Settings from './components/Settings';
+
+function App() {
+  return (
+    &lt;Router&gt;
+      &lt;Routes&gt;
+        {/* Parent route with shared layout */}
+        &lt;Route path=&quot;/dashboard&quot; element={&lt;DashboardLayout /&gt;}&gt;
+          {/* Nested child routes */}
+          &lt;Route index element={&lt;Home /&gt;} /&gt; {/* Default route */}
+          &lt;Route path=&quot;profile&quot; element={&lt;Profile /&gt;} /&gt;
+          &lt;Route path=&quot;settings&quot; element={&lt;Settings /&gt;} /&gt;
+        &lt;/Route&gt;
+        {/* Standalone route */}
+        &lt;Route path=&quot;/&quot; element={&lt;h1&gt;Welcome to the App&lt;/h1&gt;} /&gt;
+      &lt;/Routes&gt;
+    &lt;/Router&gt;
+  );
+}
+
+export default App;
+</code></pre>
+<p><strong>Create the Parent Layout Component</strong></p>
+<p>The parent layout (<code>DashboardLayout</code>) includes shared UI elements and an <code>Outlet</code> to render child components.</p>
+<pre><code class="language-jsx">import React from 'react';
+import { Link, Outlet } from 'react-router-dom';
+
+function DashboardLayout() {
+  return (
+    &lt;div&gt;
+      &lt;header&gt;
+        &lt;nav&gt;
+          &lt;ul&gt;
+            &lt;li&gt;&lt;Link to=&quot;/dashboard&quot;&gt;Home&lt;/Link&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;Link to=&quot;/dashboard/profile&quot;&gt;Profile&lt;/Link&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;Link to=&quot;/dashboard/settings&quot;&gt;Settings&lt;/Link&gt;&lt;/li&gt;
+          &lt;/ul&gt;
+        &lt;/nav&gt;
+      &lt;/header&gt;
+      &lt;main&gt;
+        {/* Render child routes here */}
+        &lt;Outlet /&gt;
+      &lt;/main&gt;
+    &lt;/div&gt;
+  );
+}
+
+export default DashboardLayout;
+</code></pre>
+<ul>
+<li><strong>Parent Route</strong>: The <code>/dashboard</code> route defines a shared layout using <code>DashboardLayout</code>.</li>
+<li><strong>Child Routes</strong>: Nested routes (<code>profile</code>, <code>settings</code>) are rendered inside the <code>Outlet</code> of the parent layout.</li>
+<li><strong>Index Route</strong>: The <code>index</code> route specifies the default child route when the parent route is accessed directly.</li>
+</ul>
+<hr>
+</section><section><h2 id="route-protection-authentication-checks">Route Protection (Authentication Checks)</h2>
+<p>Route protection ensures that certain routes are accessible only to authorized users. For example:</p>
+<ul>
+<li>Restrict access to a dashboard or admin panel unless the user is authenticated.</li>
+<li>Redirect unauthorized users to a login page.</li>
+</ul>
+<h3 id="implementing-route-protection"><strong>Implementing Route Protection</strong></h3>
+<p>To protect routes, you can create a custom wrapper component (<code>ProtectedRoute</code>) that checks authentication status before rendering the protected component.</p>
+<h3 id="step-1-create-a-protected-route-component"><strong>Step 1: Create a Protected Route Component</strong></h3>
+<pre><code class="language-jsx">import React from 'react';
+import { Navigate, Outlet } from 'react-router-dom';
+
+function ProtectedRoute({ isAuthenticated }) {
+  if (!isAuthenticated) {
+    // Redirect to login page if not authenticated
+    return &lt;Navigate to=&quot;/login&quot; /&gt;;
+  }
+  // Render the child routes if authenticated
+  return &lt;Outlet /&gt;;
+}
+
+export default ProtectedRoute;
+</code></pre>
+<h3 id="step-2-use-the-protected-route-in-your-application"><strong>Step 2: Use the Protected Route in Your Application</strong></h3>
+<p>Wrap the protected routes with the <code>ProtectedRoute</code> component.</p>
+<pre><code class="language-jsx">import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './components/Login';
+import DashboardLayout from './components/DashboardLayout';
+import Home from './components/Home';
+import Profile from './components/Profile';
+import Settings from './components/Settings';
+
+function App() {
+  const isAuthenticated = true; // Replace with actual authentication logic
+
+  return (
+    &lt;Router&gt;
+      &lt;Routes&gt;
+        {/* Public routes */}
+        &lt;Route path=&quot;/login&quot; element={&lt;Login /&gt;} /&gt;
+
+        {/* Protected routes */}
+        &lt;Route element={&lt;ProtectedRoute isAuthenticated={isAuthenticated} /&gt;}&gt;
+          &lt;Route path=&quot;/dashboard&quot; element={&lt;DashboardLayout /&gt;}&gt;
+            &lt;Route index element={&lt;Home /&gt;} /&gt;
+            &lt;Route path=&quot;profile&quot; element={&lt;Profile /&gt;} /&gt;
+            &lt;Route path=&quot;settings&quot; element={&lt;Settings /&gt;} /&gt;
+          &lt;/Route&gt;
+        &lt;/Route&gt;
+
+        {/* Default route */}
+        &lt;Route path=&quot;/&quot; element={&lt;h1&gt;Welcome to the App&lt;/h1&gt;} /&gt;
+      &lt;/Routes&gt;
+    &lt;/Router&gt;
+  );
+}
+
+export default App;
+</code></pre>
+<h3 id="step-3-simulate-authentication-logic"><strong>Step 3: Simulate Authentication Logic</strong></h3>
+<p>In a real-world application, replace the hardcoded <code>isAuthenticated</code> value with actual authentication logic, such as checking a token in local storage or making an API call.</p>
+<pre><code class="language-jsx">const isAuthenticated = localStorage.getItem('authToken') !== null;
+</code></pre>
+<p>Explination</p>
+<ul>
+<li><strong><code>ProtectedRoute</code></strong>: A custom component that checks authentication before rendering child routes.</li>
+<li><strong>Fallback Behavior</strong>: If the user is not authenticated, they are redirected to the login page.</li>
+<li><strong>Modularity</strong>: Encapsulating route protection logic in a separate component keeps your code clean and reusable.</li>
+</ul>
+<hr>
+</section><section><h2 id="handling-404-pages-not-found">Handling 404 Pages (Not Found)</h2>
+<p>React Router is a versatile tool for managing edge cases in routing, such as handling <strong>404 pages</strong> and implementing <strong>redirects</strong>. These features ensure your application can gracefully manage invalid routes while guiding users to the appropriate destinations. we’ll explore how to implement these functionalities using <code>react-router-dom</code>, <code>useParams</code>, and <code>useNavigate</code> in a cohesive and user-friendly way.</p>
+<p>A 404 page is displayed when a user navigates to a route that doesn’t exist in your application. Instead of showing a blank screen or an error, you can provide a friendly message and guide them back to valid routes. This not only improves user experience but also ensures your app feels polished and professional.</p>
+<h3 id="how-to-implement-a-404-page">How to Implement a 404 Page</h3>
+<p>To handle 404 errors, define a catch-all route (<code>*</code>) at the end of your route configuration. This ensures any unmatched routes are redirected to a dedicated &quot;Not Found&quot; page.</p>
+<p><strong>Example</strong>:</p>
+<pre><code class="language-jsx">import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+
+// Import components
+import Home from './components/Home';
+import About from './components/About';
+import NotFound from './components/NotFound';
+
+function App() {
+  return (
+    &lt;Router&gt;
+      &lt;div&gt;
+        &lt;nav&gt;
+          &lt;ul&gt;
+            &lt;li&gt;&lt;Link to=&quot;/&quot;&gt;Home&lt;/Link&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;Link to=&quot;/about&quot;&gt;About&lt;/Link&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;Link to=&quot;/invalid-route&quot;&gt;Invalid Route&lt;/Link&gt;&lt;/li&gt;
+          &lt;/ul&gt;
+        &lt;/nav&gt;
+
+        {/* Define routes */}
+        &lt;Routes&gt;
+          &lt;Route path=&quot;/&quot; element={&lt;Home /&gt;} /&gt;
+          &lt;Route path=&quot;/about&quot; element={&lt;About /&gt;} /&gt;
+          {/* Catch-all route for 404 */}
+          &lt;Route path=&quot;*&quot; element={&lt;NotFound /&gt;} /&gt;
+        &lt;/Routes&gt;
+      &lt;/div&gt;
+    &lt;/Router&gt;
+  );
+}
+
+export default App;
+</code></pre>
+<p><strong>Creating the 404 Component</strong></p>
+<p>The <code>NotFound</code> component provides a friendly message and navigation options to help users find their way back.</p>
+<pre><code class="language-jsx">import React from 'react';
+import { Link } from 'react-router-dom';
+
+function NotFound() {
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;404 - Page Not Found&lt;/h1&gt;
+      &lt;p&gt;The page you’re looking for doesn’t exist.&lt;/p&gt;
+      &lt;Link to=&quot;/&quot;&gt;Go Back to Home&lt;/Link&gt;
+    &lt;/div&gt;
+  );
+}
+
+export default NotFound;
+</code></pre>
+<ul>
+<li>The <strong>catch-all route (<code>*</code>)</strong> ensures no invalid route goes unnoticed.</li>
+<li>A well-designed 404 page keeps users engaged and reduces frustration by guiding them back to valid paths.</li>
+</ul>
+</section><section><h2 id="redirecting-users">Redirecting Users</h2>
+<p>Redirects automatically navigate users from one route to another. They’re particularly useful for:</p>
+<ul>
+<li>Redirecting users after login or logout.</li>
+<li>Managing legacy URLs or deprecated routes.</li>
+<li>Directing users to a default page when they access incomplete or outdated paths.</li>
+</ul>
+<h3 id="implementing-redirects">Implementing Redirects</h3>
+<p>React Router offers two primary ways to handle redirects:</p>
+<ol>
+<li>Using the <code>Navigate</code> component for declarative navigation.</li>
+<li>Using the <code>useNavigate</code> hook for programmatic control.</li>
+</ol>
+<p><strong>Example: Redirect with <code>Navigate</code></strong></p>
+<p>The <code>Navigate</code> component allows you to redirect users declaratively within your JSX.</p>
+<pre><code class="language-jsx">import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
+function App() {
+  return (
+    &lt;Router&gt;
+      &lt;Routes&gt;
+        {/* Redirect from /old-home to /home */}
+        &lt;Route path=&quot;/old-home&quot; element={&lt;Navigate to=&quot;/&quot; /&gt;} /&gt;
+        &lt;Route path=&quot;/&quot; element={&lt;h1&gt;Welcome to the New Home Page&lt;/h1&gt;} /&gt;
+      &lt;/Routes&gt;
+    &lt;/Router&gt;
+  );
+}
+
+export default App;
+</code></pre>
+<p><strong>Example: Redirect with <code>useNavigate</code></strong></p>
+<p>For more dynamic scenarios, like form submissions or authentication checks, use the <code>useNavigate</code> hook.</p>
+<pre><code class="language-jsx">import React from 'react';
+import { useNavigate } from 'react-router-dom';
+
+function LoginForm() {
+  const navigate = useNavigate();
+
+  const handleSubmit = () =&gt; {
+    // Simulate authentication logic
+    const isAuthenticated = true;
+
+    if (isAuthenticated) {
+      navigate('/dashboard'); // Redirect to dashboard after login
+    }
+  };
+
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;button type=&quot;submit&quot;&gt;Login&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}
+
+export default LoginForm;
+</code></pre>
+<ul>
+<li><strong><code>Navigate</code></strong>: Ideal for static or predefined redirects.</li>
+<li><strong><code>useNavigate</code></strong>: Perfect for dynamic scenarios where navigation depends on user actions or API responses.</li>
+</ul>
+<hr>
+</section><section><h2 id="tools-overview-react-router-dom-useparams-and-usenavigate">Tools Overview: <code>react-router-dom</code>, <code>useParams</code>, and <code>useNavigate</code></h2>
+<p>Let’s recap the tools we’ve discussed:</p>
+<p><strong><code>react-router-dom</code></strong>:</p>
+<ul>
+<li>The backbone of routing in React applications.</li>
+<li>Provides essential components like <code>BrowserRouter</code>, <code>Routes</code>, <code>Route</code>, and <code>Navigate</code>.</li>
+</ul>
+<p><strong><code>useParams</code></strong>:</p>
+<ul>
+<li>Extracts dynamic parameters from the URL (e.g., <code>/users/:userId</code>).</li>
+<li>Useful for displaying content based on variable data, such as user profiles or product details.</li>
+</ul>
+<p><strong><code>useNavigate</code></strong>:</p>
+<ul>
+<li>Enables programmatic navigation, making it ideal for handling redirects after actions like form submissions or authentication checks.</li>
+</ul>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>React Router enhances SPAs by enabling dynamic, nested, and protected routing. Mastering these concepts allows you to build scalable and user-friendly applications with efficient navigation. Whether handling authentication, redirects, or 404 errors, React Router provides the tools needed for a polished user experience.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

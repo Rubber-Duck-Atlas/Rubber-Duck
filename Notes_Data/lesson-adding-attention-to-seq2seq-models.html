@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Adding Attention To Seq2seq Models</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-adding-attention-to-seq2seq-models">Lesson: Adding Attention to Seq2Seq Models</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In the previous lessons, we implemented a basic Sequence-to-Sequence (Seq2Seq) model using TensorFlow and Keras to translate English phrases to French. We identified its limitation: the fixed-length bottleneck, where the encoder compresses all input information into a single context vector. This can hinder performance for longer sequences.</p>
+<p>In this lesson, you will enhance the Seq2Seq model by adding an <strong>attention mechanism</strong>, which allows the decoder to focus on relevant parts of the input sequence dynamically. You will modify the existing model, implement the attention layer, train the updated model, and visualize attention weights to understand how the model prioritizes input tokens during translation.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Implement</strong> an attention mechanism in a Seq2Seq model using TensorFlow/Keras.</li>
+<li><strong>Train</strong> the attention-enhanced model for English-to-French translation.</li>
+<li><strong>Visualize</strong> attention weights to interpret the model's focus during translation.</li>
+</ol>
+<hr>
+</section><section><h2 id="enhancing-the-seq2seq-model-with-attention">Enhancing the Seq2Seq Model with Attention</h2>
+<p>The traditional Seq2Seq architecture relies on compressing the entire input sequence into a single fixed-length vector—an approach that often degrades in quality for long or complex sequences. To overcome this limitation, we incorporate an attention mechanism into the Seq2Seq model. Attention allows the decoder to dynamically focus on relevant parts of the input sequence at each time step, rather than depending solely on the encoder's final state. This enhancement leads to significantly better performance in tasks such as translation, summarization, and question answering. In this section, we begin by preparing a small English–French parallel corpus tailored for training a Seq2Seq model with attention. Subsequent sections will build on this foundation by integrating attention into the model architecture.</p>
+<hr>
+</section><section><h2 id="dataset-preparation">Dataset Preparation</h2>
+<p>To demonstrate the benefits of attention, we expand the dataset used in the previous lesson. This parallel corpus contains basic English phrases and their French translations. It is structured to support attention by incorporating special tokens and ensuring alignment between encoder and decoder inputs.</p>
+<pre><code class="language-python">from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+</code></pre>
+<h3 id="sample-parallel-corpus">Sample Parallel Corpus</h3>
+<pre><code class="language-python"> # Sample dataset (expanded from the previous lesson)
+data = [
+    ('hello', 'bonjour'),
+    ('how are you', 'comment ça va'),
+    ('i am fine', 'je vais bien'),
+    ('thank you', 'merci'),
+    ('good night', 'bonne nuit'),
+    ('what is your name', 'comment vous appelez-vous'),
+    ('i love you', 'je t’aime'),
+    ('see you later', 'à plus tard')
+]
+</code></pre>
+<h3 id="preprocessing-and-tokenization">Preprocessing and Tokenization</h3>
+<pre><code class="language-python">input_texts, target_texts = zip(*data)
+target_texts = ['&lt;sos&gt; ' + text + ' &lt;eos&gt;' for text in target_texts]
+
+input_tokenizer = Tokenizer(filters='')
+target_tokenizer = Tokenizer(filters='')
+
+input_tokenizer.fit_on_texts(input_texts)
+target_tokenizer.fit_on_texts(target_texts)
+
+input_sequences = input_tokenizer.texts_to_sequences(input_texts)
+target_sequences = target_tokenizer.texts_to_sequences(target_texts)
+</code></pre>
+<h3 id="sequence-padding">Sequence Padding</h3>
+<pre><code class="language-python">max_input_len = max(len(seq) for seq in input_sequences)
+max_target_len = max(len(seq) for seq in target_sequences)
+
+encoder_input_data = pad_sequences(input_sequences, maxlen=max_input_len, padding='post')
+
+decoder_input_data = pad_sequences(
+    [seq[:-1] for seq in target_sequences], maxlen=max_target_len - 1, padding='post')
+
+decoder_target_data = pad_sequences(
+    [seq[1:] for seq in target_sequences], maxlen=max_target_len - 1, padding='post')
+</code></pre>
+<h3 id="decoder-target-data-example">Decoder Target Data Example</h3>
+<pre><code class="language-python">decoder_target_data
+</code></pre>
+<p><strong>Expected Output:</strong></p>
+<pre><code class="language-makefile">array([[ 5,  2,  0,  0],
+       [ 3,  6,  7,  2],
+       [ 4,  8,  9,  2],
+       [10,  2,  0,  0],
+       [11, 12,  2,  0],
+       [ 3, 13, 14,  2],
+       [ 4, 15,  2,  0],
+       [16, 17, 18,  2]], dtype=int32)
+</code></pre>
+<blockquote>
+<p>This matrix shows the integer token sequences the model will learn to predict. Each row corresponds to a French sentence without the <code>&lt;sos&gt;</code> token, padded to the same length. The <code>&lt;eos&gt;</code> token (2 in this example) marks the end of a prediction.</p>
+</blockquote>
+<h3 id="summary">Summary</h3>
+<p>This dataset setup ensures that:</p>
+<ul>
+<li>Each sequence is consistently padded and aligned.</li>
+<li>Start (<code>&lt;sos&gt;</code>) and end (<code>&lt;eos&gt;</code>) tokens guide the decoder during generation.</li>
+<li>The model is now ready to benefit from attention mechanisms</li>
+</ul>
+<p>To implement attention in a Seq2Seq framework, we begin by revisiting the model architecture. The attention mechanism requires access to all encoder hidden states at each decoding step, rather than just the final state. This architectural change enhances the model’s ability to handle long or complex sequences. In the next step, we will construct the attention-enhanced Seq2Seq model by modifying the encoder to return full hidden states and integrating an attention layer into the decoder pipeline.</p>
+<hr>
+</section><section><h2 id="step-1-building-the-attention-enhanced-model">Step 1: Building the Attention-Enhanced Model</h2>
+<p>To improve upon the classical Seq2Seq model's limitations, particularly its inability to dynamically focus on relevant parts of the input—we now integrate an attention mechanism into the architecture. Specifically, we employ a Bahdanau-style attention layer, which allows the decoder to attend selectively to all encoder outputs at each time step. This enhancement leads to better performance on longer or structurally complex sequences by enabling the model to learn soft alignments between source and target tokens.</p>
+<h3 id="model-parameters-and-vocabulary-setup">Model Parameters and Vocabulary Setup</h3>
+<p>Before defining the model architecture, we initialize important parameters and determine vocabulary sizes for both source and target languages.</p>
+<pre><code class="language-python">from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, LSTM, Embedding, Dense, Attention
+
+# Latent dimensionality for embeddings and LSTM units
+latent_dim = 64
+
+# Vocabulary sizes (input and output)
+vocab_in_size = len(input_tokenizer.word_index) + 1
+vocab_out_size = len(target_tokenizer.word_index) + 1
+</code></pre>
+<h3 id="encoder-definition">Encoder Definition</h3>
+<p>The encoder processes the input sequence and returns:</p>
+<ul>
+<li>The sequence of all hidden states (needed for attention)</li>
+<li>The final hidden and cell states (used to initialize the decoder)</li>
+</ul>
+<pre><code class="language-python"># Encoder definition
+encoder_inputs = Input(shape=(None,))
+enc_emb = Embedding(input_dim=vocab_in_size, output_dim=latent_dim)(encoder_inputs)
+
+# LSTM returns sequences and final states
+encoder_outputs, state_h, state_c = LSTM(
+    latent_dim, return_sequences=True, return_state=True
+)(enc_emb)
+
+# Store the final encoder states for initializing the decoder
+encoder_states = [state_h, state_c]
+</code></pre>
+<h3 id="decoder-definition-with-attention">Decoder Definition with Attention</h3>
+<p>The decoder generates the output sequence while attending to relevant parts of the input via the attention mechanism.</p>
+<pre><code class="language-python"># Decoder input layer
+decoder_inputs = Input(shape=(None,))
+dec_emb_layer = Embedding(input_dim=vocab_out_size, output_dim=latent_dim)
+dec_emb = dec_emb_layer(decoder_inputs)
+
+# Decoder LSTM uses the encoder's final states as initial state
+decoder_lstm = LSTM(latent_dim, return_sequences=True, return_state=True)
+decoder_outputs, _, _ = decoder_lstm(dec_emb, initial_state=encoder_states)
+
+# Attention mechanism: aligns decoder output with encoder output
+attention = Attention()
+attention_output = attention([decoder_outputs, encoder_outputs])
+
+# Here we simplify by using attention output directly
+decoder_concat = attention_output
+
+# Final output layer: predicts vocabulary token probabilities
+decoder_dense = Dense(vocab_out_size, activation='softmax')
+decoder_outputs = decoder_dense(decoder_concat)
+</code></pre>
+<h3 id="attention-integration">Attention Integration</h3>
+<p>We now align the decoder outputs with the encoder's full sequence of hidden states using a <strong>Bahdanau-style attention mechanism</strong>.</p>
+<pre><code class="language-python"># Attention layer computes alignment between decoder outputs and encoder outputs
+attention = Attention()
+
+# Output: contextually weighted representation of encoder outputs
+attention_output = attention([decoder_outputs, encoder_outputs])
+</code></pre>
+<blockquote>
+<p><strong>Note</strong>: The <code>Attention</code> layer used here computes dot-product attention, which behaves similarly to Bahdanau-style when integrated with LSTM output sequences.</p>
+</blockquote>
+<h3 id="concatenation-and-output-prediction">Concatenation and Output Prediction</h3>
+<p>Here, we simplify by passing the attention-weighted outputs directly into the final dense layer, which predicts the next token at each timestep.</p>
+<pre><code class="language-python"># Use attention output directly for prediction
+decoder_concat = attention_output
+
+# Output layer: predicts vocabulary token probabilities
+decoder_dense = Dense(vocab_out_size, activation='softmax')
+decoder_outputs = decoder_dense(decoder_concat)
+</code></pre>
+<h3 id="summary-1">Summary</h3>
+<ul>
+<li>The encoder now outputs <strong>all hidden states</strong> to support attention.</li>
+<li>The decoder <strong>attends to all encoder outputs</strong> at each decoding step, improving alignment between source and target.</li>
+<li>The attention-enhanced model allows more accurate and context-sensitive sequence generation.</li>
+</ul>
+<p>This completes the architecture definition. In the next step, we will <strong>compile and train</strong> the attention-augmented model using the prepared dataset.</p>
+<hr>
+</section><section><h2 id="step-2-compiling-and-training-the-attention-enhanced-seq2seq-model">Step 2: Compiling and Training the Attention-Enhanced Seq2Seq Model</h2>
+<p>With the architecture of the attention-augmented Seq2Seq model defined, the next step is to compile and train it. This involves specifying the optimization strategy and loss function, followed by fitting the model to the preprocessed data. Given that the target outputs are sequences of integer-encoded tokens (not one-hot vectors), we use <code>sparse_categorical_crossentropy</code> as the appropriate loss function.</p>
+<h3 id="model-compilation">Model Compilation</h3>
+<p>We assemble the model using Keras' functional API and specify the following training configurations:</p>
+<ul>
+<li><strong>Optimizer</strong>: <code>Adam</code>—commonly used for sequence models due to its adaptive learning rate.</li>
+<li><strong>Loss Function</strong>: <code>sparse_categorical_crossentropy</code>—handles integer-encoded targets efficiently.</li>
+<li><strong>Metric</strong>: <code>accuracy</code>—monitors the proportion of correctly predicted tokens during training.</li>
+</ul>
+<pre><code class="language-python"># Assemble the full model
+model = Model([encoder_inputs, decoder_inputs], decoder_outputs)
+
+# Compile the model
+model.compile(
+    optimizer='adam',
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy']
+)
+</code></pre>
+<h3 id="model-training">Model Training</h3>
+<p>We now train the model using the input and target sequences prepared earlier. The <code>decoder_target_data</code> is expanded in its last dimension to match the expected shape of <code>(samples, timesteps, 1)</code> required for sparse loss computation.</p>
+<pre><code class="language-python"># Train the model
+model.fit(
+    [encoder_input_data, decoder_input_data],
+    decoder_target_data[..., None],  # Reshape to (batch_size, sequence_length, 1)
+    epochs=500,
+    verbose=1  # Use 1 to display progress per epoch
+)
+</code></pre>
+<p><strong>Expected Output</strong></p>
+<pre><code class="language-makefile">Epoch 1/500
+1/1 ━━━━━━━━━━━━━━━━━━━━ 6s 6s/step - accuracy: 0.0000e+00 - loss: 2.9460
+Epoch 2/500
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 91ms/step - accuracy: 0.0000e+00 - loss: 2.9419
+...
+Epoch 499/500
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 131ms/step - accuracy: 0.9688 - loss: 0.1192
+Epoch 500/500
+1/1 ━━━━━━━━━━━━━━━━━━━━ 0s 249ms/step - accuracy: 0.9688 - loss: 0.1187
+</code></pre>
+<blockquote>
+<p>These results reflect a successful convergence over the toy dataset. While loss decreases steadily, accuracy improves as the model learns to produce correct translations over time.</p>
+</blockquote>
+<h3 id="summary-2">Summary</h3>
+<ul>
+<li>The model is trained end-to-end using encoder–decoder pairs.</li>
+<li>Attention improves the model's ability to align input and output tokens effectively.</li>
+<li>The high accuracy near the end of training reflects mastery of the small dataset.</li>
+</ul>
+<p>In the next step, we will <strong>adapt the model for inference</strong>, allowing it to generate translations one token at a time using the trained attention mechanism.</p>
+<hr>
+</section><section><h2 id="step-3-inference-with-attention">Step 3: Inference with Attention</h2>
+<p>Once the attention-augmented Seq2Seq model has been trained, we need to prepare it for inference, the process of generating translations one token at a time. Unlike training, where the entire target sequence is known and fed to the decoder via teacher forcing, inference must proceed step-by-step, using only the previously generated token and the model’s internal state at each decoding step. To support this, we split the model into two components:</p>
+<ul>
+<li><strong>Encoder Model for Inference</strong>: Encodes the input and returns hidden states and full encoder outputs (for attention).</li>
+<li><strong>Decoder Model for Inference</strong>: Takes the previous token, decoder states, and encoder outputs, and returns the next token prediction along with updated states and attention context.</li>
+</ul>
+<h3 id="constructing-the-inference-models">Constructing the Inference Models</h3>
+<p>To perform inference using the trained attention-based Seq2Seq model, we must construct separate models for the encoder and decoder. These inference models operate differently from the training model: instead of processing entire sequences at once, they generate the output token-by-token, maintaining and updating internal states at each step. This structure enables dynamic decoding and allows attention to guide the generation process.</p>
+<h3 id="encoder-inference-model">Encoder Inference Model</h3>
+<p>The encoder inference model is responsible for processing the entire input sequence and producing two outputs: (1) the full sequence of hidden states, which will be used by the attention mechanism, and (2) the final hidden and cell states, which initialize the decoder. This model is identical to the encoder used during training, except that its outputs are now exposed for use in the decoding process.</p>
+<pre><code class="language-python"># Encoder inference model: outputs encoder hidden states and final LSTM states
+encoder_model = Model(encoder_inputs, [encoder_outputs, state_h, state_c])
+</code></pre>
+<h3 id="decoder-inference-model-with-attention">Decoder Inference Model with Attention</h3>
+<p>Unlike training, where the decoder receives the entire target sequence at once, inference requires the decoder to generate the output sequence one token at a time. The decoder inference model is designed to handle this step-by-step process. It takes the previous token, the encoder's output sequence (for attention), and the decoder’s previous hidden states to predict the next token. It also returns updated states for use in subsequent decoding steps. We define a decoder model that:</p>
+<ul>
+<li>Accepts one input token at a time.</li>
+<li>Uses encoder outputs for attention.</li>
+<li>Maintains decoder LSTM states across steps.</li>
+</ul>
+<pre><code class="language-python">from tensorflow.keras.layers import Input
+
+# Inputs for decoder state and encoder outputs during inference
+decoder_state_input_h = Input(shape=(latent_dim,))
+decoder_state_input_c = Input(shape=(latent_dim,))
+decoder_states_inputs = [decoder_state_input_h, decoder_state_input_c]
+encoder_outputs_input_decoder = Input(shape=(None, latent_dim))  # All encoder hidden states
+
+# Decoder receives one token at a time
+decoder_inputs_single = Input(shape=(1,))  # Shape: (batch_size=1, timestep=1)
+
+# Reuse decoder embedding layer
+dec_emb2 = dec_emb_layer(decoder_inputs_single)
+
+# LSTM step with prior states
+decoder_outputs2, state_h2, state_c2 = decoder_lstm(dec_emb2, initial_state=decoder_states_inputs)
+
+# Attention mechanism: aligns decoder output with encoder outputs
+attention_layer = Attention()
+attention_output2 = attention_layer([decoder_outputs2, encoder_outputs_input_decoder])
+
+# Prediction via dense layer over attention output
+decoder_outputs2 = decoder_dense(attention_output2)
+
+# Final decoder inference model
+decoder_model = Model(
+    [decoder_inputs_single, encoder_outputs_input_decoder] + decoder_states_inputs,
+    [decoder_outputs2, attention_output2, state_h2, state_c2]
+)
+
+decoder_model.summary()
+</code></pre>
+<p><strong>Model Summary (Sample)</strong></p>
+<pre><code>Model: &quot;decoder_model&quot;
+_________________________________________________________________________________
+ Layer (type)                Output Shape              Param #
+=================================================================================
+ input_1 (InputLayer)        [(None, 1)]               0
+ embedding_1 (Embedding)     (None, 1, 64)             1216
+ input_2 (InputLayer)        [(None, 64)]              0
+ input_3 (InputLayer)        [(None, 64)]              0
+ lstm_1 (LSTM)               [(None, 1, 64),           33024
+                              (None, 64),
+                              (None, 64)]
+ input_4 (InputLayer)        [(None, None, 64)]        0
+ attention_1 (Attention)     (None, 1, 64)             0
+ dense_1 (Dense)             (None, 1, vocab_out_size) 1235
+=================================================================================
+Total params: 35,475
+Trainable params: 35,475
+Non-trainable params: 0
+</code></pre>
+<h3 id="integrating-the-attention-mechanism">Integrating the Attention Mechanism</h3>
+<p>At each decoding step, the attention mechanism dynamically computes a context vector by aligning the current decoder state with all encoder hidden states. This context vector helps the decoder focus on the most relevant parts of the input sequence when generating the next token. By integrating attention into the decoder inference model, we enable more accurate and context-aware translation output.</p>
+<h3 id="translation-function-with-attention-tracking">Translation Function with Attention Tracking</h3>
+<p>This function generates output token-by-token, recording attention weights at each step for possible visualization.</p>
+<pre><code class="language-python">def decode_sequence_with_attention(input_seq):
+    # Encode the input and initialize decoder states
+    encoder_outs, state_h, state_c = encoder_model.predict(input_seq)
+    states_value = [state_h, state_c]
+
+    # Start the target sequence with &lt;sos&gt;
+    target_seq = np.array([[target_tokenizer.word_index['&lt;sos&gt;']]])
+
+    decoded_sentence = []
+    attention_weights_list = []
+    stop_condition = False
+
+    while not stop_condition:
+        # Predict next token
+        output_tokens, attention_output, h, c = decoder_model.predict(
+            [target_seq, encoder_outs] + states_value
+        )
+
+        # Get the highest probability token
+        sampled_token_index = np.argmax(output_tokens[0, -1, :])
+        sampled_word = target_tokenizer.index_word.get(sampled_token_index, '[UNKNOWN]')
+
+        # Check for end-of-sequence or length limit
+        if sampled_word == '&lt;eos&gt;' or len(decoded_sentence) &gt; max_target_len:
+            stop_condition = True
+        else:
+            decoded_sentence.append(sampled_word)
+            attention_weights_list.append(attention_output[0])  # Shape: (1, max_input_len)
+
+        # Prepare next decoder input and update states
+        target_seq = np.array([[sampled_token_index]])
+        states_value = [h, c]
+
+    return ' '.join(decoded_sentence), attention_weights_list
+</code></pre>
+<h3 id="summary-3">Summary</h3>
+<ul>
+<li>The inference process uses separate encoder and decoder models.</li>
+<li>Attention allows the decoder to focus on different parts of the input dynamically.</li>
+<li>The model now generates translations step-by-step, enabling visualization and interpretability via attention weights.</li>
+</ul>
+<p>In the next step, we will <strong>test the model</strong> with new input sentences and optionally <strong>visualize the attention</strong> for interpretability.</p>
+<hr>
+</section><section><h2 id="step-4-visualizing-attention-weights">Step 4: Visualizing Attention Weights</h2>
+<p>One of the key benefits of integrating attention into a Seq2Seq model is its interpretability. Attention mechanisms allow us to see which input tokens the model focuses on while generating each word in the output sequence. To make this behavior more tangible, we can visualize the attention weights as a <strong>heatmap</strong>, which displays how much &quot;attention&quot; the decoder pays to each input token at every step of translation. This visualization helps to:</p>
+<ul>
+<li>Interpret the translation process.</li>
+<li>Diagnose translation errors or mismatches.</li>
+<li>Gain insights into model behavior, especially in educational or debugging contexts.</li>
+</ul>
+<h3 id="implementing-attention-visualization">Implementing Attention Visualization</h3>
+<p>We define a function to display the attention weights using Matplotlib and Seaborn:</p>
+<pre><code class="language-python">import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+</code></pre>
+<p><strong>Heatmap Function Definition</strong></p>
+<pre><code class="language-python">def plot_attention_weights(attention_weights, input_text, decoded_sentence):
+    # Skip if data is missing
+    if not attention_weights or not decoded_sentence:
+        print(&quot;No attention weights or empty translation; skipping visualization.&quot;)
+        return
+
+    # Tokenize input and output
+    input_tokens = input_text.split()
+    output_tokens = decoded_sentence.split()
+
+    # Convert attention list to NumPy array and remove redundant dimensions
+    attn_matrix = np.squeeze(np.array(attention_weights), axis=1)
+
+    # Crop matrix to actual number of tokens
+    attn_matrix = attn_matrix[:len(output_tokens), :len(input_tokens)]
+
+    # Create heatmap
+    plt.figure(figsize=(max(8, len(input_tokens)), max(6, len(output_tokens))))
+    sns.heatmap(attn_matrix, 
+                xticklabels=input_tokens, 
+                yticklabels=output_tokens, 
+                cmap='Blues', 
+                vmin=0, vmax=1)
+
+    plt.xlabel('Input Tokens')
+    plt.ylabel('Output Tokens')
+    plt.title('Attention Weights Heatmap')
+    plt.show()
+</code></pre>
+<h3 id="testing-the-visualization">Testing the Visualization</h3>
+<p>We now run the translation pipeline on an input sentence and visualize its attention:</p>
+<pre><code class="language-python"># Example input sentence
+test_input = 'how are you'
+
+# Tokenize and pad the input
+test_seq = input_tokenizer.texts_to_sequences([test_input])
+test_seq = pad_sequences(test_seq, maxlen=max_input_len, padding='post')
+
+# Perform inference using the attention-enabled decoder
+decoded_sentence, attn_weights = decode_sequence_with_attention(test_seq)
+
+# Print results and display attention heatmap
+print(&quot;Input:&quot;, test_input)
+print(&quot;Predicted Translation:&quot;, decoded_sentence)
+plot_attention_weights(attn_weights, test_input, decoded_sentence)
+</code></pre>
+<p><strong>Expected Output</strong></p>
+<pre><code>Input: how are you
+Predicted Translation: comment ça va
+</code></pre>
+<p>A corresponding heatmap will be displayed, showing how each output word aligns with the input tokens.</p>
+<p><img src="../_assets/attention_weights.png" alt="attention_weights"></p>
+<h3 id="summary-4">Summary</h3>
+<ul>
+<li>The attention heatmap reveals which parts of the input the model focuses on at each decoding step.</li>
+<li>This improves model transparency and allows us to inspect and interpret alignment behaviors.</li>
+<li>Such visualizations are especially useful in error analysis, educational demonstrations, and model debugging.</li>
+</ul>
+<hr>
+</section><section><h2 id="step-5-bleu-score-evaluation">Step 5: BLEU Score Evaluation</h2>
+<p>To evaluate the performance of our attention-enhanced Seq2Seq model, we apply the BLEU (Bilingual Evaluation Understudy) metric. BLEU is a widely used method for assessing machine translation quality by comparing model-generated translations (<em>hypotheses</em>) with one or more correct <em>reference</em> translations. It operates by measuring n-gram overlap between the hypothesis and reference. Although our model is trained on a small dataset, BLEU can still provide a useful indication of how well the model has learned basic translation mappings.</p>
+<h3 id="bleu-evaluation-procedure">BLEU Evaluation Procedure</h3>
+<p>We use sentence-level BLEU scores from the <code>nltk.translate.bleu_score</code> module. Each hypothesis is evaluated against its corresponding reference.</p>
+<pre><code class="language-python">from nltk.translate.bleu_score import sentence_bleu
+</code></pre>
+<p><strong>Define Test Data</strong></p>
+<pre><code class="language-python"># Ground-truth reference translations (tokenized)
+references = [['merci'], ['comment ça va']]
+
+# Corresponding source sentences (English)
+tests = ['thank you', 'how are you']
+</code></pre>
+<p><strong>Evaluate Predictions</strong></p>
+<pre><code class="language-python"># Evaluate each test input against its reference
+for sentence, ref in zip(tests, references):
+    # Preprocess the input sentence
+    seq = input_tokenizer.texts_to_sequences([sentence])
+    seq = pad_sequences(seq, maxlen=max_input_len, padding='post')
+
+    # Run inference using the attention-enabled decoder
+    hyp, _ = decode_sequence_with_attention(seq)
+
+    # Output results
+    print(f&quot;Input: {sentence}&quot;)
+    print(f&quot;Hypothesis: {hyp}&quot;)
+    print(&quot;BLEU:&quot;, sentence_bleu([ref], hyp.split()))
+</code></pre>
+<p><strong>Sample Output</strong></p>
+<pre><code class="language-makefile">Input: thank you
+Hypothesis: merci
+BLEU: 1.0
+
+Input: how are you
+Hypothesis: comment ça va
+BLEU: 1.0
+</code></pre>
+<h3 id="summary-5">Summary</h3>
+<ul>
+<li>The BLEU score quantifies how closely a generated sentence matches a reference.</li>
+<li>A score of <strong>1.0</strong> indicates a perfect match, expected in this toy dataset with exact phrase pairs.</li>
+<li>BLEU is a reliable metric for <strong>automatic evaluation</strong>, especially when evaluating at <strong>corpus-level</strong> on larger datasets.</li>
+</ul>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>In this lesson, you extended a basic Seq2Seq model by adding the Bahdanau attention mechanism, enabling the decoder to compute a context vector that dynamically attends to relevant input tokens. You also learned to compute and visualize attention weights, providing interpretability and insight into the translation process. This marks an improvement over vanilla Seq2Seq models by addressing the fixed-length bottleneck issue, improving translation quality for short English–French phrases. In the next activity, you will train and evaluate both attention-based and non-attention models, comparing their performance and analyzing how attention affects translation quality.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

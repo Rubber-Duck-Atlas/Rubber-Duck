@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Fine Tuning Bert Text Classification</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-fine-tuning-bert-for-text-classification">Lesson: Fine-Tuning BERT for Text Classification</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In the previous lesson, we examined pretrained Transformer models such as BERT, GPT, and T5, and discussed how they leverage transfer learning through pretraining and fine-tuning. Text classification is one of the most common tasks in natural language processing (NLP). From spam detection and sentiment analysis to phishing detection and topic categorization, the ability to assign categories to textual inputs is foundational to many applications.</p>
+<p>In this lesson, we focus on fine-tuning BERT (Bidirectional Encoder Representations from Transformers) for a binary classification task using the Hugging Face ecosystem. We use a real-world dataset of website URLs and metadata to detect phishing attempts. Instead of training a model from scratch, we leverage BERT's powerful pre-trained language representations and adapt them with minimal effort to our classification task.</p>
+<p>By the end of this lesson, you will have a solid understanding of how to adapt BERT to a supervised classification task using the Hugging Face Transformers and Datasets libraries.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Explain</strong> how the BERT architecture is adapted for text classification tasks.</li>
+<li><strong>Prepare</strong> and tokenize text classification datasets using a pre-trained tokenizer.</li>
+<li><strong>Configure</strong> training arguments and evaluate a fine-tuned model using standard metrics.</li>
+</ol>
+<hr>
+</section><section><h2 id="overview-of-bert-for-classification">Overview of BERT for Classification</h2>
+<p>This lesson focuses on fine-tuning BERT for text classification tasks such as sentiment analysis, spam detection, or topic identification. To understand how BERT can be adapted to such tasks, we first examine how it is pre-trained. BERT (Bidirectional Encoder Representations from Transformers) is a general-purpose language understanding model, pre-trained on large volumes of unannotated text using two unsupervised objectives:</p>
+<ul>
+<li><strong>Masked Language Modeling (MLM)</strong>: Random tokens in the input are replaced with a <code>[MASK]</code> token, and the model learns to predict the original tokens from context. This enables BERT to capture <strong>bidirectional contextual information</strong>.</li>
+<li><strong>Next Sentence Prediction (NSP)</strong>: BERT is trained to determine whether one sentence logically follows another. This enhances its ability to model <strong>inter-sentence relationships</strong>, which are crucial for many NLP tasks.</li>
+</ul>
+<p>These objectives allow BERT to learn <strong>deep, transferable language representations</strong>, which serve as the foundation for downstream applications. In classification tasks, BERT is typically fine-tuned by:</p>
+<ul>
+<li>Adding a classification layer (e.g., a fully connected dense layer) on top of the <code>[CLS]</code> token representation.</li>
+<li>Training the entire model on labeled examples for the specific classification objective.</li>
+</ul>
+<p>This fine-tuning process allows BERT to adapt its general language understanding to the specific decision boundaries required for the classification task at hand.</p>
+<p><img src="../_assets/bert-for-class.png" alt=""></p>
+<blockquote>
+<p>BERT architecture for classification</p>
+</blockquote>
+<hr>
+<h3 id="architecture-adaptation-for-classification">Architecture Adaptation for Classification</h3>
+<p>Having explored how BERT is pre-trained using Masked Language Modeling (MLM) and Next Sentence Prediction (NSP), we now examine how its architecture is adapted for downstream tasks, specifically, text classification. This is a critical step in fine-tuning BERT, enabling it to apply its general language understanding to task-specific objectives.</p>
+<h3 id="from-pretraining-to-downstream-use">From Pretraining to Downstream Use</h3>
+<p>BERT is designed to output a contextual embedding for each token in the input sequence. The <code>[CLS]</code> token, which is prepended to every input during pretraining, is designated to capture an aggregate representation of the entire sequence. This makes it a natural choice for classification tasks, where a fixed-size summary of the input is needed.</p>
+<h3 id="modifying-bert-for-classification">Modifying BERT for Classification</h3>
+<p>To transform BERT into a classifier, the architecture is modified as follows:</p>
+<ol>
+<li>Extract the <code>[CLS]</code> token's final hidden state from the last encoder layer. This vector serves as the representation of the entire input.</li>
+<li>Apply dropout to this vector for regularization, reducing the risk of overfitting during fine-tuning.</li>
+<li>Pass the result through a fully connected (dense) layer, typically followed by a softmax activation for multi-class classification or a sigmoid activation for binary classification.</li>
+</ol>
+<p><strong>Why This Design Works</strong></p>
+<p>This adaptation preserves BERT’s deep contextual understanding from pretraining while enabling it to learn new classification boundaries tailored to the target dataset. Since only a small number of parameters (in the classifier head) are added, fine-tuning remains efficient and data-friendly even with limited labeled data.</p>
+<hr>
+</section><section><h2 id="fine-tuning-bert-on-a-classification-dataset-with-hugging-face">Fine-Tuning BERT on a Classification Dataset with Hugging Face</h2>
+<p>With the architectural adaptation in place, we now shift to practical implementation. In this section, we'll fine-tune a pre-trained BERT model for binary classification using the Hugging Face Transformers library and the <code>&quot;shawhin/phishing-site-classification&quot;</code> dataset.</p>
+<h3 id="preparing-the-environment">Preparing the Environment</h3>
+<p>We begin by installing and importing the necessary libraries, including the <code>evaluate</code> library for computing accuracy.</p>
+<pre><code class="language-python">from datasets import DatasetDict, Dataset, load_dataset
+from transformers import (
+    AutoTokenizer,
+    AutoModelForSequenceClassification,
+    TrainingArguments,
+    Trainer
+)
+
+!pip install evaluate
+import evaluate
+import numpy as np
+from transformers import DataCollatorWithPadding
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li><code>AutoTokenizer</code> and <code>AutoModelForSequenceClassification</code> load the BERT tokenizer and model.</li>
+<li><code>Trainer</code> and <code>TrainingArguments</code> handle training configuration and execution.</li>
+<li><code>evaluate</code> provides accuracy computation.</li>
+<li><code>DataCollatorWithPadding</code> ensures all sequences in a batch have consistent length via dynamic padding.</li>
+</ul>
+<h3 id="loading-the-dataset">Loading the Dataset</h3>
+<p>We use a pre-built phishing site classification dataset hosted on Hugging Face:</p>
+<pre><code class="language-python">dataset_dict = load_dataset(&quot;shawhin/phishing-site-classification&quot;)
+</code></pre>
+<pre><code class="language-python">dataset_dict
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<p>The dataset is loaded as a <code>DatasetDict</code>, typically containing <code>&quot;train&quot;</code> and <code>&quot;test&quot;</code> splits. Each record includes a <code>text</code> field (URL and context) and a <code>label</code> field (1 = phishing, 0 = safe).</p>
+<h3 id="exploring-the-dataset">Exploring the Dataset</h3>
+<p>Before processing, we inspect an individual example to verify format and content:</p>
+<pre><code class="language-python">dataset_dict[&quot;train&quot;][0]
+</code></pre>
+<p>This displays the raw input text and its corresponding label.</p>
+<h3 id="loading-and-applying-the-tokenizer">Loading and Applying the Tokenizer</h3>
+<p>We now load a pre-trained BERT tokenizer and model with a classification head suitable for binary classification:</p>
+<pre><code class="language-python"># Define pre-trained model name
+model_path = &quot;google-bert/bert-base-uncased&quot;
+
+# Load tokenizer
+tokenizer = AutoTokenizer.from_pretrained(model_path)
+
+# Load pre-trained model with classification head
+id2label = {0: &quot;Safe&quot;, 1: &quot;Not Safe&quot;}
+label2id = {&quot;Safe&quot;: 0, &quot;Not Safe&quot;: 1}
+
+model = AutoModelForSequenceClassification.from_pretrained(
+    model_path,
+    num_labels=2,
+    id2label=id2label,
+    label2id=label2id
+)
+</code></pre>
+<p><strong>Explanation</strong>:</p>
+<ul>
+<li><code>AutoModelForSequenceClassification</code> loads BERT with a classification head and softmax layer.</li>
+<li><code>num_labels=2</code> specifies a binary classification task.</li>
+</ul>
+<h3 id="freezing-the-base-model-optional-but-recommended">Freezing the Base Model (Optional but Recommended)</h3>
+<p>Fine-tuning all of BERT’s parameters is resource-intensive. We can instead freeze the base model and train only the final classification layers:</p>
+<pre><code class="language-python"># Freeze all base model parameters
+for name, param in model.base_model.named_parameters():
+    param.requires_grad = False
+
+# Optionally unfreeze specific layers (e.g., pooler)
+for name, param in model.base_model.named_parameters():
+    if &quot;pooler&quot; in name:
+        param.requires_grad = True
+</code></pre>
+<p>This strategy significantly reduces training time and overfitting risks when working with small or medium-sized datasets.</p>
+<hr>
+</section><section><h2 id="formatting-the-dataset-and-launching-fine-tuning">Formatting the Dataset and Launching Fine-Tuning</h2>
+<p>After loading and preparing the model and tokenizer, the next step is to preprocess the dataset, define the evaluation metrics, configure the training process, and launch fine-tuning. This pipeline ensures the model is trained efficiently while tracking performance using standard metrics.</p>
+<h3 id="preprocessing-and-tokenization">Preprocessing and Tokenization</h3>
+<p>We begin by tokenizing the raw text data using the pre-trained BERT tokenizer. This involves truncating longer sequences and preparing them for batch processing:</p>
+<pre><code class="language-python">def preprocess_function(examples):
+    return tokenizer(examples[&quot;text&quot;], truncation=True)
+
+tokenized_data = dataset_dict.map(preprocess_function, batched=True)
+</code></pre>
+<p>To ensure all input sequences in a batch are of uniform length, we use a data collator:</p>
+<pre><code class="language-python">data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+</code></pre>
+<h3 id="defining-the-evaluation-metrics">Defining the Evaluation Metrics</h3>
+<p>To evaluate model performance, we use two metrics:</p>
+<ul>
+<li><strong>Accuracy</strong>: Measures the proportion of correct predictions.</li>
+<li><strong>AUC (Area Under the Curve)</strong>: Captures the quality of probabilistic predictions for binary classification.</li>
+</ul>
+<p>We define a helper function that computes both metrics from model outputs:</p>
+<pre><code class="language-python">accuracy = evaluate.load(&quot;accuracy&quot;)
+auc_score = evaluate.load(&quot;roc_auc&quot;)
+
+def compute_metrics(eval_pred):
+    predictions, labels = eval_pred
+    probabilities = np.exp(predictions) / np.exp(predictions).sum(-1, keepdims=True)
+    positive_class_probs = probabilities[:, 1]
+
+    auc = np.round(auc_score.compute(prediction_scores=positive_class_probs, references=labels)['roc_auc'], 3)
+    predicted_classes = np.argmax(predictions, axis=1)
+    acc = np.round(accuracy.compute(predictions=predicted_classes, references=labels)['accuracy'], 3)
+
+    return {&quot;Accuracy&quot;: acc, &quot;AUC&quot;: auc}
+</code></pre>
+<p>This function ensures our model is assessed both on classification accuracy and how confidently it makes decisions.</p>
+<h3 id="configuring-training-with-trainingarguments">Configuring Training with <code>TrainingArguments</code></h3>
+<p>We define the core training configuration, including batch size, learning rate, number of epochs, and evaluation strategy:</p>
+<pre><code class="language-python">lr = 2e-4
+batch_size = 16
+num_epochs = 4
+
+training_args = TrainingArguments(
+    output_dir=&quot;bert-phishing-classifier_teacher&quot;,
+    learning_rate=lr,
+    per_device_train_batch_size=batch_size,
+    per_device_eval_batch_size=batch_size,
+    num_train_epochs=num_epochs,
+    logging_strategy=&quot;epoch&quot;,
+    eval_strategy=&quot;epoch&quot;,
+    save_strategy=&quot;epoch&quot;,
+    load_best_model_at_end=True,
+    report_to=&quot;none&quot;,
+)
+</code></pre>
+<p>These settings help manage training time, validation checkpoints, and model checkpointing.</p>
+<h3 id="launching-fine-tuning-with-trainer">Launching Fine-Tuning with <code>Trainer</code></h3>
+<p>We now wrap everything into the Hugging Face <code>Trainer</code> class and begin training:</p>
+<pre><code class="language-python">trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=tokenized_data[&quot;train&quot;],
+    eval_dataset=tokenized_data[&quot;test&quot;],
+    tokenizer=tokenizer,
+    data_collator=data_collator,
+    compute_metrics=compute_metrics,
+)
+
+trainer.train()
+</code></pre>
+<p>This automatically handles forward and backward passes, loss computation, and metric logging each epoch.</p>
+<p><strong>Explanation:</strong></p>
+<ul>
+<li><code>train_dataset</code> and <code>eval_dataset</code>: Our processed training and test data.</li>
+<li><code>tokenizer</code>: Passed so that dynamic padding remains consistent.</li>
+<li><code>compute_metrics</code>: Used to calculate accuracy after each evaluation step.</li>
+</ul>
+<h3 id="final-evaluation">Final Evaluation</h3>
+<p>After training, we evaluate the model on the validation set:</p>
+<pre><code class="language-python">predictions = trainer.predict(tokenized_data[&quot;validation&quot;])
+logits = predictions.predictions
+labels = predictions.label_ids
+
+metrics = compute_metrics((logits, labels))
+print(metrics)
+</code></pre>
+<p><strong>Expected Output</strong>:</p>
+<pre><code class="language-python">{'Accuracy': 0.88, 'AUC': 0.936}
+</code></pre>
+<p>This indicates robust performance in distinguishing between phishing and legitimate inputs.</p>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>Fine-tuning BERT for text classification enables powerful, accurate NLP systems using only modest amounts of labeled data. This lesson provided an in-depth overview of BERT's classification architecture, dataset preprocessing, tokenizer usage, and configuration of Hugging Face's <code>Trainer</code>. In the upcoming activity, you will implement this entire pipeline to train BERT on the IMDb sentiment analysis task and compare its performance to traditional classifiers.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

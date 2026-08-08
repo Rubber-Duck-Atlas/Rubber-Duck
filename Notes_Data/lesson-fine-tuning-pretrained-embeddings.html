@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Fine Tuning Pretrained Embeddings</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-fine-tuning-pre-trained-embeddings">Lesson: Fine-Tuning Pre-Trained Embeddings</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In the previous lesson, we explored how neural word embeddings improve upon static methods like Word2Vec and GloVe by incorporating contextual meaning and handling polysemy. However, training such embeddings from scratch requires vast amounts of data and compute. In most real-world scenarios, we start with pre-trained embeddings like GloVe or FastText and fine-tune them for specific tasks or domains.</p>
+<p>In this lesson, we examine how to integrate pre-trained embeddings into deep learning models and fine-tune them during training to adapt to specific tasks. Fine-tuning boosts performance by blending general language knowledge with task-specific nuances.</p>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Integrate</strong> pre-trained word embeddings into a deep learning pipeline.</li>
+<li><strong>Differentiate</strong> between frozen and trainable embeddings.</li>
+<li><strong>Explain</strong> how fine-tuning enhances model accuracy for specific NLP tasks.</li>
+<li><strong>Implement</strong> fine-tuning with libraries such as PyTorch and Keras.</li>
+<li><strong>Evaluate</strong> the trade-offs between training from scratch and fine-tuning.</li>
+</ol>
+<hr>
+</section><section><h2 id="pre-trained-embeddings-glove-and-fasttext">Pre-Trained Embeddings: GloVe and FastText</h2>
+<p>As discussed in Week 2, pre-trained word embeddings offer a reusable foundation for many NLP tasks. GloVe embeddings are derived from global word co-occurrence statistics computed over massive corpora such as Wikipedia and Common Crawl. These embeddings assign each word a fixed-dimensional vector based on how often it appears near other words.</p>
+<p>FastText improves on this approach by incorporating subword information. It represents words as combinations of character-level n-grams, allowing the model to produce embeddings even for rare or unseen words. This makes FastText particularly effective in morphologically rich languages or low-resource settings.</p>
+<p>Both GloVe and FastText capture general semantic and syntactic information, making them well suited for transfer learning. Instead of training word vectors from scratch, models can initialize with these embeddings and reuse the linguistic knowledge encoded in them.</p>
+<h3 id="why-fine-tune">Why Fine-Tune?</h3>
+<p>Although pre-trained embeddings are broadly useful, they are not always optimal for every domain or task. Fine-tuning them,  allowing their values to update during model training can significantly improve performance.</p>
+<ul>
+<li><strong>Domain shift</strong>: Pre-trained embeddings are trained on general corpora. In specialized fields such as medicine, law, or finance, fine-tuning helps the model adapt to domain-specific vocabulary and phrasing.</li>
+<li><strong>Task specificity</strong>: Sentiment analysis, named entity recognition, and text classification often benefit from embeddings that reflect the structure and priorities of the task, rather than generic similarity.</li>
+<li><strong>Improved performance</strong>: When embeddings are updated during training, they often become more effective for the problem at hand. Fine-tuned embeddings typically lead to better accuracy compared to frozen ones.</li>
+</ul>
+<p>In practice, fine-tuning balances general linguistic knowledge with task-driven adaptation, especially useful when the dataset differs from the corpus used to train the original vectors.</p>
+<hr>
+</section><section><h2 id="integrating-pre-trained-embeddings-in-deep-learning-models">Integrating Pre-Trained Embeddings in Deep Learning Models</h2>
+<p>Integrating pre-trained embeddings into a deep learning model involves a structured process that aligns linguistic knowledge with the model’s learning objectives. The first step is to load the pre-trained embeddings, such as GloVe or FastText, into an embedding matrix, where each row corresponds to a word in the vocabulary and contains its vector representation. This matrix encodes the semantic relationships learned during unsupervised pretraining. Next, the embedding matrix is used to initialize the model’s embedding layer, allowing the model to begin training with rich, meaningful word representations instead of random weights.</p>
+<p>After initialization, a key design choice must be made: whether to freeze the embeddings (keeping them fixed) or fine-tune them during training. Freezing helps retain general-purpose semantics, while fine-tuning allows the vectors to adapt to the task’s specific context. Finally, the model is trained on a downstream task such as text classification, sequence labeling, or sentiment analysis. The embedding layer, whether static or trainable, serves as the input representation that guides the model’s learning process.</p>
+<blockquote>
+<p>This integration allows deep learning models to leverage large-scale linguistic knowledge while adapting to the nuances of domain-specific or task-specific data.</p>
+</blockquote>
+<p><img src="../_assets/fine-tuning.png" alt=""></p>
+<blockquote>
+<p>Workflow of integrating pre-trained embeddings into a deep learning model.</p>
+</blockquote>
+<hr>
+<h3 id="steps-for-integrating-pre-trained-embeddings">Steps for Integrating Pre-Trained Embeddings</h3>
+<p>To leverage the benefits of pre-trained word vectors in downstream NLP models, the embeddings must be properly integrated into the training pipeline. The following steps outline the typical process used to incorporate embeddings such as GloVe or FastText into a deep learning architecture.</p>
+<ol>
+<li><strong>Load pre-trained embeddings into an embedding matrix</strong>: Import pre-trained vectors (e.g., GloVe, FastText) and construct a matrix where each row corresponds to a word in the vocabulary and each column represents a feature dimension, typically ranging from 50 to 300.</li>
+<li><strong>Initialize the model’s embedding layer with this matrix</strong>: Use the matrix to initialize the embedding layer in the neural model (e.g., RNN, CNN, or Transformer). This provides the model with semantic representations learned from large corpora.</li>
+<li><strong>Choose whether to freeze or fine-tune the embeddings</strong>: Decide whether to keep the embeddings fixed (frozen) to retain general-purpose semantics or allow them to be updated (fine-tuned) during training to adapt to the task-specific data.</li>
+<li><strong>Train the model on the specific task</strong>: Train the model on the target NLP task such as sentiment classification, named entity recognition, or text tagging using the initialized embeddings as input representations.</li>
+</ol>
+<hr>
+<h3 id="code-example-loading-glove-embeddings-in-pytorch">Code Example: Loading GloVe Embeddings in PyTorch</h3>
+<p>The following snippet demonstrates how to load pre-trained GloVe vectors into a PyTorch model by creating an <code>nn.Embedding</code> layer initialized with the embedding matrix.</p>
+<pre><code class="language-python">import torch
+import torch.nn as nn
+
+# Assume preprocessed vocab and GloVe vectors
+embedding_matrix = torch.FloatTensor(pretrained_vectors)  # shape: (vocab_size, embedding_dim)
+
+# Create embedding layer
+embedding_layer = nn.Embedding.from_pretrained(embedding_matrix, freeze=False)  # Set freeze=True to keep static/frozen
+</code></pre>
+<p>Setting <code>freeze=False</code> enables <strong>fine-tuning</strong> of the embedding weights during training, allowing the vectors to adapt to the task.  If <code>freeze=True</code>, the embeddings remain static and are not updated during backpropagation—preserving their original structure.</p>
+<hr>
+<h3 id="example-imdb-sentiment-analysis-with-fine-tuning">Example: IMDB Sentiment Analysis with Fine-Tuning</h3>
+<p>To illustrate the practical impact of embedding strategy, consider the results of applying GloVe embeddings to a sentiment classification task using the IMDB movie review dataset. The same model architecture is tested under two conditions: one using frozen embeddings, and the other allowing fine-tuning.</p>
+<table>
+<thead>
+<tr>
+<th>Embedding Type</th>
+<th>Accuracy</th>
+<th>Trainable</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GloVe (frozen)</td>
+<td>~83%</td>
+<td>No</td>
+<td>Faster convergence</td>
+</tr>
+<tr>
+<td>GloVe (fine-tuned)</td>
+<td>~88%</td>
+<td>Yes</td>
+<td>Best performance</td>
+</tr>
+</tbody>
+</table>
+<p>The performance gain from fine-tuning is substantial. While frozen embeddings offer solid generalization from pretraining, allowing the model to update the embeddings during training makes them task-aware. This enables the model to align word representations with sentiment-specific signals in the target dataset.</p>
+<hr>
+<h3 id="freezing-vs-fine-tuning">Freezing vs Fine-Tuning</h3>
+<p>The decision to freeze or fine-tune embeddings depends on several practical factors. Below is a comparison summarizing the trade-offs involved.</p>
+<table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>Pros</th>
+<th>Cons</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Frozen</td>
+<td>Faster training, avoids overfitting</td>
+<td>May underperform on domain-specific tasks</td>
+</tr>
+<tr>
+<td>Fine-Tuned</td>
+<td>Adapts to domain, higher accuracy</td>
+<td>Slower training, risk of forgetting general semantics</td>
+</tr>
+</tbody>
+</table>
+<p>Freezing is often preferred when training on smaller datasets, when prototyping rapidly, or when the target task is close to the domain of the pre-trained corpus. It minimizes training time and reduces the risk of overfitting.</p>
+<p>In contrast, fine-tuning becomes valuable when the domain differs substantially from the original training data, or when task-specific accuracy is critical. By allowing the embeddings to adjust, the model can refine word meanings in context and achieve better generalization to specialized vocabulary and label structures.</p>
+<p>In practice, many models begin with frozen embeddings and later enable fine-tuning once the architecture is stable and performance plateaus.</p>
+<hr>
+</section><section><h2 id="best-practices-for-fine-tuning">Best Practices for Fine-Tuning</h2>
+<p>Fine-tuning pre-trained embeddings can significantly improve task performance, but it must be done with care to avoid degrading useful pre-learned representations. The following practices can help guide effective tuning in real-world models:</p>
+<ol>
+<li><strong>Start with lower learning rates for the embedding layer</strong>: Use a smaller learning rate for the embedding weights than for the rest of the model. This prevents abrupt updates that could erase general semantic knowledge.</li>
+<li><strong>Monitor validation performance closely</strong>: Because fine-tuning introduces more trainable parameters, overfitting can occur, especially with limited data. Early stopping or regularization may be necessary.</li>
+<li><strong>Use domain-specific embeddings when available</strong>: If pre-trained vectors exist for your domain (e.g., BioWordVec for biomedical text), they can offer a better starting point than general-purpose embeddings like GloVe.</li>
+<li><strong>Apply a freeze–then–unfreeze strategy</strong>: Begin training with the embedding layer frozen, allowing other layers to stabilize. Once initial convergence is reached, unfreeze the embeddings and fine-tune them with a lower learning rate.</li>
+</ol>
+<p>Thoughtful fine-tuning ensures that pre-trained embeddings are not only preserved, but adapted in ways that meaningfully improve performance on downstream tasks.</p>
+<hr>
+</section><section><h2 id="visualizing-the-effects-of-fine-tuning">Visualizing the Effects of Fine-Tuning</h2>
+<p>In addition to performance metrics, fine-tuning can be understood through visual inspection of the embedding space. Techniques such as PCA (Principal Component Analysis) or t-SNE (t-Distributed Stochastic Neighbor Embedding) allow high-dimensional word vectors to be projected into 2D space for interpretation.</p>
+<p>These visualizations often reveal how embeddings shift in response to task-specific training. For example, sentiment words like <em>“good,” “great,” “bad,”</em> and <em>“awful”</em> may initially appear scattered in the pre-trained space. After fine-tuning on a sentiment classification task, these words may form distinct clusters, reflecting the model’s evolving understanding of their contextual roles.</p>
+<p>Fine-tuning doesn’t just improve classification accuracy—it reshapes the geometry of the embedding space to align with the task’s conceptual boundaries.</p>
+<h3 id="code-example-visualizing-embedding-shift-with-t-sne">Code Example: Visualizing Embedding Shift with t-SNE</h3>
+<p>The following example uses t-SNE to visualize how selected word embeddings shift before and after fine-tuning.</p>
+<pre><code class="language-python">import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
+import numpy as np
+
+# Example: 8 sentiment words
+words = [&quot;good&quot;, &quot;great&quot;, &quot;excellent&quot;, &quot;happy&quot;, &quot;bad&quot;, &quot;terrible&quot;, &quot;awful&quot;, &quot;sad&quot;]
+
+# Assume you have both pre- and post-fine-tuning embeddings
+# Each should be a dictionary: word -&gt; vector
+# Shape: (num_words, embedding_dim)
+embeddings_before = np.array([embedding_lookup_pre[word] for word in words])
+embeddings_after = np.array([embedding_lookup_post[word] for word in words])
+
+# Concatenate embeddings to reduce together
+all_embeddings = np.vstack([embeddings_before, embeddings_after])
+
+# Apply t-SNE to reduce dimensionality
+tsne = TSNE(n_components=2, random_state=0)
+reduced = tsne.fit_transform(all_embeddings)
+
+# Split back
+before_2d = reduced[:len(words)]
+after_2d = reduced[len(words):]
+
+# Plot shifts
+plt.figure(figsize=(8, 6))
+for i, word in enumerate(words):
+    plt.scatter(*before_2d[i], color=&quot;blue&quot;, label=&quot;Before&quot; if i == 0 else &quot;&quot;)
+    plt.scatter(*after_2d[i], color=&quot;red&quot;, label=&quot;After&quot; if i == 0 else &quot;&quot;)
+    plt.plot(
+        [before_2d[i][0], after_2d[i][0]],
+        [before_2d[i][1], after_2d[i][1]],
+        color=&quot;gray&quot;, linestyle=&quot;--&quot;, linewidth=0.5
+    )
+    plt.text(after_2d[i][0] + 0.5, after_2d[i][1], word)
+
+plt.title(&quot;Word Embeddings Before vs. After Fine-Tuning&quot;)
+plt.legend()
+plt.grid(True)
+plt.show()
+</code></pre>
+<p><strong>Assumptions:</strong></p>
+<ul>
+<li><code>embedding_lookup_pre</code> and <code>embedding_lookup_post</code> are Python dictionaries mapping words to their vector representations.</li>
+<li>The embeddings are of the same dimensionality (e.g., 100 or 300).</li>
+</ul>
+<hr>
+<h3 id="code-example-visualizing-embedding-shifts-with-pca">Code Example: Visualizing Embedding Shifts with PCA</h3>
+<p>The following code demonstrates how to use <strong>Principal Component Analysis (PCA)</strong> to visualize how word vectors move before and after fine-tuning. This helps illustrate how embeddings adapt to the task by changing their relative positions in vector space.</p>
+<pre><code class="language-python">import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+import numpy as np
+
+# Example: 8 sentiment words
+words = [&quot;good&quot;, &quot;great&quot;, &quot;excellent&quot;, &quot;happy&quot;, &quot;bad&quot;, &quot;terrible&quot;, &quot;awful&quot;, &quot;sad&quot;]
+
+# Assume you have both pre- and post-fine-tuning embeddings
+# Each should be a dictionary: word -&gt; vector
+embeddings_before = np.array([embedding_lookup_pre[word] for word in words])
+embeddings_after = np.array([embedding_lookup_post[word] for word in words])
+
+# Combine for joint dimensionality reduction
+all_embeddings = np.vstack([embeddings_before, embeddings_after])
+
+# Apply PCA to reduce to 2D
+pca = PCA(n_components=2)
+reduced = pca.fit_transform(all_embeddings)
+
+# Split result
+before_2d = reduced[:len(words)]
+after_2d = reduced[len(words):]
+
+# Plot
+plt.figure(figsize=(8, 6))
+for i, word in enumerate(words):
+    plt.scatter(*before_2d[i], color=&quot;blue&quot;, label=&quot;Before&quot; if i == 0 else &quot;&quot;)
+    plt.scatter(*after_2d[i], color=&quot;red&quot;, label=&quot;After&quot; if i == 0 else &quot;&quot;)
+    plt.plot(
+        [before_2d[i][0], after_2d[i][0]],
+        [before_2d[i][1], after_2d[i][1]],
+        color=&quot;gray&quot;, linestyle=&quot;--&quot;, linewidth=0.5
+    )
+    plt.text(after_2d[i][0] + 0.3, after_2d[i][1], word)
+
+plt.title(&quot;Word Embeddings Before vs. After Fine-Tuning (PCA)&quot;)
+plt.legend()
+plt.grid(True)
+plt.show()
+</code></pre>
+<hr>
+<h3 id="when-to-use-pca-over-t-sne">When to Use PCA Over t-SNE:</h3>
+<ul>
+<li><strong>PCA</strong> preserves linear structure and direction of shifts ideal for showing how embeddings move.</li>
+<li><strong>t-SNE</strong> preserves local neighborhoods — better for observing cluster formation but distorts global distances.</li>
+</ul>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>Fine-tuning pre-trained embeddings allows us to merge the general knowledge captured by GloVe or FastText with task-specific adjustments learned during model training. This balance often results in <strong>superior performance</strong>, especially in real-world applications like sentiment analysis or domain-specific classification.</p>
+<p>In the next activity, you will fine-tune GloVe embeddings on a sentiment classification task using the IMDB dataset. You will see firsthand how allowing embeddings to update can boost accuracy and make your model more context-aware.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

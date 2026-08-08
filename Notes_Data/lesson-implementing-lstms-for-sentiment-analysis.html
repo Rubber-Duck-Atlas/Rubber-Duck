@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Implementing Lstms For Sentiment Analysis</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-implementing-lstms-for-sentiment-analysis">Lesson: Implementing LSTMs for Sentiment Analysis</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Sentiment analysis is a foundational task in natural language processing where the goal is to classify the emotional tone of a text as positive, negative, or neutral. Simple models like bag-of-words fail to capture sequential information or context, often leading to poor performance, especially on longer texts.</p>
+<p>Long Short-Term Memory (LSTM) networks are well-suited for this task. As covered in the previous lesson, LSTMs are designed to retain information over long sequences and are capable of learning dependencies between distant words. This makes them an ideal architecture for <strong>sequence classification tasks</strong> like sentiment analysis.</p>
+<p>In this lesson, we will explore how LSTMs are applied to sentiment classification, understand how data is prepared for input into LSTMs, and examine how <strong>hyperparameter tuning</strong> can affect model performance.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li>Describe how LSTMs are used for sequence classification in NLP.</li>
+<li>Interpret how input sequences are represented and fed into an LSTM model.</li>
+<li>Analyze the effect of hyperparameters on LSTM model performance.</li>
+</ol>
+<hr>
+</section><section><h2 id="introduction-to-sentiment-classification">Introduction to sentiment classification</h2>
+<p>Sentiment analysis is a classic natural language processing task where the goal is to determine the emotional tone behind a body of text. In its simplest form, the task is binary: classify a piece of text as expressing either positive or negative sentiment. Datasets like IMDB movie reviews, Amazon product reviews, or SST-2 (Stanford Sentiment Treebank) provide labeled examples that make this problem well-suited for supervised learning. What makes sentiment analysis particularly interesting is that it requires understanding both word meaning and word order. For example:</p>
+<ul>
+<li><em>“The movie was not bad.”</em></li>
+<li><em>“The movie was bad.”</em></li>
+</ul>
+<p>These two sentences contain almost identical tokens, but their sentiment differs due to the presence and placement of the word <em>“not”</em>. This highlights the importance of sequence modeling, where the model must track how words combine across time steps to express meaning. Recurrent neural networks (RNNs), especially LSTMs, are well-suited to this kind of task because they can retain context from earlier tokens as they process later ones. Unlike bag-of-words approaches or simple averaging of word embeddings, LSTMs treat the input as a sequence, allowing the model to build a representation of the entire sentence with attention to temporal dependencies.</p>
+<p>In this lesson, we will construct a model that uses an LSTM layer to perform binary sentiment classification. We will also explore how the model's performance is affected by architectural and training choices, such as embedding type, hidden size, and dropout rate.</p>
+<hr>
+<h3 id="preparing-the-dataset">Preparing the Dataset</h3>
+<p>Before building the LSTM model, the text data must be transformed into a format suitable for training. Raw sentences cannot be fed directly into a neural network—they must first be <strong>tokenized</strong>, <strong>indexed</strong>, and <strong>padded</strong> to ensure consistent input shapes. These steps convert free-form text into numerical sequences the model can process efficiently.</p>
+<p>The most commonly used benchmark for binary sentiment classification is the <strong>IMDB dataset</strong>, which contains 50,000 movie reviews split evenly between positive and negative labels. Other common datasets include SST-2 (for shorter, phrase-level sentiment) and Yelp reviews.</p>
+<p>The preprocessing workflow typically involves the following:</p>
+<ul>
+<li><strong>Tokenization</strong>: Each sentence is split into a sequence of tokens (words or subwords). For simplicity, whitespace or rule-based tokenizers can be used, but modern implementations often rely on pretrained tokenizers that handle punctuation and special cases robustly.</li>
+<li><strong>Vocabulary Indexing</strong>: Each token is mapped to a unique integer using a vocabulary dictionary. Tokens not seen during training are mapped to a special <code>&lt;UNK&gt;</code> token. The resulting sentence is now a sequence of integers.</li>
+<li><strong>Padding and Truncation</strong>: Since LSTMs expect fixed-length input, all sequences are padded (or truncated) to a consistent <code>max_length</code>. Short sentences are padded with zeros at the end (or beginning), while longer sentences are truncated to avoid excessive memory usage.</li>
+</ul>
+<pre><code class="language-python"># Example: padding a batch of 3 tokenized sentences to max length = 6
+Input sequences (before padding):
+[&quot;the movie was great&quot;, &quot;i loved it&quot;, &quot;boring&quot;]
+
+Padded (with zeros):
+[[the, movie, was, great, 0, 0],
+ [i, loved, it, 0, 0, 0],
+ [boring, 0, 0, 0, 0, 0]]
+</code></pre>
+<ul>
+<li><strong>Train-Validation Split</strong>: The dataset is divided into training and validation subsets (e.g., 80/20 split) to evaluate generalization during training.</li>
+</ul>
+<p>These preprocessing steps are essential for ensuring compatibility between textual data and neural architectures. They also affect the model’s ability to generalize. For example, an overly small vocabulary can lead to high <code>&lt;UNK&gt;</code> rates, while excessive padding can waste memory and reduce convergence speed.</p>
+<p>By the end of this phase, the input data will consist of fixed-length sequences of integers, ready to be embedded and passed through the LSTM layer.</p>
+<hr>
+<h3 id="code-preprocessing-text-for-lstm-sentiment-classification-imdb-style">Code: Preprocessing Text for LSTM Sentiment Classification (IMDB-style)</h3>
+<p>Before an LSTM model can process text data, the input must be transformed into numerical sequences of equal length. This code block demonstrates a typical preprocessing pipeline using PyTorch, including tokenization, vocabulary construction, sequence padding, and conversion to tensors. These steps are essential for preparing input suitable for batch processing and feeding into the model's embedding layer.</p>
+<pre><code class="language-python">import torch
+from torchtext.vocab import build_vocab_from_iterator
+from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import DataLoader
+import re
+
+# Example raw data (normally you'd load IMDB/SST2)
+texts = [&quot;The movie was great!&quot;, &quot;I hated the ending.&quot;, &quot;An average film.&quot;]
+labels = [1, 0, 0]  # 1 = positive, 0 = negative
+
+# Tokenization function
+def tokenize(text):
+    text = text.lower()
+    text = re.sub(r&quot;[^a-zA-Z0-9\s]&quot;, &quot;&quot;, text)  # remove punctuation
+    return text.strip().split()
+
+# Tokenize all texts
+tokenized_texts = [tokenize(t) for t in texts]
+
+# Build vocabulary
+def yield_tokens(data_iter):
+    for tokens in data_iter:
+        yield tokens
+
+vocab = build_vocab_from_iterator(yield_tokens(tokenized_texts), specials=[&quot;&lt;pad&gt;&quot;, &quot;&lt;unk&gt;&quot;])
+vocab.set_default_index(vocab[&quot;&lt;unk&gt;&quot;])
+
+# Numericalize tokenized text
+numericalized = [torch.tensor(vocab(tokens)) for tokens in tokenized_texts]
+
+# Pad sequences
+padded = pad_sequence(numericalized, batch_first=True, padding_value=vocab[&quot;&lt;pad&gt;&quot;])
+
+# Labels as tensor
+labels_tensor = torch.tensor(labels)
+
+print(&quot;Padded Input:\n&quot;, padded)
+print(&quot;Labels:\n&quot;, labels_tensor)
+</code></pre>
+<h3 id="explanation">Explanation</h3>
+<ul>
+<li><strong>Tokenizes</strong> the input text.</li>
+<li><strong>Builds a vocabulary</strong> from your dataset (with <code>&lt;pad&gt;</code> and <code>&lt;unk&gt;</code> tokens).</li>
+<li><strong>Numericalizes</strong> each sentence using the vocabulary.</li>
+<li><strong>Pads sequences</strong> to the longest sentence in the batch (you can later fix a <code>max_length</code>).</li>
+<li><strong>Returns tensors</strong> ready to be wrapped in a DataLoader.</li>
+</ul>
+<hr>
+<h3 id="building-the-lstm-classifier">Building the LSTM Classifier</h3>
+<p>Now that the input text has been tokenized, indexed, padded, and batched, the next step is to define the model architecture that will learn from these sequences. LSTM (Long Short-Term Memory) networks are ideal for sequence classification tasks because they retain temporal context across time steps, allowing the model to understand how word order influences meaning. For sentiment analysis, the model needs to process an input sentence and output a binary prediction indicating whether the sentiment is positive or negative. A typical architecture includes the following components:</p>
+<ul>
+<li><strong>Embedding layer</strong>: Maps token indices to dense vectors, optionally initialized with pre-trained embeddings.</li>
+<li><strong>LSTM layer</strong>: Processes the embedded sequence and learns hidden state transitions.</li>
+<li><strong>Dropout layer</strong>: Prevents overfitting by randomly zeroing activations during training.</li>
+<li><strong>Fully connected layer</strong>: Maps the final LSTM output to a scalar score.</li>
+<li><strong>Sigmoid activation</strong>: Converts the score into a probability between 0 and 1.</li>
+</ul>
+<h3 id="code-lstm-classifier-in-pytorch">Code: LSTM Classifier in PyTorch</h3>
+<p>The following implementation shows how to define a basic LSTM-based sentiment classifier in PyTorch. The model includes an embedding layer, an LSTM block, dropout for regularization, and a fully connected layer that outputs a binary prediction through a sigmoid function. This structure is designed to handle fixed-length input sequences and return a probability of positive sentiment for each example.</p>
+<pre><code class="language-python">import torch.nn as nn
+
+class LSTMSentimentClassifier(nn.Module):
+    def __init__(self, vocab_size, embedding_dim, hidden_dim, output_dim, padding_idx, num_layers=1, dropout=0.5):
+        super().__init__()
+        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=padding_idx)
+        self.lstm = nn.LSTM(input_size=embedding_dim,
+                            hidden_size=hidden_dim,
+                            num_layers=num_layers,
+                            batch_first=True)
+        self.dropout = nn.Dropout(dropout)
+        self.fc = nn.Linear(hidden_dim, output_dim)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        embedded = self.embedding(x)
+        _, (hidden, _) = self.lstm(embedded)
+        hidden = self.dropout(hidden[-1])  # Last layer's hidden state
+        output = self.fc(hidden)
+        return self.sigmoid(output)
+</code></pre>
+<h3 id="design-notes">Design Notes</h3>
+<ul>
+<li><code>vocab_size</code>: total number of tokens in your vocabulary, including <code>&lt;pad&gt;</code> and <code>&lt;unk&gt;</code>.</li>
+<li><code>padding_idx</code>: ensures the embedding for the padding token remains zero and is not updated during training.</li>
+<li><code>hidden[-1]</code>: the final hidden state from the top LSTM layer is used for classification.</li>
+<li>The model returns a single scalar output per example, passed through a sigmoid to represent the probability of the positive class.</li>
+</ul>
+<p>This architecture is simple yet effective for binary classification tasks based on short to medium-length text.</p>
+<p>While PyTorch offers a flexible, low-level way to define custom neural architectures, many teams use TensorFlow/Keras in production environments. Let’s now implement the same model using Keras’s Functional API, which offers more modularity and readability than its Sequential counterpart.</p>
+<h3 id="code-lstm-sentiment-classifier-in-keras-functional-api">Code: LSTM Sentiment Classifier in Keras (Functional API)</h3>
+<p>The Functional API allows more control over the structure and naming of the model’s layers, while retaining the ability to mirror the same architecture as the PyTorch version. This version uses an embedding layer, a single LSTM unit, and a dense output layer with sigmoid activation for binary sentiment prediction.</p>
+<pre><code class="language-python">from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Embedding, LSTM, Dropout, Dense
+
+input_seq = Input(shape=(200,), name=&quot;input_sequence&quot;)
+x = Embedding(input_dim=10000, output_dim=128, input_length=200, name=&quot;embedding&quot;)(input_seq)
+x = LSTM(64, dropout=0.2, recurrent_dropout=0.2, name=&quot;lstm&quot;)(x)
+output = Dense(1, activation='sigmoid', name=&quot;output&quot;)(x)
+
+model = Model(inputs=input_seq, outputs=output, name=&quot;LSTM_Sentiment_Classifier&quot;)
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+model.summary()
+</code></pre>
+<p>This model structure is equivalent to the PyTorch implementation and is commonly used in Keras-based pipelines for text classification.</p>
+<hr>
+<h3 id="training-and-evaluation">Training and Evaluation</h3>
+<p>Once the LSTM model has been defined, the next step is to train it on labeled data and evaluate its performance. For binary sentiment classification tasks, the most common setup includes:</p>
+<ul>
+<li><strong>Loss function</strong>: Binary cross-entropy, which penalizes incorrect predictions on binary targets.</li>
+<li><strong>Optimizer</strong>: Adam, which adapts the learning rate and typically converges faster than vanilla stochastic gradient descent.</li>
+<li><strong>Evaluation metric</strong>: Accuracy, which measures the percentage of correct predictions on the validation or test set.</li>
+</ul>
+<p>The core strength of LSTMs lies in their ability to capture <strong>word order and context</strong> across time steps. Unlike bag-of-words models, which treat words independently, LSTMs learn to detect patterns like negation (“not bad”) or emphasis (“very good”) by examining token sequences as a whole. You don’t need to memorize the implementation details, but it’s important to understand the overall workflow:</p>
+<ol>
+<li>Text is tokenized and converted into indexed sequences.</li>
+<li>Sequences are padded or truncated to a consistent length.</li>
+<li>Each sequence is passed through the embedding layer and LSTM.</li>
+<li>The model learns which parts of the input are most predictive of sentiment.</li>
+<li>The output is a single probability representing the likelihood of positive sentiment.</li>
+</ol>
+<p>This setup allows the model to adapt to complex language patterns and learn how structure influences meaning—making LSTMs a powerful tool for sequence-based tasks like sentiment analysis.</p>
+<h3 id="code-training-and-evaluating-the-lstm-model-in-keras">Code: Training and Evaluating the LSTM Model in Keras</h3>
+<p>Once the LSTM model has been defined using the Functional API, training it is straightforward with Keras. The following code demonstrates how to fit the model on padded input sequences, monitor performance using a validation set, and evaluate accuracy after training. While the data shown here is randomly generated for demonstration purposes, the same process applies to real datasets such as IMDB.</p>
+<pre><code class="language-python">from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.utils import to_categorical
+import numpy as np
+
+# Example (simulated) training data — normally, you'd use tokenized and padded text sequences
+# Here, we simulate 1000 training examples of padded sequences
+X_train = np.random.randint(1, 10000, size=(1000, 200))   # shape: (samples, sequence_length)
+y_train = np.random.randint(0, 2, size=(1000,))           # binary labels
+
+X_val = np.random.randint(1, 10000, size=(200, 200))
+y_val = np.random.randint(0, 2, size=(200,))
+
+# Fit the model
+history = model.fit(
+    X_train,
+    y_train,
+    validation_data=(X_val, y_val),
+    epochs=5,
+    batch_size=32,
+    verbose=1
+)
+
+# Evaluate on validation set
+loss, accuracy = model.evaluate(X_val, y_val)
+print(f&quot;Validation Accuracy: {accuracy:.4f}&quot;)
+</code></pre>
+<h3 id="explanation-1">Explanation</h3>
+<ul>
+<li><code>X_train</code> and <code>X_val</code> should be sequences of word indices, already padded to the model’s <code>input_length</code>.</li>
+<li><code>y_train</code> and <code>y_val</code> are binary sentiment labels (0 for negative, 1 for positive).</li>
+<li>The <code>fit()</code> method handles training and validation in a single call.</li>
+<li>The <code>evaluate()</code> method reports final accuracy after training is complete.</li>
+</ul>
+<p>This code can be easily adapted to use the IMDB dataset via <code>keras.datasets.imdb</code> or your own preprocessed dataset.</p>
+<hr>
+</section><section><h2 id="hyperparameter-tuning">Hyperparameter Tuning</h2>
+<p>While LSTMs provide a powerful architecture for sequence modeling, their performance depends heavily on the choice of hyperparameters. These are settings that define the model structure and training behavior but are not learned from the data. Selecting the right configuration can significantly affect accuracy, convergence speed, and generalization. Some hyperparameters govern the architecture itself, such as the size of the hidden layer or the number of LSTM layers. Others affect the training process, like learning rate or batch size. There is no one-size-fits-all setting effective tuning requires experimentation and empirical validation. Below are key hyperparameters that influence LSTM performance in sentiment analysis.</p>
+<h3 id="architectural-hyperparameters">Architectural Hyperparameters</h3>
+<p>These hyperparameters define the structure of the LSTM model itself—how much capacity it has to learn patterns in the data, and how it processes sequences. Adjusting these settings impacts the model’s ability to generalize, its training time, and how well it captures linguistic dependencies in text.</p>
+<p><strong>Embedding dimension</strong>: This defines the size of the vector used to represent each word. Larger dimensions allow the model to capture more semantic nuance, but they increase memory usage and risk overfitting if the dataset is small.</p>
+<ul>
+<li>Common values: 100, 128, 300</li>
+<li>Best practice: Start with 100 or 128 for most tasks, and only increase if you observe performance limitations.</li>
+</ul>
+<p><strong>LSTM Units (Hidden Dimension)</strong>: This controls the number of memory cells (hidden units) in the LSTM layer. More units allow the model to learn more complex patterns but also increase the number of parameters and computational cost.</p>
+<ul>
+<li>Typical values: 32, 64, 128, 256</li>
+<li>Best practice: Start with 64 or 128, and scale up only if necessary based on validation performance. Monitor for signs of overfitting when using higher values.</li>
+</ul>
+<p><strong>Number of LSTM Layers</strong>: Adding more layers can increase the model’s capacity to learn hierarchical patterns in sequences. However, stacking LSTMs also increases training time and the risk of vanishing gradients.</p>
+<ul>
+<li>Common values: 1 or 2</li>
+<li>Use a single layer for most sentiment tasks unless deeper context modeling is needed.</li>
+<li><strong>Bidirectionality</strong>: A bidirectional LSTM processes the input sequence in both forward and backward directions, allowing the model to access both past and future context. This often improves performance in text classification and tagging tasks.<ul><li>Best practice: Use bidirectional LSTMs when word context from both sides is important.</li><li>Consider disabling it in latency-sensitive applications or on very long sequences.</li></ul></li>
+</ul>
+<h3 id="training-hyperparameters">Training Hyperparameters</h3>
+<p>The following hyperparameters control how the model learns during training. While architecture defines what the model can represent, these settings influence <strong>how efficiently and effectively</strong> that representation is learned. Tuning them properly helps improve convergence, reduce overfitting, and optimize generalization.</p>
+<p><strong>Dropout and Recurrent Dropout</strong>: Dropout is a regularization method that randomly disables a fraction of the units in the network during training. This helps prevent overfitting by encouraging the model to learn more robust representations.</p>
+<ul>
+<li><code>dropout</code>: Applied to the input connections (e.g., from embedding to LSTM).</li>
+<li><code>recurrent_dropout</code>: Applied to the recurrent connections inside the LSTM cell.</li>
+</ul>
+<p>These techniques are especially useful in small datasets or high-capacity models. Start with values like <code>0.2</code> for both and adjust based on validation performance.</p>
+<p><strong>Batch Size and Epochs</strong>: Batch size determines how many training samples are processed before the model updates its weights. Smaller batch sizes (e.g., 32 or 64) tend to improve generalization, while larger batches (e.g., 128) reduce training time but may lead to overfitting.</p>
+<ul>
+<li>Common batch sizes: 32, 64, or 128</li>
+<li>Larger batches enable faster computation but may learn less noise-resilient patterns.</li>
+</ul>
+<p>Epochs define how many times the model will iterate over the entire training set. In most scenarios, 5 to 15 epochs are sufficient. It is best practice to monitor validation accuracy or loss and use <strong>early stopping</strong> to halt training once performance stops improving, this prevents unnecessary computation and reduces overfitting risk.</p>
+<p><strong>Learning rate</strong>: The learning rate controls the size of weight updates during backpropagation. If it's too high, the model may overshoot optimal values or fail to converge. If it's too low, training will be slow or may stall completely. Optimizers like <strong>Adam</strong> dynamically adjust the learning rate, but the initial value still matters. A good starting point is <code>0.001</code>.</p>
+<p><strong>Sequence Length (Max Padding Length)</strong>: This determines the fixed length of input sequences after padding or truncation. Longer sequences retain more context but increase memory usage and training time. For sentiment analysis, typical lengths range from 100 to 300 tokens.</p>
+<p>Choose a length based on the average input size in your dataset and the nature of the task. For short reviews, 100–150 may suffice; for long-form input, 250–300 is more appropriate.</p>
+<h3 id="practical-tip">Practical Tip</h3>
+<p>Start with a simple configuration (e.g., 1 LSTM layer, 128 hidden units, 0.3 dropout) and monitor validation accuracy. Adjust one hyperparameter at a time to isolate its effect. Tools like Keras Tuner, Ray Tune, or manual grid search can help automate the tuning process when scaling up.</p>
+<blockquote>
+<p>Hyperparameter tuning is a critical step toward improving model generalization and stability, especially in tasks involving subtle language patterns or imbalanced data.</p>
+</blockquote>
+<hr>
+<h3 id="comparison-of-lstm-configurations">Comparison of LSTM Configurations</h3>
+<p>To understand the impact of architectural and training choices, it is useful to compare different LSTM configurations side by side. The table below presents results from several model variants, each trained on the same dataset with minor changes to key hyperparameters such as embedding size, hidden units, dropout rate, and sequence length. This type of empirical comparison helps identify which adjustments improve performance and which may lead to overfitting or diminishing returns.</p>
+<table>
+<thead>
+<tr>
+<th><strong>Config</strong></th>
+<th><strong>Embedding Dim</strong></th>
+<th><strong>Hidden Units</strong></th>
+<th><strong>Dropout</strong></th>
+<th><strong>Bidirectional</strong></th>
+<th><strong>Sequence Length</strong></th>
+<th><strong>Validation Accuracy</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>100</td>
+<td>64</td>
+<td>0.3</td>
+<td>No</td>
+<td>200</td>
+<td>84.2%</td>
+</tr>
+<tr>
+<td>B</td>
+<td>100</td>
+<td>128</td>
+<td>0.3</td>
+<td>No</td>
+<td>200</td>
+<td>86.0%</td>
+</tr>
+<tr>
+<td>C</td>
+<td>100</td>
+<td>128</td>
+<td>0.5</td>
+<td>Yes</td>
+<td>200</td>
+<td>88.1%</td>
+</tr>
+<tr>
+<td>D</td>
+<td>300</td>
+<td>128</td>
+<td>0.5</td>
+<td>Yes</td>
+<td>200</td>
+<td>88.5%</td>
+</tr>
+<tr>
+<td>E</td>
+<td>300</td>
+<td>128</td>
+<td>0.5</td>
+<td>Yes</td>
+<td>300</td>
+<td><strong>89.0%</strong></td>
+</tr>
+<tr>
+<td>F</td>
+<td>300</td>
+<td>256</td>
+<td>0.5</td>
+<td>Yes</td>
+<td>300</td>
+<td>88.4% (overfit observed)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interpretation</strong></p>
+<ul>
+<li><strong>Increasing hidden units</strong> from 64 to 128 improved accuracy significantly in early experiments.</li>
+<li><strong>Adding bidirectionality</strong> gave a noticeable boost, especially when combined with higher dropout to control overfitting.</li>
+<li><strong>Longer sequences (300 tokens)</strong> captured more context and improved results, though gains plateaued.</li>
+<li><strong>Overfitting</strong> was observed in larger models (Config F), where the model began to memorize patterns in the training set.</li>
+</ul>
+<blockquote>
+<p>The best-performing model (Config E) strikes a balance between capacity and regularization. However, the optimal configuration will always depend on your dataset size, domain, and task complexity.</p>
+</blockquote>
+<hr>
+</section><section><h2 id="performance-evaluation">Performance Evaluation</h2>
+<p>Once the model has been trained, the next step is to evaluate its performance. This involves more than just reporting accuracy; a meaningful evaluation considers whether the model generalizes well, how it behaves on unseen data, and whether its learning process was stable. For binary sentiment classification tasks, the primary evaluation metric is usually accuracy, which reflects the percentage of correctly predicted labels. However, it’s important to also monitor the loss curve and validation behavior over time.</p>
+<h3 id="key-evaluation-indicators">Key Evaluation Indicators</h3>
+<p>Evaluating model performance is not limited to a final accuracy score. A robust evaluation involves tracking learning dynamics over time and analyzing multiple signals that reveal how well the model is generalizing to unseen data. The following indicators help diagnose overfitting, underfitting, and learning stability, and guide further improvements in model design or training setup.</p>
+<ul>
+<li><strong>Training vs. Validation Accuracy</strong>: A model that performs well on training data but poorly on validation data may be overfitting. Consistent accuracy across both sets indicates better generalization.</li>
+<li><strong>Loss Curves</strong>: Plotting the training and validation loss over each epoch provides insight into convergence. A steadily decreasing validation loss suggests the model is still learning. If validation loss increases while training loss decreases, overfitting is likely.</li>
+<li><strong>Precision, Recall, and F1 Score</strong> (optional for imbalanced data): While accuracy is appropriate for balanced sentiment datasets, other metrics like F1 score may be more informative when positive and negative labels are not evenly distributed.</li>
+<li><strong>Confusion Matrix</strong>: This provides a breakdown of true positives, false positives, true negatives, and false negatives. It helps identify systematic errors, such as confusing mildly negative reviews as positive.</li>
+</ul>
+<p><strong>Example: Interpreting Accuracy and Loss Curves</strong></p>
+<p>If your model achieves 89% accuracy on training data but only 83% on validation, it is likely memorizing patterns that do not generalize. In that case, consider:</p>
+<ul>
+<li>Increasing dropout</li>
+<li>Reducing LSTM units</li>
+<li>Using early stopping</li>
+<li>Gathering more training data</li>
+</ul>
+<blockquote>
+<p>Performance metrics are not just numbers—they tell the story of how your model learns and where it might be going wrong.</p>
+</blockquote>
+<hr>
+<h3 id="code-visualizing-training-and-validation-loss-curves-in-keras">1. Code: Visualizing Training and Validation Loss Curves in Keras</h3>
+<p>This example assumes you've trained your model using <code>model.fit(...)</code> and stored the result in a variable named <code>history</code>. Keras automatically tracks loss and accuracy metrics per epoch, which we can visualize using <code>matplotlib</code>.</p>
+<pre><code class="language-python">import matplotlib.pyplot as plt
+
+# Plot training &amp; validation loss values
+plt.figure(figsize=(8, 5))
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Loss Over Epochs')
+plt.xlabel('Epoch')
+plt.ylabel('Binary Crossentropy Loss')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Plot accuracy if available
+if 'accuracy' in history.history:
+    plt.figure(figsize=(8, 5))
+    plt.plot(history.history['accuracy'], label='Training Accuracy')
+    plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+    plt.title('Accuracy Over Epochs')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+</code></pre>
+<h3 id="code-confusion-matrix-and-classification-report">2. Code: Confusion Matrix and Classification Report</h3>
+<p>To evaluate predictions more deeply (especially for imbalanced data), use a confusion matrix and classification metrics like precision, recall, and F1 score.</p>
+<pre><code class="language-python">from sklearn.metrics import confusion_matrix, classification_report
+import seaborn as sns
+import numpy as np
+
+# Predict class labels
+y_pred_probs = model.predict(X_val)
+y_pred = (y_pred_probs &gt; 0.5).astype(int)
+
+# Confusion matrix
+cm = confusion_matrix(y_val, y_pred)
+
+# Plot confusion matrix
+plt.figure(figsize=(6, 4))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+            xticklabels=['Predicted Negative', 'Predicted Positive'],
+            yticklabels=['Actual Negative', 'Actual Positive'])
+plt.title('Confusion Matrix')
+plt.ylabel('True Label')
+plt.xlabel('Predicted Label')
+plt.show()
+
+# Classification report
+print(classification_report(y_val, y_pred, target_names=['Negative', 'Positive']))
+</code></pre>
+<p><strong>What This Tells You</strong></p>
+<ul>
+<li><strong>Loss and accuracy plots</strong> reveal underfitting (flat curves), overfitting (diverging curves), or healthy convergence (loss drops, validation stable).</li>
+<li><strong>Confusion matrix</strong> shows whether your model is favoring one class.</li>
+<li><strong>Classification report</strong> gives F1 score, precision, and recall, especially useful for datasets with class imbalance or ambiguous sentiment.</li>
+</ul>
+<hr>
+<h3 id="interpreting-learning-curves">Interpreting Learning Curves</h3>
+<p>Visualizing training and validation loss or accuracy over time provides important insight into the model's learning behavior. These <strong>learning curves</strong> help identify whether the model is underfitting, overfitting, or converging as expected. Here are common patterns and what they typically indicate.</p>
+<h3 id="healthy-convergence">1. Healthy Convergence</h3>
+<p>In a well-behaved training process, the model learns patterns that generalize to unseen data. This is typically reflected in the following trends:</p>
+<ul>
+<li><strong>Training loss decreases steadily</strong> — the model is fitting the training data effectively.</li>
+<li><strong>Validation loss follows a similar trend</strong> — it’s not just memorizing, but learning transferable patterns.</li>
+<li><strong>Gap between training and validation is small</strong> — suggesting strong generalization and minimal overfitting.</li>
+</ul>
+<h3 id="overfitting">2. Overfitting</h3>
+<p>Overfitting occurs when the model begins to memorize training data rather than learn generalizable patterns. You’ll often notice these behaviors:</p>
+<ul>
+<li><strong>Training loss continues to decrease</strong> — showing continued memorization of training data.</li>
+<li><strong>Validation loss starts increasing after a few epochs</strong> — indicating that generalization is deteriorating.</li>
+<li><strong>Validation accuracy stagnates or declines</strong> — confirming reduced performance on unseen data.</li>
+</ul>
+<h3 id="underfitting">3. Underfitting</h3>
+<p>Underfitting means the model lacks sufficient capacity or hasn’t been trained long enough to learn from the data. The following signs usually appear:</p>
+<ul>
+<li><strong>Both training and validation loss remain high</strong> — the model hasn't learned core patterns yet.</li>
+<li><strong>Little improvement over epochs</strong> — suggesting limited learning progress.</li>
+<li><strong>Accuracy is consistently low on both sets</strong> — confirming weak predictive ability.</li>
+</ul>
+<h3 id="unstable-training">4. Unstable Training</h3>
+<p>When training is unstable, the model's performance fluctuates unpredictably, often due to poor hyperparameter settings. This may look like:</p>
+<ul>
+<li><strong>Loss values fluctuate significantly</strong> — a sign of inconsistent learning.</li>
+<li><strong>Validation accuracy varies erratically</strong> — the model can’t settle on reliable patterns.</li>
+<li><strong>No clear downward trend</strong> — the optimization process is failing to converge.</li>
+</ul>
+<p>This may be due to a learning rate that is too high, insufficient batch size, or noisy data. Try lowering the learning rate or smoothing the input.</p>
+<p>Learning curves are a visual feedback loop, use them to detect problems early, guide hyperparameter tuning, and validate training progress. When loss curves reveal signs of overfitting such as rising validation loss and a widening gap from training performance, it’s important to apply corrective techniques. The following section outlines common strategies to prevent overfitting and improve generalization.</p>
+<hr>
+<h3 id="understanding-and-preventing-overfitting">Understanding and Preventing Overfitting</h3>
+<p>Overfitting occurs when a model learns patterns in the training data too precisely including noise and irrelevant details leading to poor generalization on unseen inputs. It is often detected by a widening gap between training and validation accuracy or by steadily increasing validation loss while training loss continues to decrease. To mitigate overfitting and improve generalization, the following strategies are commonly used:</p>
+<ol>
+<li><strong>Dropout</strong>: Dropout randomly disables a fraction of the input units during training. This prevents the model from relying too heavily on any single neuron and encourages it to learn more distributed, robust representations.</li>
+<li><strong>Early Stopping</strong>: Early stopping monitors validation performance during training and halts training when the model stops improving. This avoids unnecessary training epochs that may lead to overfitting.<pre><code class="language-python">from tensorflow.keras.callbacks import EarlyStoppingearly_stop = EarlyStopping(monitor='val_loss', patience=2)model.fit(X_train, y_train, validation_data=(X_val, y_val), callbacks=[early_stop])</code></pre></li>
+<li><strong>Smaller Model Capacity</strong>: Reducing the number of LSTM units or layers lowers the model’s representational capacity, making it less likely to memorize noise in the training set. Start small and increase capacity only if underfitting is observed.</li>
+<li><strong>L2 Regularization</strong>: Also known as weight decay, L2 regularization penalizes large weight values by adding a regularization term to the loss function. This constrains the model to learn simpler functions.<pre><code class="language-python">from tensorflow.keras.regularizers import l2Dense(64, activation='relu', kernel_regularizer=l2(0.01))</code></pre></li>
+<li><strong>Pre-trained Embeddings</strong>: Using pre-trained embeddings such as GloVe or FastText provides a strong inductive bias by encoding general semantic relationships. This is especially helpful on small datasets, where learning embeddings from scratch may lead to overfitting.</li>
+</ol>
+<blockquote>
+<p>These techniques help ensure that the model performs not only well on the training data, but also generalizes effectively to new, real-world inputs.</p>
+</blockquote>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>In this lesson, you learned how LSTMs can be applied to real-world sequence classification tasks such as sentiment analysis. By modeling word order and long-term dependencies, LSTMs offer a major performance advantage over traditional models.</p>
+<p>You also explored how key hyperparameters—such as embedding dimension, number of LSTM units, and dropout—impact model behavior and training outcomes. Importantly, you learned how to recognize and prevent <strong>overfitting</strong>, a common issue in deep learning models, by applying practical regularization techniques like early stopping, dropout, and pre-trained embeddings.</p>
+<p>Understanding how to implement and tune LSTM models equips you with essential tools for building robust NLP applications that generalize well beyond the training data. In the next activity, you will put this knowledge into practice by training and evaluating an LSTM model for sentiment analysis on the IMDb dataset, experimenting with hyperparameters to observe their impact on performance.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

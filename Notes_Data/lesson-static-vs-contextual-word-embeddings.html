@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Static Vs Contextual Word Embeddings</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-static-vs.contextual-word-embeddings">Lesson: Static vs. Contextual Word Embeddings</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In our previous lessons, we explored static word embeddings like Word2Vec, GloVe, and FastText. These models give each word a single, fixed vector, a list of numbers that represents its meaning, no matter how the word is used in a sentence. However, language is tricky! Words often have different meanings depending on the context. For example:</p>
+<ul>
+<li>&quot;The <strong>bank</strong> raised interest rates.&quot; (Here, &quot;bank&quot; means a financial institution.)</li>
+<li>&quot;He sat on the <strong>bank</strong> of the river.&quot; (Here, &quot;bank&quot; means the river's edge.)</li>
+</ul>
+<p>Static embeddings, like Word2Vec, give &quot;bank&quot; the same vector in both sentences, even though the meanings are different. This limitation makes it hard for static embeddings to handle <strong>polysemy</strong>, when a word has multiple meanings.</p>
+<p>Today, we’ll dive into <strong>contextual embeddings</strong>, which are smarter because they adjust a word’s vector based on the sentence it’s in. We’ll explore two key models, <strong>ELMo</strong> and <strong>BERT</strong>, and learn how they use context to create better word representations. We’ll also see how these embeddings help with tasks like understanding word meanings and measuring similarity between words in context.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you’ll be able to:</p>
+<ol>
+<li>Explain why static word embeddings struggle with words that have multiple meanings.</li>
+<li>Understand what contextual embeddings are and how they adapt to the surrounding words.</li>
+<li>Describe how ELMo and BERT create embeddings that are sensitive to context.</li>
+<li>Recognize how contextual embeddings can be used for tasks like word sense disambiguation and measuring word similarity.</li>
+</ol>
+<hr>
+</section><section><h2 id="why-traditional-word-embeddings-fail-to-capture-polysemy">Why Traditional Word Embeddings Fail to Capture Polysemy</h2>
+<p><em>(Same Word, Different Meanings)</em></p>
+<p>Polysemy—the phenomenon where a single word has multiple meanings—presents a major challenge for traditional word embedding models. In natural language, the same word can convey entirely different meanings depending on its context. However, early embedding methods like Word2Vec and GloVe assign a single fixed vector to each word type, regardless of how it is used. This fundamental design choice limits their ability to capture context-specific nuances in meaning.</p>
+<h3 id="static-word-embeddings">Static Word Embeddings</h3>
+<p>Traditional embedding models such as Word2Vec, GloVe, and FastText assign a single, fixed vector representation to each word in the vocabulary. These vectors are learned by analyzing large corpora and capturing statistical co-occurrence patterns—how often words appear near others. The resulting embeddings are powerful tools for capturing broad semantic relationships and are widely used in many NLP applications.</p>
+<p>However, a fundamental limitation affects all of these models: they represent each word with only one vector, regardless of the context in which it appears. This is particularly a problem when dealing with polysemy—the phenomenon where a single word has multiple meanings. Because static models do not consider surrounding words, they cannot distinguish between different senses of the same word.</p>
+<p>Let’s explore how this limitation affects downstream tasks and real-world language understanding.</p>
+<h3 id="limitation-of-static-embeddings">Limitation of Static Embeddings</h3>
+<p>To see the impact of polysemy on static embeddings, consider the word <em>“bank”</em> in the following two sentences:</p>
+<ul>
+<li><em>&quot;She went to the <strong>bank</strong> to deposit money.&quot;</em></li>
+<li><em>&quot;He saw a bird on the <strong>bank</strong> of the river.&quot;</em></li>
+</ul>
+<p>In the first example, <em>bank</em> refers to a financial institution, while in the second, it refers to the side of a river. Despite these distinct meanings, traditional word embedding models will assign <em>bank</em> the same vector in both sentences, because they treat the word independently of its surrounding context. This context insensitivity introduces confusion and limits performance in several key NLP tasks</p>
+<h3 id="impact-on-downstream-nlp-tasks">Impact on Downstream NLP Tasks</h3>
+<p>The inability of static embeddings to distinguish between word senses has practical consequences across several key natural language processing tasks:</p>
+<p><strong>1. Word Sense Disambiguation (WSD)</strong></p>
+<p>Word Sense Disambiguation is the task of determining which specific meaning of a word is being used in a given context. For instance, the word <em>“bass”</em> can refer to a type of fish or a musical instrument. Accurate disambiguation is essential for enabling systems to understand user input, perform semantic search, or link to the correct knowledge base entity.</p>
+<p>Static word embeddings fail in this task because they assign only one vector per word. As a result, models cannot infer which meaning is intended based on the surrounding words, leading to ambiguous or incorrect interpretations.</p>
+<p><strong>2. Machine Translation</strong></p>
+<p>In machine translation, translating a word correctly requires understanding its sense in context. Consider the word <em>“bank”</em>:</p>
+<ul>
+<li>In <em>“She went to the bank to deposit money,”</em> the correct Spanish translation is <strong>banco</strong>.</li>
+<li>In <em>“He sat by the bank of the river,”</em> the correct translation is <strong>orilla</strong>.</li>
+</ul>
+<p>Static embeddings, by treating both uses of <em>bank</em> the same, often introduce translation errors—especially in languages where word choices differ significantly by sense.</p>
+<p><strong>3. Question Answering and Reading Comprehension</strong></p>
+<p>In question answering and reading comprehension tasks, systems must understand the meaning of passages and retrieve or infer answers. This often depends on the model’s ability to interpret ambiguous words correctly.</p>
+<p>For example, if a passage discusses <em>pitch</em> in a musical context, but the model interprets it as a <em>soccer field</em>, it may fail to extract the relevant answer. With static embeddings unable to adapt word meaning based on context, the system may return responses that are irrelevant or misleading.</p>
+<p><strong>Summary</strong></p>
+<p>By compressing <strong>all meanings of a word into a single vector</strong>, static embeddings inherently fail to capture <strong>polysemy</strong>.  This limitation significantly affects tasks where context is crucial to interpretation, making polysemy a central challenge in NLP that static models are unequipped to handle.</p>
+<hr>
+</section><section><h2 id="contextual-embeddings-a-solution-to-polysemy">Contextual Embeddings: A Solution to Polysemy</h2>
+<p>To overcome the limitations of static embeddings, particularly their failure to handle polysemy, researchers developed a new class of models: <strong>contextual embeddings</strong>.Contextual embeddings dynamically generate a word’s vector based on the specific sentence in which it appears, allowing the model to adapt the meaning of a word according to its context. Instead of assigning one fixed vector to each word, these models produce a <strong>different vector for each occurrence</strong> of the word, depending on the words around it.</p>
+<p>By making word meaning <strong>context-dependent</strong>, contextual embeddings offer a powerful solution to the challenges posed by polysemy. They enable models to represent language more accurately and flexibly, opening the door to major advances across many NLP applications.</p>
+<h3 id="what-are-contextual-embeddings">What Are Contextual Embeddings?</h3>
+<p>A contextual embedding is a word representation that is generated based on the specific sentence or context in which the word appears. Unlike static embeddings, which assign a single fixed vector to each word type (similar to a dictionary definition), contextual embeddings create a different vector for each occurrence of a word, depending on its surrounding words. This allows models to adapt the meaning of a word dynamically, capturing subtle shifts in interpretation based on usage. For example:</p>
+<ul>
+<li><em>&quot;The <strong>jaguar</strong> raced down the track.&quot;</em> (Here, <strong>jaguar</strong> refers to a <strong>car</strong>.)</li>
+<li><em>&quot;The <strong>jaguar</strong> hunted in the jungle.&quot;</em> (Here, <strong>jaguar</strong> refers to an <strong>animal</strong>.)</li>
+</ul>
+<p>A contextual model assigns different embeddings to <em>jaguar</em> in each of these sentences, because it interprets the meaning based on nearby words such as <em>raced</em>, <em>track</em>, <em>hunted</em>, and <em>jungle</em>. In this way, contextual embeddings naturally handle polysemy and allow language models to distinguish between multiple senses of the same word. By grounding word meaning in context, these models overcome one of the most significant limitations of traditional static embeddings.</p>
+<p>To better understand how contextual embeddings are built in practice, we now turn to some of the early models that introduced this concept, such as <strong>ELMo</strong> and <strong>BERT</strong>.</p>
+<hr>
+</section><section><h2 id="early-contextual-embedding-models-elmo">Early Contextual Embedding Models: ELMo</h2>
+<p>One of the first major breakthroughs in contextual word representations was <strong>ELMo</strong> (<em>Embeddings from Language Models</em>), introduced by Peters et al. in 2018. ELMo demonstrated that contextual embeddings could significantly improve performance across a wide range of NLP tasks.</p>
+<h3 id="characteristics-of-elmo">Characteristics of ELMo</h3>
+<ul>
+<li><strong>Architecture</strong>: ELMo uses a deep <strong>bi-directional Long Short-Term Memory</strong> (BiLSTM) network. LSTMs are a type of recurrent neural network (RNN) well-suited for modeling sequential data like sentences.</li>
+<li><strong>Bi-directionality</strong>: Unlike traditional language models that read text left-to-right, ELMo reads the sentence in <strong>both directions</strong>—left-to-right and right-to-left—capturing context from both before and after a word.</li>
+<li><strong>Training Objective</strong>: ELMo is trained as a <strong>language model</strong>, where the task is to predict surrounding words based on partial sentence input. This training encourages the model to learn meaningful representations sensitive to syntactic and semantic cues.</li>
+<li><strong>Layered Representations</strong>: Instead of outputting a single fixed vector, ELMo generates embeddings by <strong>combining representations from multiple layers</strong> of its LSTM network. This allows the final word vector to incorporate information from shallow and deep layers, capturing different levels of linguistic structure.</li>
+</ul>
+<h3 id="advantages-of-elmo">Advantages of ELMo</h3>
+<p>Because ELMo models <strong>full-sentence context in both directions</strong>, it produces <strong>different embeddings</strong> for the same word depending on its usage, effectively resolving many problems caused by polysemy.</p>
+<p>For example:</p>
+<ul>
+<li><em>&quot;The <strong>jaguar</strong> raced down the track.&quot;</em> → The word <em>jaguar</em> receives a vector emphasizing its meaning as a <strong>car</strong>.</li>
+<li><em>&quot;The <strong>jaguar</strong> hunted in the jungle.&quot;</em> → The word <em>jaguar</em> receives a different vector, reflecting its meaning as an <strong>animal</strong>.</li>
+</ul>
+<p>By dynamically adjusting word representations based on surrounding context, ELMo significantly improved results on tasks such as question answering, sentiment analysis, and coreference resolution—outperforming static embeddings across the board.</p>
+<hr>
+</section><section><h2 id="bert-deep-contextual-understanding-with-transformers">BERT: Deep Contextual Understanding with Transformers</h2>
+<p>While ELMo introduced the power of bi-directional context using recurrent neural networks (LSTMs), <strong>BERT</strong> (<em>Bidirectional Encoder Representations from Transformers</em>), introduced by Devlin et al. in 2018, took contextual word embeddings even further by using an entirely different architecture: the <strong>Transformer</strong>.</p>
+<p>BERT became a major breakthrough in NLP because it achieved deep contextual understanding in a much more efficient and powerful way than previous recurrent models.</p>
+<h3 id="characteristics-of-bert">Characteristics of BERT</h3>
+<ul>
+<li><strong>Transformer Architecture</strong>: BERT is built entirely on the <strong>Transformer encoder</strong>—a neural network architecture based on <strong>self-attention mechanisms</strong>, allowing it to model relationships between all words in a sentence simultaneously, rather than sequentially.</li>
+<li><strong>True Bidirectionality</strong>: Unlike traditional language models (and even unlike ELMo, which separately processes left-to-right and right-to-left), BERT uses <strong>Masked Language Modeling (MLM)</strong>. It randomly masks words during training and predicts them based on both left and right context simultaneously. This enables BERT to fully integrate contextual clues from all directions at once.</li>
+<li><strong>Pre-training Objectives</strong>:<ol><li><strong>Masked Language Modeling (MLM)</strong> — Predict missing words in a sentence.</li><li><strong>Next Sentence Prediction (NSP)</strong> — Predict whether one sentence logically follows another.<br>Together, these objectives teach BERT to understand not only word-level context but also sentence-level relationships.</li></ol></li>
+<li><strong>Contextual Embeddings</strong>: For each word in a sentence, BERT generates a <strong>deep, context-sensitive vector</strong> that captures fine-grained meanings depending on the entire input.</li>
+</ul>
+<h3 id="advantages-of-bert">Advantages of BERT</h3>
+<p>BERT produces extremely rich contextual embeddings because it <strong>jointly considers all words and their interdependencies</strong>. As a result, it provides highly nuanced representations of word meaning.</p>
+<p>For example:</p>
+<ul>
+<li><em>&quot;The <strong>bat</strong> flew across the night sky.&quot;</em> (Bat = <strong>animal</strong>)</li>
+<li><em>&quot;He swung the <strong>bat</strong> during the baseball game.&quot;</em> (Bat = <strong>sports equipment</strong>)</li>
+</ul>
+<p>BERT generates <strong>different embeddings</strong> for <em>bat</em> in these two sentences based on the surrounding context, correctly modeling the intended meaning.</p>
+<p>Due to its deep bidirectional processing and Transformer-based architecture, BERT significantly outperformed all previous models on a wide range of NLP benchmarks, including question answering (SQuAD), natural language inference (GLUE), and named entity recognition (CoNLL).</p>
+<p>BERT also popularized the <strong>pre-train and fine-tune</strong> paradigm, where a general-purpose language model is first pre-trained on large corpora, and then fine-tuned on specific tasks with smaller datasets.</p>
+<hr>
+<h3 id="summary-from-static-to-deep-contextual-embeddings">Summary: From Static to Deep Contextual Embeddings</h3>
+<p>The development of word embeddings in NLP reflects a major shift from fixed, context-independent representations to dynamic, context-sensitive ones. Here’s a concise overview of how the field evolved:</p>
+<table>
+<thead>
+<tr>
+<th>Model Type</th>
+<th>Key Idea</th>
+<th>Context Sensitivity</th>
+<th>Architecture</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Static Embeddings</strong></td>
+<td>One fixed vector per word (Word2Vec, GloVe, FastText)</td>
+<td>None</td>
+<td>Shallow, matrix-based</td>
+</tr>
+<tr>
+<td><strong>ELMo</strong></td>
+<td>Contextualized embeddings using BiLSTMs</td>
+<td>Word-level, bi-directional</td>
+<td>BiLSTM (Recurrent Neural Networks)</td>
+</tr>
+<tr>
+<td><strong>BERT</strong></td>
+<td>Deep, bidirectional contextual understanding with attention</td>
+<td>Deep contextualized word and sentence-level meaning</td>
+<td>Transformer Encoder</td>
+</tr>
+</tbody>
+</table>
+<h4 id="key-progression-highlights">Key Progression Highlights:</h4>
+<p><strong>Static Embeddings</strong></p>
+<ul>
+<li>Words are mapped to a single vector regardless of context.</li>
+<li>Cannot handle polysemy effectively.</li>
+</ul>
+<p><strong>ELMo</strong></p>
+<ul>
+<li>Introduces context-dependent embeddings using BiLSTMs.</li>
+<li>Produces different vectors for the same word depending on usage.</li>
+</ul>
+<p><strong>BERT</strong></p>
+<ul>
+<li>Builds on Transformers to jointly model full sentence context.</li>
+<li>Deeply bidirectional and highly effective for a wide range of tasks.</li>
+<li>Pre-train and fine-tune paradigm revolutionized modern NLP workflows.</li>
+</ul>
+<hr>
+</section><section><h2 id="applications-of-contextual-embeddings-in-nlp">Applications of Contextual Embeddings in NLP</h2>
+<p>Contextual embeddings—especially those generated by models like <strong>ELMo</strong> and <strong>BERT</strong>—have dramatically improved performance across a wide range of <strong>real-world NLP tasks</strong>. By capturing word meaning in context, these models offer deeper understanding, better generalization, and increased robustness in downstream applications.</p>
+<p>Below are key areas where contextual embeddings have had a major impact:</p>
+<h3 id="question-answering-qa">1. <strong>Question Answering (QA)</strong></h3>
+<p>Contextual models allow systems to interpret both the <strong>question</strong> and the <strong>reference passage</strong> with a deeper sense of meaning. They are capable of:</p>
+<ul>
+<li>Identifying the correct span of text that answers a question.</li>
+<li>Resolving ambiguity in queries with polysemous words.</li>
+<li>Understanding paraphrased or implicit questions.</li>
+</ul>
+<p><strong>Example:</strong> In SQuAD-style datasets, BERT-based models significantly outperform traditional LSTM + attention architectures.</p>
+<h3 id="machine-translation">2. <strong>Machine Translation</strong></h3>
+<p>By representing word meaning dynamically, contextual embeddings improve translation quality:</p>
+<ul>
+<li>They help disambiguate source words (e.g., <em>“pitch”</em> as <em>field</em> vs. <em>sound</em>).</li>
+<li>They produce more accurate equivalents in target languages.</li>
+<li>They enable context-aware encoder-decoder attention in Transformer-based models (e.g., mBART, mT5).</li>
+</ul>
+<p><strong>Example:</strong> BERT-style embeddings are used in many multilingual models for low-resource and zero-shot translation.</p>
+<h3 id="named-entity-recognition-ner">3. <strong>Named Entity Recognition (NER)</strong></h3>
+<p>Context helps distinguish between common words and named entities:</p>
+<ul>
+<li><em>&quot;Apple&quot; in “apple pie” vs. “Apple released a new device.”</em></li>
+<li>Contextual embeddings allow the model to treat these as <strong>very different tokens</strong>, improving classification accuracy.</li>
+</ul>
+<p><strong>Example:</strong> Fine-tuning BERT on CoNLL-2003 yields state-of-the-art performance in recognizing people, organizations, and locations.</p>
+<h3 id="text-classification-and-sentiment-analysis">4. <strong>Text Classification and Sentiment Analysis</strong></h3>
+<p>Understanding sentiment often depends on subtle cues in context:</p>
+<ul>
+<li><em>“The movie was surprisingly good”</em> vs. <em>“The movie was surprisingly bad”</em></li>
+<li>Contextual embeddings help capture polarity shifts, irony, and emphasis better than bag-of-words or static embeddings.</li>
+</ul>
+<h3 id="semantic-search-and-information-retrieval">5. <strong>Semantic Search and Information Retrieval</strong></h3>
+<p>By mapping queries and documents into <strong>context-aware vector spaces</strong>, contextual models improve retrieval:</p>
+<ul>
+<li>Synonyms and paraphrases can be matched more effectively.</li>
+<li>Word sense disambiguation leads to better ranking of relevant results.</li>
+</ul>
+<p><strong>Example:</strong> Models like Sentence-BERT (SBERT) use BERT embeddings to encode entire sentences for fast semantic similarity comparison.</p>
+<p>We’ve seen that contextual embeddings improve many NLP tasks by capturing word meaning in context. Now let’s take a closer look at one task where this capability is especially critical: <strong>Word Sense Disambiguation</strong>.</p>
+<hr>
+<h3 id="applications-in-word-sense-disambiguation">Applications in Word Sense Disambiguation</h3>
+<p>Words often have multiple meanings, a concept called <strong>polysemy</strong>. For example:</p>
+<ul>
+<li>&quot;mouse&quot; can mean: (1) a small rodent (&quot;a quiet animal like a mouse&quot;) or (2) a computer device (&quot;a mouse controlling a computer system in 1968&quot;).</li>
+<li>&quot;bank&quot; can mean: (1) a financial institution (&quot;a bank can hold the investments…&quot;) or (2) a sloping mound (&quot;as agriculture burgeons on the east bank…&quot;).</li>
+</ul>
+<p>We can label these meanings as senses: <span class="math">\((mouse^1)\)</span> (rodent), <span class="math">\((mouse^2)\)</span> (device), <span class="math">\((bank^1)\)</span> (financial), <span class="math">\((bank^2)\)</span> (river edge). These senses are often listed in resources like <strong>WordNet</strong>, a thesaurus that catalogs word senses in many languages.</p>
+<h3 id="visualizing-senses-with-contextual-embeddings">Visualizing Senses with Contextual Embeddings</h3>
+<p>Contextual embeddings can separate these meanings in a visual way. For example, if we take many instances of the word &quot;die&quot; (which can mean &quot;to die,&quot; the singular of &quot;dice,&quot; or the German article &quot;die&quot;) and pass them through BERT, we get a contextual embedding for each instance. If we project these embeddings into a 2D space using a technique like UMAP, we’d see clusters:</p>
+<ul>
+<li>One cluster for &quot;die&quot; as the verb &quot;to die.&quot;</li>
+<li>Another cluster for &quot;die&quot; as a playing die (singular of dice).</li>
+<li>A third cluster for the German article &quot;die.&quot;</li>
+</ul>
+<p><img src="../_assets/contextual-embedding.png" alt=""></p>
+<p>This shows that BERT embeddings group similar meanings together based on context, unlike static embeddings, which would place all instances of &quot;die&quot; in the same spot.</p>
+<h3 id="word-sense-disambiguation-wsd">Word Sense Disambiguation (WSD)</h3>
+<p>The task of figuring out which sense of a word is being used in a sentence is called <strong>Word Sense Disambiguation (WSD)</strong>. WSD takes a word in context and a list of possible senses (e.g., from WordNet) and picks the correct sense. For example, in &quot;an electric guitar and bass player stand off to one side&quot;, WSD would choose $(electric<sup>1, player</sup>2..$) (financial institution).
+The task can be sketched out as:
+<img src="../_assets/wsd.png" alt=""></p>
+<blockquote>
+<p>The all-words WSD task, mapping from input words <span class="math">\((x)\)</span> to WordNet senses
+<span class="math">\((y)\)</span></p>
+</blockquote>
+<p>A simple but powerful WSD method uses contextual embeddings like BERT. Here’s how it works:</p>
+<ol>
+<li><strong>Training</strong>: Take a dataset with sentences where words are labeled with their senses (e.g., SemCor or SenseEval datasets). Pass each sentence through BERT to get a contextual embedding for each labeled word. For BERT, this embedding is often computed by summing the vectors from the last four layers. For each sense (s) of a word (e.g.,  <span class="math">\((electric^1)\)</span>), average the embeddings of all instances of that sense to create a <strong>sense embedding</strong> (<span class="math">\(\mathbf{v}_s)\)</span>:</li>
+</ol>
+<div class="math">
+\[
+\mathbf{v}_s = \frac{1}{n} \sum_i \mathbf{v}_i \quad \forall \mathbf{v}_i \in \text{tokens}(s)
+\]</div>
+<ol start="3">
+<li><strong>Testing</strong>: For a new word in a sentence (e.g., &quot;found&quot; in a sentence), compute its contextual embedding (<span class="math">\(\mathbf{t})\)</span> using BERT. Then, find the sense whose sense embedding <span class="math">\((\mathbf{v}_s)\)</span> is closest to (<span class="math">\(\mathbf{t})\)</span> using <strong>cosine similarity</strong>:<div class="math">\[\text{sense}(t) = \underset{s \in \text{senses}(t)}{\text{argmax}}  \text{cos}(\mathbf{t}, \mathbf{v}_s)\]</div></li>
+</ol>
+<p>The illustration of the model:
+<img src="../_assets/found-wsd.png" alt=""></p>
+<blockquote>
+<p>The nearest-neighbor algorithm for WSD. In green are the contextual embeddings precomputed for each sense of each word; here we just show a few of the senses for find. A contextual embedding is computed for the target word found, and then the nearest neighbor sense (in this case <span class="math">\(find_{\text{v}}^9\)</span>) is chosen</p>
+</blockquote>
+<p>This nearest-neighbor approach is very effective for WSD because contextual embeddings capture the meaning of a word in its specific context.</p>
+<hr>
+</section><section><h2 id="contextual-embeddings-and-word-similarity">Contextual Embeddings and Word Similarity</h2>
+<p>In addition to resolving ambiguity, contextual embeddings provide a powerful framework for measuring word similarity—but in a context-sensitive way. Unlike static embeddings such as Word2Vec, which assign one vector per word type, contextual models generate different vectors for each word instance, enabling more precise semantic comparisons.</p>
+<p>Just like in traditional settings, similarity is typically computed using cosine similarity—a measure of the angle between two vectors in high-dimensional space. However, with contextual embeddings, this comparison takes into account the specific sentence in which the word appears, allowing us to distinguish between different senses of the same word.</p>
+<p>For example:</p>
+<ul>
+<li><em>&quot;He may <strong>die</strong> in battle.&quot;</em> (die = to perish)</li>
+<li><em>&quot;She rolled the <strong>die</strong> across the table.&quot;</em> (die = a small cube used in games)</li>
+</ul>
+<p>Although the same surface form (<em>die</em>) is used, their contextual embeddings will be <strong>far apart</strong> in the vector space, reflecting their distinct meanings. Conversely, two uses of <em>die</em> with the same intended sense—such as:</p>
+<ul>
+<li><em>&quot;He might <strong>die</strong> from the wound.&quot;</em></li>
+<li><em>&quot;Many soldiers <strong>died</strong> in the war.&quot;</em></li>
+</ul>
+<p>...will have <strong>high cosine similarity</strong>, as their contextual embeddings reflect similar semantic usage.</p>
+<p>This makes contextual embeddings not only more expressive but also highly useful in tasks involving semantic similarity, paraphrase detection, and word-in-context comparisons—tasks where understanding subtle shifts in meaning is essential.</p>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>Static embeddings like Word2Vec, GloVe, and FastText were a great starting point for representing words as vectors, but they struggle with polysemy(words with multiple meanings). Contextual embeddings, like those from ELMo and BERT, solve this by creating vectors that depend on the sentence. ELMo uses bi-directional LSTMs, while BERT uses Transformers to understand the entire sentence at once.</p>
+<blockquote>
+<p>(LSTMs and Transformers will be explained in future lessons)</p>
+</blockquote>
+<p>These embeddings are powerful for tasks like word sense disambiguation (WSD) and measuring word similarity, as they can distinguish between different meanings of a word (like &quot;bank&quot; or &quot;die&quot;) and measure how similar two words are in context. In the next lesson, you’ll get hands-on practice with BERT embeddings, extracting embeddings using BERT and observing how they change across sentences.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

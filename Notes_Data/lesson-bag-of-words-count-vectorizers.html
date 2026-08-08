@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Bag Of Words Count Vectorizers</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-bag-of-words-count-vectorizers"><strong>Lesson: Bag-of-Words &amp; Count Vectorizers</strong></h1></header>
+<section><h2 id="introduction"><strong>Introduction</strong></h2>
+<p>In natural language processing (NLP), representing text in numerical form is crucial for machine learning models. However, raw text cannot be directly processed by algorithms; it must be transformed into a structured format.</p>
+<p>One of the simplest ways to achieve this is through the <strong>Bag-of-Words (BoW) model</strong>, which represents text as a <strong>vector of word occurrences</strong>. This model treats a document as a collection of words, disregarding grammar and word order, and represents it using <strong>word frequency vectors</strong>.</p>
+<p>While effective for many applications, BoW has limitations, such as <strong>loss of context</strong> and <strong>high dimensionality</strong>, which need to be considered when working with large datasets.</p>
+<hr>
+</section><section><h2 id="learning-outcomes"><strong>Learning Outcomes</strong></h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li>Explain how the Bag-of-Words model represents text numerically.</li>
+<li>Understand and construct <strong>Binary Term-Document Incidence Matrices</strong> and <strong>Term-Document Count Matrices</strong>.</li>
+<li>Implement a Count Vectorizer to convert text into numerical vectors.</li>
+<li>Identify the limitations of the Bag-of-Words approach and understand its impact on NLP tasks.</li>
+</ol>
+<hr>
+</section><section><h2 id="bag-of-words-model"><strong>Bag-of-Words Model</strong></h2>
+<p>The Bag-of-Words (BoW) model is a fundamental technique used in Natural Language Processing (NLP) to convert text into numerical feature vectors. It treats text as a collection (&quot;bag&quot;) of individual words, ignoring grammar and word order, but preserving word frequency.</p>
+<h3 id="how-it-works">How It Works:</h3>
+<ol>
+<li><strong>Tokenization</strong>: Break the text into individual words (tokens).</li>
+<li><strong>Vocabulary Creation</strong>: Create a list of all <strong>unique words</strong> across the entire corpus.</li>
+<li><strong>Vectorization</strong>:  Represent each document as a vector that <strong>counts the frequency</strong> of each word from the vocabulary.</li>
+</ol>
+<hr>
+<h3 id="representing-text-as-a-word-frequency-vector">** Representing Text as a Word Frequency Vector**</h3>
+<p>The Bag-of-Words (BoW) model converts text into numerical form by representing each document as a vector of word features, while completely ignoring grammar, syntax, and word order. This transformation enables machine learning models to process and analyze textual data.</p>
+<p><strong>1. Binary Term-Document Incidence Matrix</strong></p>
+<p>Indicates whether a word is present (1) or absent (0) in each document.<br>
+Useful for tasks like keyword detection and document classification where presence matters more than frequency.</p>
+<p><strong>2. Term-Document Count Matrix</strong></p>
+<p>Stores the <strong>number of times each word appears</strong> in each document.<br>
+This approach retains frequency information, which can be useful for weighting or ranking terms.</p>
+<h3 id="binary-term-document-incidence-matrix"><strong>Binary Term-Document Incidence Matrix</strong></h3>
+<p>In this matrix, each document is represented as a <strong>binary vector</strong> (∈ {0,1}). If a word appears in the document, its value is <strong>1</strong>; otherwise, it is <strong>0</strong>.</p>
+<p><strong>Example: Shakespeare’s Plays</strong></p>
+<p>Let’s consider a dataset where each row represents a <strong>word</strong>, and each column represents a <strong>Shakespeare play</strong>.</p>
+<table>
+<thead>
+<tr>
+<th><strong>Term</strong></th>
+<th>Antony &amp; Cleopatra</th>
+<th>Julius Caesar</th>
+<th>The Tempest</th>
+<th>Hamlet</th>
+<th>Othello</th>
+<th>Macbeth</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ANTHONY</strong></td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td><strong>BRUTUS</strong></td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td><strong>CAESAR</strong></td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td><strong>CALPURNIA</strong></td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td><strong>CLEOPATRA</strong></td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td><strong>MERCY</strong></td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td><strong>WORSER</strong></td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>If a word appears in a play, we mark it <strong>1</strong>; otherwise, it is <strong>0</strong>.</li>
+<li>For example, &quot;CAESAR&quot; appears in <em>Antony and Cleopatra</em>, <em>Julius Caesar</em>, <em>Hamlet</em>, and <em>Othello</em>, so it has <strong>1s</strong> in those columns.</li>
+</ul>
+<hr>
+<h3 id="term-document-count-matrix"><strong>Term-Document Count Matrix</strong></h3>
+<p>Instead of using binary values, we count how often each word appears in each document.</p>
+<table>
+<thead>
+<tr>
+<th><strong>Term</strong></th>
+<th>Antony &amp; Cleopatra</th>
+<th>Julius Caesar</th>
+<th>The Tempest</th>
+<th>Hamlet</th>
+<th>Othello</th>
+<th>Macbeth</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ANTHONY</strong></td>
+<td>157</td>
+<td>73</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td><strong>BRUTUS</strong></td>
+<td>4</td>
+<td>157</td>
+<td>0</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td><strong>CAESAR</strong></td>
+<td>232</td>
+<td>227</td>
+<td>0</td>
+<td>2</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td><strong>CALPURNIA</strong></td>
+<td>0</td>
+<td>10</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td><strong>CLEOPATRA</strong></td>
+<td>57</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td><strong>MERCY</strong></td>
+<td>2</td>
+<td>0</td>
+<td>3</td>
+<td>8</td>
+<td>5</td>
+<td>8</td>
+</tr>
+<tr>
+<td><strong>WORSER</strong></td>
+<td>2</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Here, <strong>CAESAR</strong> appears <strong>232 times in Antony &amp; Cleopatra</strong> and <strong>227 times in Julius Caesar</strong>.</li>
+<li>Unlike the binary matrix, this approach <strong>preserves frequency information</strong>.</li>
+</ul>
+<hr>
+</section><section><h2 id="implementing-bag-of-words-in-python"><strong>Implementing Bag-of-Words in Python</strong></h2>
+<p>We can automate the above process using <strong>CountVectorizer</strong> from <code>sklearn.feature_extraction.text</code>.</p>
+<h3 id="step-1-import-required-libraries"><strong>Step 1: Import Required Libraries</strong></h3>
+<pre><code class="language-python">from sklearn.feature_extraction.text import CountVectorizer
+
+corpus = [
+    &quot;Antony appears in Julius Caesar and Antony and Cleopatra.&quot;,
+    &quot;Brutus appears in Julius Caesar and Hamlet.&quot;,
+    &quot;Caesar appears in Julius Caesar, Hamlet, and Othello.&quot;
+]
+</code></pre>
+<h3 id="step-2-create-and-apply-the-count-vectorizer"><strong>Step 2: Create and Apply the Count Vectorizer</strong></h3>
+<pre><code class="language-python">vectorizer = CountVectorizer(binary=False)
+X = vectorizer.fit_transform(corpus)
+</code></pre>
+<h3 id="step-3-display-the-vocabulary"><strong>Step 3: Display the Vocabulary</strong></h3>
+<pre><code class="language-python">print(&quot;Vocabulary:&quot;, vectorizer.get_feature_names_out())
+</code></pre>
+<p><strong>Output:</strong></p>
+<pre><code>Vocabulary: ['antony' 'appears' 'brutus' 'caesar' 'cleopatra' 'hamlet' 'julius' 'othello']
+</code></pre>
+<h3 id="step-4-convert-text-into-count-matrix"><strong>Step 4: Convert Text into Count Matrix</strong></h3>
+<pre><code class="language-python">print(&quot;Count Matrix:\n&quot;, X.toarray())
+</code></pre>
+<p><strong>Output:</strong></p>
+<pre><code>Count Matrix:
+[[2 1 0 1 1 0 1 0]
+ [0 1 1 1 0 1 1 0]
+ [0 1 0 2 0 1 1 1]]
+</code></pre>
+<p>Each row represents a document, and each column corresponds to a word. The numbers indicate how frequently the word appears in that document.</p>
+<hr>
+</section><section><h2 id="limitations-of-the-bag-of-words-model"><strong>Limitations of the Bag-of-Words Model</strong></h2>
+<p>While the <strong>Bag-of-Words (BoW)</strong> model is simple and effective for many text-processing tasks, it has several important limitations:</p>
+<h3 id="loss-of-context"><strong>Loss of Context</strong></h3>
+<p>BoW <strong>ignores word order, grammar, and semantics</strong>, meaning it cannot distinguish between sentences with different meanings but the same words.</p>
+<ul>
+<li><strong>Example</strong>:<ul><li>&quot;The cat chased the dog&quot;</li><li>&quot;The dog chased the cat&quot;</li><li>Both have the <strong>same BoW representation</strong> despite having different meanings.</li></ul></li>
+</ul>
+<h3 id="high-dimensionality-sparsity-issue"><strong>High Dimensionality (Sparsity Issue)</strong></h3>
+<ul>
+<li>As the size of the corpus grows, the vocabulary expands, resulting in <strong>very large feature vectors</strong>.</li>
+<li>Most words don’t appear in most documents, leading to <strong>sparse matrices</strong> (filled mostly with zeros).</li>
+<li>This increases <strong>memory usage</strong> and <strong>computational cost</strong>, especially for large-scale NLP tasks.</li>
+</ul>
+<h3 id="equal-weighting-of-words"><strong>Equal Weighting of Words</strong></h3>
+<ul>
+<li>All words are treated equally, regardless of their importance or relevance to the topic.</li>
+<li>Common words like <em>&quot;the&quot;</em>, <em>&quot;and&quot;</em>, and <em>&quot;is&quot;</em> get the same weight as more informative terms like <em>&quot;neuroscience&quot;</em> or <em>&quot;algorithm&quot;</em>.</li>
+<li><strong>Solution</strong>: The <strong>TF-IDF</strong> model (covered in the next lesson) adjusts word weights based on their frequency across documents, helping reduce this issue.</li>
+</ul>
+<hr>
+</section><section><h2 id="conclusion"><strong>Conclusion</strong></h2>
+<p>In this lesson, we explored how text can be represented numerically using the <strong>Bag-of-Words (BoW) model</strong>, including both the <strong>Binary Term-Document Incidence Matrix</strong> and the <strong>Term-Document Count Matrix</strong>. We also implemented BoW in Python using <code>CountVectorizer</code> from the <code>scikit-learn</code> library. While BoW is a simple and effective starting point for many NLP tasks, it has important limitations—such as ignoring word order, treating all words equally, and generating high-dimensional, sparse matrices. These issues can reduce the model’s ability to capture meaning and relevance in text. To overcome these challenges, our next step will be to explore <strong>TF-IDF (Term Frequency–Inverse Document Frequency)</strong>, a technique that improves text representation by weighting words based on their importance within and across documents.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

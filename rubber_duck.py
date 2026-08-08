@@ -403,7 +403,9 @@ def build_answer_prompt(query: str, results: List[dict]) -> str:
     )
     return (
         "Answer the question using ONLY the information in the sources below. "
+        "Write a complete answer in 1-3 full sentences; do not answer with fragments or a single term. "
         "Cite sources with their bracketed number, e.g. [1]. "
+        "Include at least one citation in each sentence that states a factual claim. "
         "If the sources don't contain the answer, say so instead of guessing.\n\n"
         f"Sources:\n{sources}\n\n"
         f"Question: {query}\n"
@@ -449,12 +451,16 @@ def build_results_payload(
     query: str,
     results: List[dict],
     user_id: str = DEFAULT_USER_ID,
+    answer: str | None = None,
 ) -> dict:
-    return {
+    payload = {
         "user_id": user_id,
         "timestamp": datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
         "query": query,
-        "results": [
+    }
+    if answer is not None:
+        payload["answer"] = answer
+    payload["results"] = [
             {
                 "path": str(result["path"]),
                 "score": round(result["score"], 3),
@@ -462,8 +468,8 @@ def build_results_payload(
                 "metadata": result["metadata"],
             }
             for result in results
-        ],
-    }
+        ]
+    return payload
 
 
 def run_interactive_search(
@@ -482,6 +488,7 @@ def run_interactive_search(
         query = input("\nEnter a keyword or phrase (blank to quit): ").strip()
         if not query:
             break
+        answer = None
         if use_semantic:
             results = semantic_search(query, chunk_embeddings, documents, top_k=top_k)
         else:
@@ -501,7 +508,7 @@ def run_interactive_search(
             answer = generate_answer(query, results, model=llm_model)
             print(f"\nAnswer:\n{answer}")
 
-        payload = build_results_payload(query, results, user_id=user_id)
+        payload = build_results_payload(query, results, user_id=user_id, answer=answer)
         print(json.dumps(payload, indent=4))
 
 
@@ -572,6 +579,8 @@ def main() -> None:
         print("No strong matches found.")
         return
 
+    answer = None
+
     print(f"Top {len(results)} match(es) for '{args.query}':")
     for rank, result in enumerate(results, start=1):
         chunk_position = f"{result['metadata']['chunk_index'] + 1}/{result['metadata']['total_chunks']}"
@@ -583,7 +592,7 @@ def main() -> None:
         answer = generate_answer(args.query, results, model=args.llm_model)
         print(f"\nAnswer:\n{answer}")
 
-    payload = build_results_payload(args.query, results, user_id=args.user_id)
+    payload = build_results_payload(args.query, results, user_id=args.user_id, answer=answer)
     print(json.dumps(payload, indent=4))
 
 
@@ -591,6 +600,7 @@ if __name__ == "__main__":
     # Documents often contain non-ASCII symbols (math, accents); force UTF-8
     # output so redirecting stdout to a file doesn't crash on Windows' default
     # console codepage.
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     main()

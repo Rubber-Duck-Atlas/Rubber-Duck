@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Introduction To Neural Word Embeddings</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-introduction-to-neural-word-embeddings">Lesson: Introduction to Neural Word Embeddings</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In Week 2, we introduced <strong>Word2Vec</strong> and <strong>GloVe</strong> as powerful tools for representing words as dense vectors based on their co-occurrence statistics. These methods improved over one-hot encoding by modeling semantic similarity: similar words had similar vectors.</p>
+<p>However, these <strong>static embeddings</strong> assign only one vector per word, regardless of its usage. This limitation becomes evident when dealing with <strong>polysemy</strong> (multiple meanings of a word) or when syntactic roles shift in different contexts. In this lesson, we will explore <strong>neural word embeddings</strong>, which dynamically adjust a word’s vector representation based on its surrounding context. These are the basis of models like <strong>ELMo</strong>, <strong>BERT</strong>, and <strong>GPT</strong>.</p>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Differentiate</strong> between static and contextual word embeddings.</li>
+<li><strong>Describe</strong> how neural networks create dynamic word representations.</li>
+<li><strong>Analyze</strong> the handling of polysemy and syntax using contextual embeddings.</li>
+<li><strong>Evaluate</strong> the advantages of contextual embeddings over Word2Vec and GloVe.</li>
+<li><strong>Interpret</strong> visualizations of embedding spaces for better model understanding.</li>
+</ol>
+<hr>
+</section><section><h2 id="revisiting-traditional-word-embeddings">Revisiting Traditional Word Embeddings</h2>
+<p>As introduced in Week 2, traditional embeddings such as Word2Vec and GloVe are grounded in the distributional hypothesis: <em>“Words that occur in similar contexts tend to have similar meanings.”</em> These early models were designed to encode this principle by analyzing how words co-occur within a given textual window or across a corpus. The result is a set of static word vectors, where a fixed point represents each word in the vocabulary in a continuous vector space.</p>
+<p>In practice, this means that no matter where or how a word appears in a sentence, its embedding remains unchanged. These vectors successfully capture broad semantic relationships such as synonymy, analogy, and semantic relatedness. For example, Word2Vec’s vector arithmetic allows operations like <em>“king – man + woman ≈ queen”</em>, revealing patterns that reflect human-like reasoning over word relationships.</p>
+<p>Word2Vec accomplishes this through two training paradigms: Skip-Gram, which predicts nearby context words from a target word, and CBOW (Continuous Bag of Words), which predicts the target word from its surrounding context. Both approaches leverage shallow neural networks. GloVe, on the other hand, takes a matrix factorization approach by leveraging global co-occurrence statistics, offering a different but complementary method to learn semantic space. Despite their success, these embeddings share a critical limitation: they encode only one meaning per word. This becomes problematic when dealing with polysemous words with multiple meanings depending on context. For instance:</p>
+<ul>
+<li>“He stood on the <strong>bank</strong> of the river.”</li>
+<li>“She works at a <strong>bank</strong> downtown.”</li>
+</ul>
+<p>In both cases, traditional models like Word2Vec or GloVe will assign the same vector to the word <em>“bank”</em>. While mathematically consistent, this approach fails to account for the fact that one sentence refers to a geographic feature and the other to a financial institution. The inability to disambiguate such meanings severely limits performance in context-sensitive NLP tasks such as sentiment analysis, named entity recognition, and machine translation.</p>
+<p>This constraint has driven the field toward contextual neural embeddings, where representations are no longer static but are generated dynamically based on the surrounding text. The shift toward these models marks a turning point in how we teach machines to understand language, not merely by statistical proximity, but through interpretive understanding grounded in context.</p>
+<hr>
+</section><section><h2 id="neural-embeddings-and-contextual-semantics">Neural Embeddings and Contextual Semantics</h2>
+<p>To address the rigid limitations of static word vectors, modern NLP systems turn to neural architectures that generate contextual embeddings representations that are sensitive to how words are used in full sentences. Unlike traditional embeddings, which assign one vector per word type, contextual embeddings produce a unique vector for each word occurrence, dynamically shaped by its surrounding context. These embeddings are computed at runtime using the entire sentence input, allowing the model to reflect differences in meaning for polysemous words. For instance, the embedding for the word <em>“cell”</em> in <em>“The prisoner was locked in his cell”</em> will differ from <em>“She studied the cell under a microscope”</em>, even though the surface word is identical. Context dictates meaning, and neural embeddings are designed to capture exactly that. This shift has fundamentally changed how language understanding is modeled. But how exactly do these models learn such rich, context-aware representations? What architectural choices make this possible, and what distinguishes models like BERT and GPT from traditional embedding generators?</p>
+<hr>
+</section><section><h2 id="contextualized-embeddings-with-neural-networks">Contextualized Embeddings with Neural Networks</h2>
+<p>Neural word embeddings are generated dynamically using architectures that consider the entire sentence context. This means that the same word will receive different embeddings depending on its specific usage. Unlike Word2Vec or GloVe, which rely on co-occurrence statistics, these models compute embeddings as a function of the sentence itself. Models such as:</p>
+<ul>
+<li><strong>ELMo (Embeddings from Language Models)</strong></li>
+<li><strong>BERT (Bidirectional Encoder Representations from Transformers)</strong></li>
+<li><strong>GPT (Generative Pre-trained Transformer)</strong></li>
+</ul>
+<p>use architectures like <strong>LSTMs</strong> or <strong>Transformers</strong> to build layers of understanding across the sentence. These models do not store vectors for words in isolation. Instead, they learn how words interact with their context and produce <strong>contextualized embeddings</strong> that adapt based on meaning and structure.</p>
+<p>For example, the word <em>“cell”</em> in:</p>
+<ul>
+<li>“The prisoner was locked in his <strong>cell</strong>.”</li>
+<li>“She studied the <strong>cell</strong> under a microscope.”</li>
+</ul>
+<p>will have two distinct embeddings when passed through a contextual model. The vector representations shift to reflect whether the word refers to a prison or a biological unit something static embeddings cannot do.</p>
+<hr>
+</section><section><h2 id="architecture-overview">Architecture Overview</h2>
+<p>Contextualized embeddings are typically learned in a language modeling framework. These models are trained not on isolated words but on full sequences, learning to predict masked tokens, next tokens, or entire spans based on their surroundings. This setup allows them to encode not just the surface form of language but its deeper semantic and syntactic structure. The core components of this architecture are:</p>
+<ol>
+<li><strong>Contextual encoder</strong>: This is the main engine of representation learning. In early models like ELMo, this was a bidirectional LSTM. In newer models like BERT and GPT, it is a stack of Transformer blocks. The encoder takes in a sequence of tokens and outputs a set of hidden states that represent each token in the context of its neighbors.</li>
+<li><strong>Sentence-level processing</strong>: The encoder does not treat each word in isolation. Instead, it processes the entire sentence at once, allowing every token to “attend” to all others. This bidirectional or autoregressive attention is what enables the dynamic embedding behavior.</li>
+<li><strong>Contextualized vector extraction</strong>: The hidden states produced by the encoder are context-specific representations of each token. The final layer’s output usually after layer normalization—is taken as the embedding for each word instance.</li>
+</ol>
+<p>These embeddings reflect word identity, grammatical role, surrounding structure, and discourse function. Unlike traditional models, they adapt naturally to linguistic variation without needing to manually define word senses or syntactic rules.</p>
+<blockquote>
+<p>The underlying architecture especially Transformer blocks and self-attention, will be analyzed in detail in <strong>Week 4</strong>.</p>
+</blockquote>
+<hr>
+<h3 id="bert-overview-contextual-embeddings-via-transformers">BERT Overview: Contextual Embeddings via Transformers</h3>
+<p>Among contextual embedding models, BERT has been the most influential. Developed by Google in 2018, BERT introduced a fully bidirectional Transformer encoder, trained using masked language modeling and next sentence prediction. This architecture enabled a model to condition the representation of each token on both left and right context simultaneously a major advance over left-to-right models like GPT or unidirectional RNNs. Key features of BERT’s contextual embedding mechanism:</p>
+<ul>
+<li><strong>Token and position embeddings</strong>: Each input token is embedded and combined with a positional vector, allowing the model to track word order.</li>
+<li><strong>Multi-layer Transformer encoders</strong>: BERT applies multiple layers of attention and feedforward transformation. Each layer refines the contextual interpretation of every token.</li>
+<li><strong>Contextual hidden states</strong>: The output of the final Transformer layer provides the context-sensitive embedding of each token. These vectors vary based on how the token is used.</li>
+</ul>
+<p>For example, the word <em>“bass”</em> will produce two different vectors in:</p>
+<ul>
+<li>“He played the <strong>bass</strong> guitar.”</li>
+<li>“She caught a <strong>bass</strong> in the lake.”</li>
+</ul>
+<p>These distinctions emerge automatically, without needing to tag or define word senses ahead of time. In practice, BERT embeddings are often extracted using the <strong>Hugging Face <code>transformers</code> library</strong>, which provides access to pretrained models, tokenizers, and utilities for fine-tuning. These embeddings can be used in two main ways:</p>
+<ul>
+<li><strong>Fine-tuning</strong>: The BERT model itself is trained further on a downstream task (e.g., sentiment classification, NER).</li>
+<li><strong>Feature extraction</strong>: The BERT embeddings are passed into another model (e.g., LSTM, classifier) without updating BERT’s internal weights.</li>
+</ul>
+<blockquote>
+<p>You will explore both approaches in <strong>Week 3</strong>, where you’ll implement a classification model using BERT representations as input.</p>
+</blockquote>
+<hr>
+<h3 id="modeling-polysemy-in-vector-space">Modeling Polysemy in Vector Space</h3>
+<p>One of the most powerful consequences of contextual embeddings is their ability to handle polysemy words with multiple meanings. Unlike traditional models that collapse all meanings into a single vector, neural contextual embeddings produce distinct vectors depending on context.</p>
+<p>This phenomenon can be visualized using dimensionality reduction techniques like t-SNE or PCA. For example, if we extract embeddings for the word <em>“plant”</em> from dozens of different sentences, we’ll observe clustering behavior:</p>
+<ul>
+<li>Sentences using <em>“plant”</em> to mean a flower will cluster together.</li>
+<li>Sentences referring to a factory or power plant will form a separate cluster.</li>
+</ul>
+<p>This clustering occurs naturally, without any manual labeling or explicit disambiguation. The model infers meaning from usage. These vector differences are not only interpretable, they lead directly to better performance on language tasks, particularly those that require fine-grained meaning resolution, such as information retrieval, question answering, and coreference resolution.</p>
+<hr>
+</section><section><h2 id="comparing-contextual-and-static-embeddings">Comparing Contextual and Static Embeddings</h2>
+<p>One of the most striking differences between static and contextual embeddings becomes evident when we visualize them in vector space. Traditional embeddings like Word2Vec assign a single point in space to each word, regardless of context. In contrast, contextual embeddings generate a cloud of points, one for each occurrence of the word in varying contexts. This difference can be made visible using dimensionality reduction techniques, such as t-SNE (t-distributed stochastic neighbor embedding) or PCA (principal component analysis). These methods allow us to project high-dimensional word vectors into two or three dimensions for visualization.</p>
+<h3 id="visual-clustering-of-word-senses">Visual Clustering of Word Senses</h3>
+<p>Imagine extracting BERT embeddings for the word <em>“plant”</em> across 100 different sentences. With static embeddings, every instance of <em>“plant”</em> appears as a single dot. But with contextual embeddings, you would observe semantic clustering:</p>
+<ul>
+<li>Instances of <em>“plant”</em> meaning “factory” form one cluster.</li>
+<li>Instances of <em>“plant”</em> meaning “flower” form another.</li>
+</ul>
+<p>This natural grouping illustrates that contextual models internally resolve polysemy, an ability that traditional methods entirely lack.</p>
+<p><strong>Case Example 1: Named Entity Disambiguation</strong></p>
+<p>In named entity recognition (NER), static embeddings struggle to differentiate between ambiguous names:</p>
+<ul>
+<li><em>“Jordan scored 30 points.”</em> (person)</li>
+<li><em>“Jordan shares a border with Israel.”</em> (country)</li>
+</ul>
+<p>BERT captures these distinctions by assigning different vectors to “Jordan” in each case. This enables downstream classifiers to <strong>detect entity type from context</strong>, even if the surface form is identical.</p>
+<p><strong>Case Example 2: Sarcasm Detection</strong></p>
+<p>Sarcasm is notoriously difficult for traditional models, which operate on individual word sentiment. For example:</p>
+<ul>
+<li><em>“Oh great, another Monday morning…”</em></li>
+</ul>
+<p>Static embeddings might interpret “great” as positive. Contextual embeddings understand the tone and structure, allowing models to pick up on disparity between literal and intended meaning.</p>
+<blockquote>
+<p>Contextual embeddings don’t just represent meaning—they <strong>reshape</strong> it based on usage, unlocking a deeper understanding of language nuance.</p>
+</blockquote>
+<hr>
+</section><section><h2 id="practical-example-extracting-contextual-word-embeddings-with-bert">Practical Example: Extracting Contextual Word Embeddings with BERT</h2>
+<p>To solidify your understanding of contextual embeddings, we’ll now extract and compare BERT embeddings for the same word used in different contexts using the Hugging Face <code>transformers</code> library. This practical example demonstrates how BERT generates different vectors for the same word depending on surrounding sentence structure validating what we’ve seen conceptually.</p>
+<p><strong>Setup</strong></p>
+<p>First, ensure you have the <code>transformers</code> and <code>torch</code> libraries installed:</p>
+<pre><code class="language-bash">pip install transformers torch
+</code></pre>
+<h3 id="step-1-load-pretrained-bert-and-tokenizer">Step 1: Load Pretrained BERT and Tokenizer</h3>
+<pre><code class="language-python">from transformers import BertTokenizer, BertModel
+import torch
+
+# Load model and tokenizer
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+model = BertModel.from_pretrained('bert-base-uncased')
+model.eval()
+</code></pre>
+<h3 id="step-2-define-sentences-with-a-polysemous-word">Step 2: Define Sentences with a Polysemous Word</h3>
+<pre><code class="language-python">sentence1 = &quot;The prisoner was locked in his cell overnight.&quot;
+sentence2 = &quot;She studied the cell under a microscope.&quot;
+</code></pre>
+<h3 id="step-3-tokenize-and-get-hidden-states">Step 3: Tokenize and Get Hidden States</h3>
+<pre><code class="language-python">def get_token_embedding(sentence, target_word):
+    inputs = tokenizer(sentence, return_tensors='pt')
+    with torch.no_grad():
+        outputs = model(**inputs)
+
+    token_ids = inputs['input_ids'][0]
+    tokens = tokenizer.convert_ids_to_tokens(token_ids)
+    hidden_states = outputs.last_hidden_state.squeeze(0)
+
+    # Find the position of the word &quot;cell&quot;
+    for i, token in enumerate(tokens):
+        if token == target_word:
+            return hidden_states[i], tokens
+
+embedding1, tokens1 = get_token_embedding(sentence1, 'cell')
+embedding2, tokens2 = get_token_embedding(sentence2, 'cell')
+</code></pre>
+<blockquote>
+<p>Note: In BERT, words can be split into subword tokens (e.g., &quot;playing&quot; → &quot;play&quot; + &quot;##ing&quot;). We're using the raw <code>&quot;cell&quot;</code> token here, which works for simple examples. More advanced usage would handle subword reconstruction and averaging.</p>
+</blockquote>
+<h3 id="step-4-compare-the-embeddings">Step 4: Compare the Embeddings</h3>
+<pre><code class="language-python">from torch.nn.functional import cosine_similarity
+
+similarity = cosine_similarity(embedding1.unsqueeze(0), embedding2.unsqueeze(0))
+print(f&quot;Cosine similarity between 'cell' in two contexts: {similarity.item():.4f}&quot;)
+</code></pre>
+<p>You should see a value significantly below 1.0, indicating that BERT has produced distinct embeddings for the same surface word based on usage.</p>
+<h3 id="interpretation">Interpretation</h3>
+<p>This hands-on test confirms the behavior we discussed earlier:</p>
+<ul>
+<li>The <strong>embedding for “cell”</strong> in a prison-related context is <strong>different</strong> from its embedding in a biology-related context.</li>
+<li>BERT adapts representations at the <strong>token level</strong>, grounded in sentence-wide attention.</li>
+</ul>
+<hr>
+</section><section><h2 id="advantages-over-word2vec-and-glove">Advantages Over Word2Vec and GloVe</h2>
+<p>While traditional models like Word2Vec and GloVe were instrumental in making word vectors usable in NLP, they are fundamentally limited by their reliance on static representations. In contrast, contextual embedding models such as BERT, GPT, and ELMo offer significant improvements in handling meaning that shifts with context.</p>
+<h3 id="handling-polysemy">1. Handling Polysemy</h3>
+<p>One of the most important advantages of contextual embeddings is their ability to distinguish between multiple meanings of the same word. Word2Vec and GloVe assign a single vector to a word type, regardless of how it is used. This means that the word <em>“cell”</em> receives the same embedding whether it refers to a prison room, a biological unit, or a spreadsheet cell. In contrast, models like BERT produce different embeddings for each occurrence of a word, adapting the representation to reflect the sentence’s specific meaning. For example:</p>
+<ul>
+<li>“The inmate was confined to a small <strong>cell</strong>.”</li>
+<li>“She observed the <strong>cell</strong> divide under the microscope.”</li>
+</ul>
+<p>In BERT, these two instances of <em>“cell”</em> are embedded into distinct regions of semantic space capturing the difference without any manual disambiguation or predefined sense inventory.</p>
+<h3 id="contextual-sensitivity">2. Contextual Sensitivity</h3>
+<p>Static embeddings are blind to word order, grammar, and surrounding words. They cannot distinguish between:</p>
+<ul>
+<li>“The movie was good.”</li>
+<li>“The movie was not good.”</li>
+</ul>
+<p>Contextual embeddings, however, are built from deep sentence-level analysis. In BERT, each word’s embedding is influenced by every other token in the sentence through multi-head attention layers. This enables the model to understand:</p>
+<ul>
+<li>Syntactic structures (negation, emphasis, dependency)</li>
+<li>Discourse markers and rhetorical framing</li>
+<li>Meaning shifts introduced by sarcasm, irony, or tone</li>
+</ul>
+<h3 id="improved-performance-on-downstream-tasks">3. Improved Performance on Downstream Tasks</h3>
+<p>Contextual models consistently outperform static models across a wide range of NLP benchmarks:</p>
+<ul>
+<li><strong>Named Entity Recognition (NER)</strong>: Better differentiation of ambiguous entities like <em>“Apple”</em> (company vs. fruit).</li>
+<li><strong>Question Answering (QA)</strong>: Improved answer retrieval based on semantic alignment, not surface overlap.</li>
+<li><strong>Coreference Resolution</strong>: Better resolution of pronouns and named mentions using contextual clues.</li>
+</ul>
+<blockquote>
+<p>These performance gains reflect a deeper truth: understanding language requires <strong>context</strong>, and contextual embeddings give models the ability to reason about words <strong>as they are used</strong>, not just what they are.</p>
+</blockquote>
+<p>These qualitative advantages are further clarified in the following summary table, which contrasts the architectural and functional differences between Word2Vec, GloVe, and BERT.</p>
+<hr>
+<h3 id="comparison-of-word-embedding-models"><strong>Comparison of Word Embedding Models</strong></h3>
+<table>
+<thead>
+<tr>
+<th>Feature / Model</th>
+<th><strong>Word2Vec</strong></th>
+<th><strong>GloVe</strong></th>
+<th><strong>BERT</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Embedding Type</strong></td>
+<td>Static</td>
+<td>Static</td>
+<td>Contextual (dynamic)</td>
+</tr>
+<tr>
+<td><strong>Context Handling</strong></td>
+<td>Local window (Skip-gram / CBOW)</td>
+<td>Global co-occurrence statistics</td>
+<td>Full sentence (bidirectional Transformer)</td>
+</tr>
+<tr>
+<td><strong>Polysemy Representation</strong></td>
+<td>One vector per word</td>
+<td>One vector per word</td>
+<td>Multiple vectors per word (context-dependent)</td>
+</tr>
+<tr>
+<td><strong>Architecture</strong></td>
+<td>Shallow neural network</td>
+<td>Matrix factorization</td>
+<td>Deep Transformer encoder</td>
+</tr>
+<tr>
+<td><strong>Directionality</strong></td>
+<td>Left-to-right or CBOW (symmetric)</td>
+<td>Symmetric</td>
+<td>Bidirectional (full sentence)</td>
+</tr>
+<tr>
+<td><strong>Tokenization</strong></td>
+<td>Word-level</td>
+<td>Word-level</td>
+<td>Subword-level (WordPiece)</td>
+</tr>
+<tr>
+<td><strong>Handles Syntax / Word Order</strong></td>
+<td>No</td>
+<td>Limited</td>
+<td>Yes (via positional encodings + attention)</td>
+</tr>
+<tr>
+<td><strong>Training Objective</strong></td>
+<td>Predict nearby words</td>
+<td>Factorize co-occurrence matrix</td>
+<td>Masked language modeling + next sentence</td>
+</tr>
+<tr>
+<td><strong>Fine-tuning Capability</strong></td>
+<td>No</td>
+<td>No</td>
+<td>Yes (for task-specific optimization)</td>
+</tr>
+<tr>
+<td><strong>Suitable for Downstream Tasks</strong></td>
+<td>Moderate</td>
+<td>Moderate</td>
+<td>Excellent</td>
+</tr>
+<tr>
+<td><strong>Computational Cost</strong></td>
+<td>Low</td>
+<td>Low</td>
+<td>High</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>These contrasts explain why contextual models like BERT have become foundational in modern NLP. Their ability to adjust meaning on-the-fly and encode richer linguistic structure allows for significantly more robust and accurate language understanding.</p>
+</blockquote>
+<p>Let me know if you want this adapted for slides, markdown, or turned into a summary block with learning reflection prompts.</p>
+<hr>
+</section><section><h2 id="neural-embeddings-in-downstream-tasks">Neural Embeddings in Downstream Tasks</h2>
+<p>Now that we’ve seen how contextual embeddings dynamically represent word meaning, the next step is to understand why this matters in practice. The true strength of these embeddings lies in their transferability, they can be used across a wide range of downstream NLP tasks, often with minimal task-specific training.</p>
+<p>By capturing both semantic nuance and syntactic structure, neural embeddings have significantly improved performance in several key applications:</p>
+<ul>
+<li><strong>Sentiment Analysis</strong>: Contextual embeddings can disambiguate tone and emotion, especially in complex cases involving negation or sarcasm. For example, the model distinguishes between <em>“That’s great!”</em> and <em>“Oh, great.”</em> even though the word <em>“great”</em> appears in both.</li>
+<li><strong>Named Entity Recognition (NER)</strong>: With static embeddings, names like <em>“Apple”</em> are ambiguous. Neural models use sentence context to correctly identify whether it refers to a company, a fruit, or even a location in technical writing.</li>
+<li><strong>Machine Translation</strong>: Translating ambiguous or polysemous words is challenging. Neural embeddings enable models to generate accurate translations by resolving meaning through context, a critical advantage over older rule-based or phrase-based approaches.</li>
+<li><strong>Text Summarization</strong>: Maintaining coherence across multiple sentences requires understanding topic flow and sentence structure. Contextual embeddings allow summarization models to preserve core meaning and grammatical fluency more effectively than traditional approaches.</li>
+</ul>
+<p>These improvements are not isolated—they reflect a broad trend across the field: models equipped with contextual embeddings consistently outperform their static counterparts across nearly every NLP benchmark.</p>
+<blockquote>
+<p>The ability to represent words <em>as they are used</em>, rather than <em>as they are listed</em>, is what gives contextual models their edge.</p>
+</blockquote>
+<hr>
+</section><section><h2 id="visualizing-embedding-shifts">Visualizing Embedding Shifts</h2>
+<p>The ability of contextual models to assign different meanings to the same word depending on usage can be clearly seen in how their embeddings shift across contexts. This phenomenon is often described as an <strong>embedding shift</strong>, a change in a word’s position in semantic space caused by differences in its surrounding words.</p>
+<p>To illustrate this, consider the word <em>“apple”</em> in two distinct sentences:</p>
+<ul>
+<li>“I ate an <strong>apple</strong> after lunch.”</li>
+<li>“I updated the software on my <strong>Apple</strong> device.”</li>
+</ul>
+<p>In traditional models like Word2Vec or GloVe, both uses of <em>“apple”</em> would be mapped to the same vector, regardless of whether it referred to fruit or a company. But in contextual models like BERT, each instance of the word is embedded <strong>based on its sentence-level context</strong>. The resulting vectors are meaningfully different. This behavior is visualized in the diagram below. This figure shows how contextual embeddings distinguish between senses of the same word. In a sentence about food, <em>“apple”</em> is embedded close to <em>“banana”</em> and other fruits. In a technological context, the same word shifts closer to vectors representing <em>“Apple (company)”</em>. The dashed arrows illustrate the semantic movement that occurs depending on usage.</p>
+<p><img src="../_assets/apple.png" alt=""></p>
+<p>What’s important here is that these shifts occur automatically, without predefined word senses or manually engineered features. Contextual models infer the appropriate meaning by processing the entire sentence at once a capability static embeddings simply do not possess.</p>
+<blockquote>
+<p>This visual difference is not just cosmetic it underlies why contextual embeddings enable better performance in real tasks like entity recognition, sentiment analysis, and semantic search.</p>
+</blockquote>
+<p>This diagram confirms what we’ve explored conceptually: context determines meaning, and modern embedding models adapt accordingly.</p>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>Neural word embeddings represent a paradigm shift in language understanding. Unlike static embeddings such as Word2Vec and GloVe, contextualized embeddings dynamically incorporate sentence-level context, allowing models to resolve ambiguity, capture subtle syntactic roles, and adapt across domains. These advantages make neural embeddings foundational for modern deep learning-based NLP systems. In the next lesson, we will explore how to <strong>leverage pre-trained embeddings</strong> (e.g., GloVe, FastText) and <strong>fine-tune</strong> them for improved accuracy in specialized NLP tasks.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

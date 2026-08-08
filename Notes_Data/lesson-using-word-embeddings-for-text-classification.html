@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Using Word Embeddings For Text Classification</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-using-word-embeddings-for-text-classification">Lesson: Using Word Embeddings for Text Classification</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>So far, we’ve explored how word embeddings transform words into vectors (lists of numbers) that capture their meaning. In this lesson, we’ll focus on one of the most exciting uses of word embeddings: <strong>text classification</strong>. This is when we teach a computer to label text with categories, like deciding if an email is &quot;spam&quot; or &quot;not spam,&quot; or if a movie review is &quot;positive&quot; or &quot;negative.&quot;</p>
+<p>We’ll learn how word embeddings improve text classification, and we’ll look at two ways to use them: a simple method called <strong>logistic regression</strong> and more advanced <strong>deep learning models</strong>. By the end, you’ll see why embeddings make classification faster, more accurate, and better at handling new text. Let’s dive in!</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you’ll be able to:</p>
+<ol>
+<li>Understand how word embeddings improve model performance in <strong>text classification tasks</strong>.</li>
+<li>Explain how <strong>logistic regression and deep learning classifiers</strong> leverage word embeddings.</li>
+<li><strong>Describe the benefits</strong> of pre-trained embeddings for accuracy and generalization.</li>
+</ol>
+<hr>
+</section><section><h2 id="quick-recap-of-the-weeks-lessons">Quick Recap of the Week’s Lessons</h2>
+<p>Since this is our last lesson, let’s recap what we’ve covered this week:</p>
+<ul>
+<li><strong>Vector Semantics</strong>: We learned how words can be represented as vectors, enabling us to measure similarities, perform analogies, and support applications like search engines.</li>
+<li><strong>Word2Vec (CBOW and Skip-Gram)</strong>: We explored predictive models that generate embeddings by predicting words from their context (CBOW) or context from words (Skip-Gram).</li>
+<li><strong>GloVe</strong>: We examined a count-based model that creates embeddings by analyzing word co-occurrence patterns.</li>
+<li><strong>FastText</strong>: We discovered how this model uses subword n-grams to handle rare and unseen words effectively.</li>
+<li><strong>Static vs. Contextual Embeddings</strong>: We compared static embeddings (e.g., GloVe) with contextual ones (e.g., BERT, ELMo) that adapt to sentence context.</li>
+<li><strong>Extracting Embeddings with BERT</strong>: Using Hugging Face’s library, we saw how BERT generates different embeddings for polysemous words like &quot;bank&quot; based on context.</li>
+</ul>
+<p>Now, we’ll build on these ideas by seeing how embeddings, both static (like GloVe) and contextual (like BERT) help us in <strong>text classification task</strong></p>
+<hr>
+</section><section><h2 id="how-embeddings-improve-model-performance-in-nlp-tasks">How embeddings improve model performance in NLP tasks</h2>
+<p>Modern NLP tasks rely heavily on transforming raw text into a format that machine learning models can interpret. <strong>Word embeddings</strong> play a crucial role in this transformation by converting words into dense, meaningful vectors that capture syntactic and semantic properties. These embeddings serve as foundational input to various models, significantly improving performance across tasks such as classification, translation, and question answering.</p>
+<p>Let’s begin with one of the most common NLP applications: <strong>text classification</strong>.</p>
+<h3 id="overview-of-text-classification">Overview of Text Classification</h3>
+<p>Text classification refers to the task of assigning predefined labels or categories to text segments based on their content. It is one of the most fundamental and widely used applications in natural language processing (NLP). Common examples include:</p>
+<ul>
+<li><strong>Spam Detection</strong>: Classifying emails as either &quot;spam&quot; or &quot;not spam.&quot;</li>
+<li><strong>Sentiment Analysis</strong>: Determining whether a movie review expresses a &quot;positive&quot; or &quot;negative&quot; opinion.</li>
+<li><strong>Topic Classification</strong>: Identifying whether a news article pertains to &quot;sports,&quot; &quot;politics,&quot; &quot;technology,&quot; or another topic.</li>
+</ul>
+<p>To perform classification, textual data must first be transformed into a numerical format that machine learning models can interpret. This is where <strong>word embeddings</strong> play a critical role—they convert words into vectors that capture both their syntactic structure and semantic meaning.</p>
+<hr>
+<h3 id="advantages-of-embeddings-in-text-classification">Advantages of Embeddings in Text Classification</h3>
+<p>Prior to the development of word embeddings, traditional techniques such as <strong>Bag-of-Words (BoW)</strong> and <strong>TF-IDF</strong> were commonly used to represent text numerically:</p>
+<ul>
+<li><strong>Bag-of-Words (BoW)</strong> creates a feature vector by counting the frequency of each word in a sentence or document, entirely disregarding word order. For instance, the sentences <em>&quot;I love this movie&quot;</em> and <em>&quot;This movie I love&quot;</em> are indistinguishable under BoW.</li>
+<li><strong>TF-IDF (Term Frequency–Inverse Document Frequency)</strong> enhances BoW by reducing the influence of common words (e.g., &quot;the&quot;, &quot;is&quot;) across documents. While this improves relevance, TF-IDF still does not capture word meaning or relationships between terms.</li>
+</ul>
+<h3 id="limitations-of-traditional-methods">Limitations of Traditional Methods</h3>
+<p>These methods come with several significant drawbacks:</p>
+<ul>
+<li><strong>Sparse Representations</strong>: They produce high-dimensional vectors that are mostly zeros, since each vector is based on a full vocabulary, and most words are absent from any single document.</li>
+<li><strong>High Dimensionality</strong>: A vocabulary of 10,000 words results in a 10,000-dimensional vector for each input, which can be computationally inefficient.</li>
+<li><strong>Lack of Semantic Awareness</strong>: They treat all words as independent and fail to recognize semantic relationships (e.g., &quot;happy&quot; vs. &quot;joyful&quot;) or distinguish between senses of a word in different contexts (e.g., &quot;bank&quot; as a financial institution vs. riverbank).</li>
+</ul>
+<h3 id="embeddings-as-solution">Embeddings  as Solution</h3>
+<p><strong>Word embeddings</strong>—such as those produced by <strong>Word2Vec</strong>, <strong>GloVe</strong>, or <strong>BERT</strong>—address these limitations through dense, meaning-aware representations.</p>
+<ul>
+<li><strong>Dense Vectors</strong>: Embeddings significantly reduce dimensionality by representing words with compact vectors—typically 50 to 300 dimensions for static embeddings and 768 or more for transformer-based models like BERT.</li>
+<li><strong>Semantic Similarity</strong>: Embeddings group semantically related words closely in vector space. For example, &quot;happy&quot; and &quot;joyful&quot; yield similar embeddings, enabling models to generalize more effectively.</li>
+<li><strong>Context Sensitivity (for BERT and similar models)</strong>: As discussed in earlier sections, contextual models such as BERT assign different vectors to the same word depending on its usage within a sentence. This allows the model to disambiguate words like &quot;bank&quot; based on surrounding words.</li>
+</ul>
+<p><strong>Benefits in Practice</strong></p>
+<p>These improvements enable classifiers to:</p>
+<ul>
+<li><strong>Generalize Better</strong>: A model trained on examples with the word &quot;happy&quot; can often correctly interpret &quot;joyful&quot; in new data, thanks to their similar embeddings.</li>
+<li><strong>Train More Efficiently</strong>: Dense embeddings reduce the computational load and memory usage compared to sparse input features.</li>
+<li><strong>Perform Well on Small Datasets</strong>: Pretrained embeddings bring a wealth of linguistic knowledge learned from large corpora, improving performance even when the available training data is limited.</li>
+</ul>
+<p>Let’s see how we can use embeddings in two different classification methods</p>
+<hr>
+</section><section><h2 id="method-1-logistic-regression-with-averaged-embeddings">Method 1: Logistic Regression with Averaged Embeddings</h2>
+<p>One of the most straightforward ways to apply word embeddings in text classification is by using <strong>logistic regression</strong>—a simple yet effective linear model that predicts categorical labels, such as &quot;positive&quot; or &quot;negative&quot; in sentiment analysis.</p>
+<h3 id="how-the-method-works">How the Method Works</h3>
+<p>This approach combines <strong>pretrained word embeddings</strong> with <strong>classical machine learning</strong> by averaging word vectors and using the result as input to a logistic regression classifier. The process typically involves the following steps:</p>
+<ol>
+<li><strong>Obtain Embeddings for Each Word</strong>Each word in the sentence is converted into a dense vector using a pretrained embedding model such as <strong>GloVe</strong> or <strong>Word2Vec</strong>.For instance, given the sentence <em>“I love this movie”</em>:<ul><li>&quot;I&quot; → <code>[0.1, 0.3, ...]</code></li><li>&quot;love&quot; → <code>[0.5, -0.2, ...]</code></li><li>&quot;this&quot; → <code>[-0.1, 0.4, ...]</code></li><li>&quot;movie&quot; → <code>[0.3, 0.1, ...]</code>(Each vector typically has 100 to 300 dimensions in pretrained GloVe models.)</li></ul></li>
+<li><strong>Average the Word Vectors</strong>The sentence vector is computed by averaging all the individual word vectors. For the example above, the result might be:<br><code>[0.21, -0.18, ..., 0.07]</code>.This fixed-length vector serves as a holistic representation of the sentence.</li>
+<li><strong>Input to Logistic Regression</strong>The resulting averaged embedding is passed into a logistic regression classifier, which outputs a probability for each category. The model learns which components of the embedding vector are most predictive of the target label.</li>
+</ol>
+<h3 id="practical-considerations">Practical Considerations</h3>
+<p>Although averaging embeddings discards word order—treating <em>“I love this movie”</em> and <em>“This movie I love”</em> identically—it still captures the semantic content of the sentence. For many classification tasks, this approximation is sufficient to obtain meaningful results. This method is widely used as a baseline in NLP pipelines due to its simplicity, efficiency, and surprisingly strong performance on tasks such as sentiment analysis and spam detection.</p>
+<hr>
+<h3 id="method-2-deep-learning-classifiers-with-embeddings">Method 2: Deep Learning Classifiers with Embeddings</h3>
+<p>To build more powerful text classification systems, we can leverage deep learning models—neural networks that are capable of learning complex patterns from data. These models make extensive use of word embeddings as input features, capturing both the semantic and syntactic structures of text.</p>
+<p><img src="../_assets/DL.png" alt=""></p>
+<blockquote>
+<p>A simple architecture of deep learning classifier.</p>
+</blockquote>
+<p>Several deep learning architectures are commonly used with embeddings:</p>
+<p><strong>A. Feedforward Neural Network (FNN)</strong></p>
+<p>The Feedforward Neural Network is an extension of logistic regression, enhanced with hidden layers that allow the model to learn non-linear combinations of features.</p>
+<ul>
+<li><strong>Input</strong>: The averaged word embedding of the sentence, similar to logistic regression.</li>
+<li><strong>Process</strong>: The embedding is passed through one or more hidden layers with <strong>ReLU</strong> (Rectified Linear Unit) activations, allowing the network to model more complex relationships.</li>
+<li><strong>Output</strong>: A final <strong>softmax</strong> layer predicts class probabilities (e.g., 80% &quot;positive,&quot; 20% &quot;negative&quot;).</li>
+</ul>
+<p>Compared to logistic regression, FNNs can capture deeper interactions between dimensions of the embedding space, leading to improved classification performance.</p>
+<p><strong>B. Recurrent Neural Network (RNN / LSTM)</strong></p>
+<p>Unlike FNNs, Recurrent Neural Networks (RNNs) and their improved variant, Long Short-Term Memory networks (LSTMs), process the input as a sequence of embeddings rather than a single averaged vector. This allows them to preserve and model word order and sentence structure.</p>
+<ul>
+<li><strong>Input</strong>: A sequence of GloVe or BERT embeddings for each word (e.g., <code>[embedding for &quot;I&quot;, embedding for &quot;love&quot;, embedding for &quot;this&quot;, embedding for &quot;movie&quot;]</code>).</li>
+<li><strong>Process</strong>: The RNN processes the embeddings one by one, keeping track of the sentence’s structure and context. For example, it can learn that &quot;not good&quot; means something different from &quot;very good&quot; because of word order.</li>
+<li><strong>Output</strong>: A prediction of the category (e.g., &quot;positive&quot; or &quot;negative&quot;).</li>
+</ul>
+<p>RNNs and LSTMs are particularly well-suited for tasks where the <strong>order of words</strong> significantly affects the meaning, such as sentiment analysis or question answering.</p>
+<p><strong>C. Convolutional Neural Network (CNN)</strong></p>
+<p>Although originally designed for image data, Convolutional Neural Networks (CNNs) have also been adapted for text classification, where they excel at capturing local patterns across neighboring words.</p>
+<ul>
+<li><strong>Input</strong>: A sequence of embeddings, just like in RNNs.</li>
+<li><strong>Process</strong>: The CNN applies convolution, a process that looks at small groups of words (called n-grams, like &quot;I love&quot; or &quot;this movie&quot;) and captures patterns in those groups. It then combines these patterns to understand the whole sentence.</li>
+<li><strong>Output</strong>: A prediction of the category.</li>
+</ul>
+<p>CNNs are especially good for short texts, like tweets or reviews, because they focus on local patterns (e.g., &quot;very good&quot; or &quot;not bad&quot;).</p>
+<h3 id="advantages-of-deep-learning-for-text-classification">Advantages of Deep Learning for Text Classification</h3>
+<p>Deep learning models whether FNNs, RNNs, or CNNs offer several important advantages:</p>
+<ul>
+<li><strong>Learn Complex Patterns</strong>: They can model intricate relationships between words and concepts that shallow models like logistic regression cannot capture.</li>
+<li><strong>Preserve Sentence Structure</strong>: RNNs and CNNs maintain the order of words, enabling models to distinguish between phrases like &quot;not good&quot; and &quot;very good.&quot;</li>
+<li><strong>Better Feature Extraction</strong>: Instead of relying on manual feature engineering, deep networks automatically learn useful representations from embeddings.</li>
+</ul>
+<p>However, these models typically require larger training datasets and greater computational resources compared to traditional methods.  To address this challenge, modern NLP workflows often rely on pre-trained embeddings—word representations that have already been trained on massive corpora. By leveraging these rich, ready-to-use embeddings, we can dramatically improve model performance while reducing the need for extensive labeled data and training time. Let us now examine the benefits of using pre-trained embeddings in NLP tasks.</p>
+<hr>
+</section><section><h2 id="pre-trained-embeddings">Pre-trained Embeddings</h2>
+<p><strong>Pre-trained embeddings</strong> such as GloVe, Word2Vec, and BERT have become foundational in modern NLP systems. Instead of training word representations from scratch, models can leverage embeddings that have been learned from massive corpora containing billions of words from diverse sources like books, news articles, and websites. Pre-trained embeddings encode rich linguistic knowledge, including:</p>
+<ul>
+<li><strong>Syntax</strong>: Understanding of grammatical patterns such as tense, plurality, and agreement (e.g., &quot;dog&quot; vs. &quot;dogs&quot;).</li>
+<li><strong>Semantics</strong>: Capturing meaning similarity (e.g., &quot;happy&quot; and &quot;joyful&quot; are close in vector space).</li>
+<li><strong>Relationships</strong>: Learning factual associations, such as &quot;France&quot; and &quot;Paris&quot; representing a country and its capital.</li>
+</ul>
+<h3 id="advantages-of-using-pre-trained-embeddings">Advantages of Using Pre-trained Embeddings</h3>
+<p>Utilizing pre-trained embeddings offers significant advantages, especially when labeled training data is limited:</p>
+<ul>
+<li><strong>Better Performance</strong>: Pre-trained embeddings lead to higher accuracy across a wide range of NLP tasks by bringing generalized knowledge into the model.</li>
+<li><strong>Generalization to Unseen Words</strong>: Even if a word like &quot;joyful&quot; is not in the training set but &quot;happy&quot; is, the model can still make correct inferences because of the similarity of their embeddings.</li>
+<li><strong>Reduced Training Time</strong>: Pre-trained embeddings eliminate the need to learn word representations from scratch, significantly speeding up the training process.</li>
+</ul>
+<blockquote>
+<p>For example, in our BERT lesson, we saw how BERT embeddings for &quot;die&quot; clustered into different meanings. This ability to capture meaning makes pre-trained embeddings, whether static (GloVe) or contextual (BERT), super helpful for classification tasks.</p>
+</blockquote>
+<hr>
+</section><section><h2 id="classification-without-vs.with-pre-trained-embeddings">Classification Without vs. With Pre-trained Embeddings</h2>
+<p>To clearly illustrate the impact of pre-trained embeddings on text classification, we can compare traditional feature engineering methods, such as Bag-of-Words (BoW) and TF-IDF, with modern approaches that leverage dense, semantic-rich embeddings.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Without Embeddings (BoW/TF-IDF)</th>
+<th>With Pre-trained Embeddings (GloVe, Word2Vec, BERT)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Input Representation</strong></td>
+<td>Sparse vectors (mostly zeros)</td>
+<td>Dense vectors capturing semantic and syntactic information</td>
+</tr>
+<tr>
+<td><strong>Dimensionality</strong></td>
+<td>Very high (e.g., 10,000 dimensions)</td>
+<td>Low (e.g., 50–300 for GloVe, 768 for BERT)</td>
+</tr>
+<tr>
+<td><strong>Semantic Similarity</strong></td>
+<td>Absent (&quot;happy&quot; and &quot;joyful&quot; treated as unrelated)</td>
+<td>Preserved (&quot;happy&quot; and &quot;joyful&quot; are close in vector space)</td>
+</tr>
+<tr>
+<td><strong>Generalization Ability</strong></td>
+<td>Poor (difficulty handling unseen or rare words)</td>
+<td>Strong (generalizes to unseen but similar words)</td>
+</tr>
+<tr>
+<td><strong>Data Requirements</strong></td>
+<td>High (large datasets needed for good performance)</td>
+<td>Lower (pre-trained knowledge improves performance with smaller datasets)</td>
+</tr>
+</tbody>
+</table>
+<p>This comparison demonstrates why pre-trained embeddings are a major advancement in NLP. By providing dense and meaningful input representations, embeddings significantly enhance model performance, promote better generalization to new data, and reduce the dependence on large labeled datasets.</p>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>This week, we explored how word embeddings capture and represent meaning in NLP. We started with static models like Word2Vec, GloVe, and FastText, learning how they represent words as fixed vectors and how they differ in capturing context and structure. We then moved to contextual embeddings with BERT and ELMo, which generate dynamic vectors based on sentence context, allowing us to handle polysemy more effectively. Through hands-on activities, we visualized embeddings, trained models, compared vector similarities, and applied these techniques in real-world tasks like sentiment analysis. By the end of the week, you’ve gained a clear understanding of how word embeddings work and how they enhance both the accuracy and adaptability of modern NLP models.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Introduction To Vector Semantics</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-introduction-to-vector-semantics">Lesson: <strong>Introduction to Vector Semantics</strong></h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In Week 1, we explored how machines understand and process human language, laying the foundation for core NLP concepts like tokenization and the distributional hypothesis. This week, we build on that understanding by introducing vector semantics, a powerful framework that allows us to represent words as points in a mathematical space.</p>
+<p>In natural language, words can carry complex meanings, relationships, and nuances. However, computers do not inherently understand these meanings. How can we teach machines to represent and reason about the meanings of words in a way that supports intelligent processing? Vector semantics provides a solution by transforming words into mathematical vectors based on the contexts in which they appear. This allows algorithms to compare, cluster, and manipulate meanings numerically.</p>
+<p>Understanding vector semantics is a foundational step toward building intelligent NLP systems. Whether for translation, sentiment analysis, or search, vector representations are at the heart of how modern models understand language.</p>
+<p>This lesson explores how we can model word meaning as numbers in a high-dimensional space, how these representations help us compute similarity, and how they unlock powerful applications in NLP—from search engines to chatbots.</p>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li>Explain the concept of vector semantics and the distributional hypothesis.</li>
+<li>Construct and interpret vector-based representations of words.</li>
+<li>Compute similarity between word vectors using cosine similarity.</li>
+<li>Analyze how vector semantics power modern NLP applications.</li>
+</ol>
+<hr>
+</section><section><h2 id="understanding-vector-semantics-and-its-importance">Understanding Vector Semantics and Its Importance</h2>
+<p><strong>Vector semantics</strong> is a method of representing word meanings as numerical vectors in a high-dimensional space. This idea is based on the <strong>distributional hypothesis</strong>, which states:</p>
+<blockquote>
+<p>&quot;Words that occur in similar contexts tend to have similar meanings.&quot;</p>
+</blockquote>
+<p>For example, consider the unknown word &quot;ongchoi&quot; that appears in phrases like:</p>
+<ul>
+<li><em>Ongchoi is delicious sauteed with garlic.</em></li>
+<li><em>Ongchoi is superb over rice.</em></li>
+<li><em>...ongchoi leaves with salty sauces...</em>And suppose that you had seen many of these context words in other contexts:</li>
+<li><em>...spinach sauteed with garlic over rice...</em></li>
+<li><em>...chard stems and leaves are delicious...</em></li>
+<li><em>...collard greens and other salty leafy greens</em></li>
+</ul>
+<p>Seeing it used in ways similar to <em>spinach</em>, <em>chard</em>, or <em>collard greens</em>, we might guess that it’s a leafy green. This is how vector semantics models meaning—by looking at word usage patterns.</p>
+<p>By capturing co-occurrence information from large text corpora, we can encode the meaning of a word based on its neighbors.</p>
+<p>For example, consider the words &quot;doctor&quot; and &quot;nurse&quot;. These words often appear in similar contexts like &quot;hospital&quot;, &quot;patient&quot;, and &quot;treatment&quot;. When represented as vectors, &quot;doctor&quot; and &quot;nurse&quot; will lie close together in the semantic space.</p>
+<h3 id="importance-of-vector-semantics">Importance of Vector Semantics</h3>
+<p>Computers can’t interpret words symbolically like humans do. By representing words as vectors, we give machines a numerical way to:</p>
+<ul>
+<li><strong>Compare meanings</strong>: Words like &quot;doctor&quot; and &quot;nurse&quot; appear near &quot;hospital&quot; or &quot;patient,&quot; so their vectors are similar.</li>
+<li><strong>Perform operations</strong>: Vectors enable mathematical tasks like measuring similarity or solving analogies.</li>
+<li><strong>Enable NLP</strong>: Applications like sentiment analysis and search rely on these representations.</li>
+</ul>
+<p>This transformation turns language into a computable format, making vector semantics a cornerstone of modern NLP.</p>
+<blockquote>
+<p>So, words that appear in similar contexts like doctor and nurse end up with similar vector representations. These patterns come from co-occurrence data in large corpora.</p>
+</blockquote>
+<p><img src="../_assets/2D-embeddings.png" alt="NLP"></p>
+<p>A visualization of embeddings learned for sentiment analysis, showing that words with similar meanings are nearby in space and the location of selected words projected down from 60-dimensional space into a two dimensional space. Notice the distinct regions containing positive words, negative words, and neutral function words with colors added for explanation.</p>
+<p>By turning words into vectors, words can be compared using mathematical tools like cosine similarity or combined through vector arithmetic. This transforms language into a format that supports computation, inference, and learning.</p>
+<hr>
+</section><section><h2 id="capturing-semantic-relationships-with-word-vectors">Capturing Semantic Relationships with Word Vectors</h2>
+<p>To build word vectors, we use large corpora and compute how frequently each word appears near others (within a sliding window or in entire documents).</p>
+<p>There are two main types of vector representations:</p>
+<h3 id="word-document-vectors">1. Word-Document Vectors</h3>
+<p>In NLP, word-document vectors represent words as vectors capturing their frequency across different documents, such as Shakespeare's plays, with the following table and graph providing a simplified two-dimensional visualization. Each word is represented by a vector that shows how often it appears in each document. For instance, consider the Shakespeare term-document matrix:</p>
+<table>
+<thead>
+<tr>
+<th>Word</th>
+<th>As You Like It</th>
+<th>Twelfth Night</th>
+<th>Julius Caesar</th>
+<th>Henry V</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>battle</td>
+<td>1</td>
+<td>0</td>
+<td>7</td>
+<td>13</td>
+</tr>
+<tr>
+<td>good</td>
+<td>114</td>
+<td>80</td>
+<td>62</td>
+<td>89</td>
+</tr>
+<tr>
+<td>fool</td>
+<td>36</td>
+<td>58</td>
+<td>1</td>
+<td>4</td>
+</tr>
+<tr>
+<td>wit</td>
+<td>20</td>
+<td>15</td>
+<td>2</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<p>Each word becomes a vector based on its frequency in each play. For example, &quot;battle&quot; is [1, 0, 7, 13]. Notice how &quot;battle&quot; is rare in comedies like <em>As You Like It</em> and <em>Twelfth Night</em> but common in historical plays like <em>Julius Caesar</em> and <em>Henry V</em>. This helps us see patterns—words that appear in similar documents are often related in meaning.</p>
+<p>Here’s a visual of this idea:
+<img src="../_assets/doc-dimensions.png" alt="doc-dimensions"></p>
+<blockquote>
+<p>A spatial visualization of the document vectors for the four Shakespeare play documents, showing just two of the dimensions, corresponding to the words battle and fool. The comedies have high values for the fool dimension and low values for the battle dimension.</p>
+</blockquote>
+<h3 id="word-word-co-occurrence-vectors">2. Word-Word Co-occurrence Vectors</h3>
+<p>Another way is to count how often words appear near each other in the same text. For example, we might count how often &quot;cherry&quot; appears near &quot;pie,&quot; &quot;sugar,&quot; &quot;computer,&quot; or &quot;data&quot; and so on. To illustrate this concept, consider the following term-term co-occurrence matrix:</p>
+<table>
+<thead>
+<tr>
+<th>Word</th>
+<th>computer</th>
+<th>data</th>
+<th>pie</th>
+<th>sugar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cherry</td>
+<td>2</td>
+<td>8</td>
+<td>442</td>
+<td>25</td>
+</tr>
+<tr>
+<td>strawberry</td>
+<td>0</td>
+<td>0</td>
+<td>60</td>
+<td>19</td>
+</tr>
+<tr>
+<td>digital</td>
+<td>1670</td>
+<td>1683</td>
+<td>5</td>
+<td>4</td>
+</tr>
+<tr>
+<td>information</td>
+<td>3325</td>
+<td>3982</td>
+<td>5</td>
+<td>13</td>
+</tr>
+</tbody>
+</table>
+<p>The numbers show how often the row word appears near the column word in a text corpus, typically within a small window (e.g., 5 words). For example:</p>
+<ul>
+<li><strong>Cherry and Pie: 442</strong> means &quot;cherry&quot; appears near &quot;pie&quot; 442 times, indicating a strong link (e.g., &quot;cherry pie&quot;).</li>
+<li><strong>Digital and Computer: 1670</strong> shows &quot;digital&quot; appears near &quot;computer&quot; 1670 times, reflecting a frequent pairing.</li>
+<li><strong>Information and Data: 3982</strong> indicates &quot;information&quot; appears near &quot;data&quot; 3982 times, a common combination.</li>
+<li><strong>Cherry and Computer: 2</strong> suggests a weak connection, with only 2 co-occurrences.</li>
+</ul>
+<p>This matrix helps reveal semantic relationships, like &quot;cherry&quot; and &quot;strawberry&quot; being similar (both near &quot;pie&quot; and &quot;sugar&quot;), while &quot;digital&quot; is unrelated.</p>
+<p>Here’s a visual representation of &quot;digital&quot; and &quot;information&quot;:</p>
+<p><img src="../_assets/word-dimensions.png" alt="word-dimensions"></p>
+<blockquote>
+<p>Aspatial visualization of word vectors for digital and information, showing just two of the dimensions, corresponding to the words data and computer.</p>
+</blockquote>
+<p>This structure allows the model to learn that <em>cherry</em> and <em>strawberry</em> are similar (both appear near <em>pie</em> and <em>sugar</em>), while <em>digital</em> is not.</p>
+<h3 id="similarity-computation-cosine-similarity">Similarity Computation: Cosine Similarity</h3>
+<p>Now that we have vectors, how do we compare words? We use a math tool called <strong>cosine similarity</strong>, which measures the angle between two vectors:</p>
+<div class="math">
+\[
+\text{cos}(v, w) = \frac{v \cdot w}{\\|v\\| \\|w\\|}
+\]</div>
+<p>Where:</p>
+<ul>
+<li>$v \cdot w $ is the dot product</li>
+<li><span class="math">\(|v|\)</span>  and <span class="math">\(|w|\)</span>  are vector magnitudes</li>
+<li>A value close to 1 means the words are very similar, while a value near 0 means they’re different. Let’s try it with some simplified vectors:</li>
+</ul>
+<p><strong>Example</strong>:</p>
+<p>Let’s compare how close <em>information</em> is to <em>cherry</em> and <em>digital</em>:</p>
+<pre><code>Vectors:
+cherry      = [442, 8, 2]
+digital     = [5, 1683, 1670]
+information = [5, 3982, 3325]
+</code></pre>
+<p>Using the cosine formula:</p>
+<pre><code>cos(cherry, information) ≈ 0.018
+cos(digital, information) ≈ 0.996
+</code></pre>
+<blockquote>
+<p><em>Digital</em> is much closer in meaning to <em>Information</em> than <em>Cherry</em> is.
+This makes sense, &quot;digital&quot; and &quot;information&quot; are closely related (think &quot;digital information&quot;), while &quot;cherry&quot; is quite different.</p>
+</blockquote>
+<h3 id="dimensionality-reduction-for-visualization">Dimensionality Reduction for Visualization</h3>
+<p>Word vectors often exist in high dimensions (50–300+), making visualization difficult. Techniques like <strong>t-SNE</strong> (t-distributed Stochastic Neighbor Embedding) and <strong>PCA</strong> (Principal Component Analysis) reduce these to 2D while preserving key relationships. <strong>t-SNE</strong> emphasizes local structures, modeling pairwise similarities to cluster similar words effectively, while <strong>PCA</strong> takes a linear approach, projecting data onto principal components that capture the most variance.</p>
+<p>In the next activity, you’ll explore pre-trained embeddings like <strong>GloVe</strong> and <strong>word2vec</strong> to visualize how semantically related words group in 2D space. <strong>GloVe</strong> uses global co-occurrence statistics to encode word relationships, while <strong>word2vec</strong> employs predictive methods (e.g., skip-gram) to learn representations from word contexts, capturing semantic similarities for visualization.</p>
+<hr>
+</section><section><h2 id="applications-of-word-vectors">Applications of Word Vectors</h2>
+<p>Word vectors form the foundation of many natural language processing tasks by enabling models to capture the meaning of words through geometric relationships in high-dimensional space. Below are key applications that demonstrate their utility across different NLP scenarios.</p>
+<h3 id="word-analogies"><strong>1. Word Analogies</strong></h3>
+<p>Word vectors can solve analogies using vector arithmetic. A well-known example:</p>
+<div class="math">
+\[
+\text{king} - \text{man} + \text{woman} ≈ \text{queen}
+\]</div>
+<p>The model computes:</p>
+<pre><code class="language-rust">vector(&quot;king&quot;) - vector(&quot;man&quot;) + vector(&quot;woman&quot;)
+</code></pre>
+<p>This arithmetic highlights how word vectors capture <strong>semantic relationships</strong>. The model identifies the word closest to the computed vector, demonstrating how concepts like gender or profession form consistent directional patterns in embedding space.</p>
+<p><img src="../_assets/word-analogies.png" alt="Word Analogies"></p>
+<hr>
+<h3 id="sentiment-analysis"><strong>2. Sentiment Analysis</strong></h3>
+<p>Word vectors allow sentiment classifiers to <strong>generalize beyond exact training words</strong>. For example:</p>
+<ul>
+<li>Words like <em>amazing</em>, <em>wonderful</em>, and <em>excellent</em> cluster near <em>good</em>.</li>
+<li>Words like <em>awful</em>, <em>terrible</em>, and <em>horrible</em> cluster near <em>bad</em>.</li>
+</ul>
+<p>Even if a model hasn’t seen a new word during training, it can infer its sentiment from its proximity to known sentiment-bearing words in vector space.</p>
+<hr>
+<h3 id="machine-translation"><strong>3. Machine Translation</strong></h3>
+<p>In machine translation, word vectors support the alignment of meanings across languages by placing semantically equivalent words close together in a shared multilingual embedding space. For example, the English word <em>book</em> and the French word <em>livre</em> may appear near each other in this space, reflecting their similar usage and meaning.</p>
+<p>This alignment allows models to learn mappings between languages even without explicit word-to-word dictionaries. Vector-based translation systems, especially when trained on parallel corpora, can exploit these geometric relationships to identify accurate translations and support tasks like cross-lingual retrieval, bilingual lexicon induction, and zero-shot translation—where the model translates between language pairs it was not explicitly trained on.</p>
+<hr>
+<h3 id="search-engines"><strong>4. Search Engines</strong></h3>
+<p>Word vectors play a critical role in modern search engines by enabling <strong>semantic retrieval</strong>—the ability to match meaning rather than just exact keywords. When a user submits a query, the system converts it into a vector and retrieves documents whose embeddings lie close in vector space. This proximity reflects thematic or conceptual similarity, even when the words used are different.</p>
+<p><img src="../_assets/search-engine.png" alt="Search Engines"></p>
+<p>Search engines have two main steps:</p>
+<ul>
+<li><strong>Retrieval</strong>: From a massive collection, identify a shortlist of documents whose vectors are close to the query vector.</li>
+<li><strong>Ranking</strong>: Further analyze and score these candidates using advanced models to present the most relevant results first.</li>
+</ul>
+<p>For example, a search for “Romeo and revenge” might surface documents about <em>Hamlet</em> or <em>Macbeth</em>, not because they contain the same words, but because they share similar narrative themes captured by their vector representations. After retrieval, a ranking model refines the results by scoring them for relevance. This vector-based approach allows search systems to better understand intent and deliver results that reflect <strong>semantic alignment</strong>, improving the quality of information retrieval in both web and enterprise search settings.</p>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>In this lesson, we explored how words can be represented as vectors derived from their usage in text. This numerical representation captures meaning, enables similarity comparison, and powers modern NLP applications.
+By transforming words into points in space, we bridge the gap between raw text and mathematical computation—unlocking the semantic richness of language.</p>
+<p>Now that you’ve seen how word vectors reflect meaning and how they can be visualized, you’re ready to apply this knowledge practically. Next, you’ll visualize word embeddings using real models like GloVe and Word2Vec in two-dimensional space.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

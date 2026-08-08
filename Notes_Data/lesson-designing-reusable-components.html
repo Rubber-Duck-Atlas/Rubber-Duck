@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Designing Reusable Components</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-designing-reusable-components">Lesson: Designing Reusable Components</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>In web development, creating efficient and maintainable user interfaces is crucial. One of the best ways to achieve this in React is by building reusable components —self-contained pieces of UI that can be reused across different parts of an application. By designing components with reusability in mind, you reduce code duplication and ensure consistency, scalability, and ease of maintenance. In this lesson, we will explore what reusable components are, their key principles, best practices for building them, and how to ensure they are accessible and well-documented. Whether new to React or looking to refine your skills, this lesson will equip you with the tools and knowledge to create robust, reusable components that enhance your development workflow.</p>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li>Understand the concept of reusable components and why they are essential for building scalable React applications.</li>
+<li>Apply key principles such as the Single Responsibility Principle (SRP), props-driven design, and composition over inheritance to create modular and focused components.</li>
+<li>Implement best practices like using PropTypes for type checking, avoiding over-engineering, and leveraging default props to make your components robust and adaptable.</li>
+<li>Build flexible and independent components by identifying common UI patterns, defining clear APIs, and ensuring proper testing and documentation.</li>
+<li>Incorporate accessibility considerations into your reusable components, including semantic HTML, keyboard navigation, ARIA attributes, and focus management, to ensure your applications are inclusive and usable by all users.</li>
+</ol>
+<hr>
+</section><section><h2 id="building-reusable-components-in-react">Building Reusable Components in React</h2>
+<p>Reusable components are the backbone of efficient and maintainable React applications. They allow developers to create modular, consistent, and adaptable UI elements that can be reused across different parts of an application. In this lesson, we’ll explore what reusable components are, their principles, best practices for building them, and how to ensure they are accessible and well-documented.</p>
+<p><img src="../_assets/lesson-5-reusable-comp.PNG" alt="Frontend"></p>
+<p>A <strong>reusable component</strong> is a self-contained piece of UI (User Interface) that can be used in multiple places throughout your application. Instead of duplicating code for similar UI elements, you write the component once and reuse it wherever needed by passing different data or behavior as props.</p>
+<p>For example, consider a <code>Button</code> component:</p>
+<pre><code class="language-javascript">import React from 'react';
+
+function Button({ label, onClick }) {
+  return &lt;button onClick={onClick}&gt;{label}&lt;/button&gt;;
+}
+
+export default Button;
+</code></pre>
+<p>This <code>Button</code> component can be reused across your app with different labels and click handlers:</p>
+<pre><code class="language-javascript">&lt;Button label=&quot;Submit&quot; onClick={() =&gt; alert('Form submitted!')} /&gt;
+&lt;Button label=&quot;Cancel&quot; onClick={() =&gt; alert('Action canceled!')} /&gt;
+</code></pre>
+<p>By reusing this component, you avoid duplicating code and ensure consistency across your application.</p>
+<h3 id="principles-of-reusable-components">Principles of Reusable Components</h3>
+<p>To build effective reusable components, it’s essential to follow certain principles. These guidelines will help you create components that are flexible, maintainable, and easy to use.</p>
+<p><strong>1. Single Responsibility Principle (SRP)</strong></p>
+<p>A reusable component should have <strong>one clear responsibility</strong> or purpose. It should focus on doing one thing and doing it well. By keeping components focused, you make them easier to understand, maintain, and reuse.</p>
+<p>For example:</p>
+<ul>
+<li>A <code>Form</code> component should handle the rendering of form elements.</li>
+<li>Form validation logic, however, should be handled by a separate component or utility function.</li>
+</ul>
+<p>This separation ensures that each component remains modular and can be reused independently without unnecessary dependencies.</p>
+<p>Example:</p>
+<pre><code class="language-javascript">function InputField({ label, value, onChange }) {
+  return (
+    &lt;div&gt;
+      &lt;label&gt;{label}&lt;/label&gt;
+      &lt;input type=&quot;text&quot; value={value} onChange={onChange} /&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<p>Here, the <code>InputField</code> component is responsible only for rendering an input field and its label, making it reusable across different forms.</p>
+<p><strong>2. Props-Driven Design</strong></p>
+<p>Reusable components should be designed to accept <strong>data and behavior through props</strong>. This makes them flexible and adaptable to various use cases. Avoid hardcoding values or behaviors inside the component; instead, pass them as props to allow customization.</p>
+<p>For example, consider a <code>Card</code> component:</p>
+<pre><code class="language-javascript">function Card({ title, content, footer }) {
+  return (
+    &lt;div className=&quot;card&quot;&gt;
+      &lt;h3&gt;{title}&lt;/h3&gt;
+      &lt;p&gt;{content}&lt;/p&gt;
+      &lt;div&gt;{footer}&lt;/div&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<p>This <code>Card</code> component can now be reused in different contexts with varying titles, content, and footers, making it highly versatile.</p>
+<p>Usage Example:</p>
+<pre><code class="language-javascript">&lt;Card
+  title=&quot;Welcome&quot;
+  content=&quot;This is a reusable card component.&quot;
+  footer={&lt;Button label=&quot;Learn More&quot; onClick={() =&gt; alert('Clicked!')} /&gt;}
+/&gt;
+</code></pre>
+<p>By passing props like <code>title</code>, <code>content</code>, and <code>footer</code>, the <code>Card</code> component becomes adaptable to different scenarios.</p>
+<p><strong>3. Composition Over Inheritance</strong></p>
+<p>In React, <strong>composition</strong> is preferred over inheritance. Instead of creating complex hierarchies of components, build smaller, self-contained components that can be combined (or composed) to create more complex UIs.</p>
+<p>For example, you can compose a <code>Card</code> component with a <code>Button</code> component to create a richer user interface:</p>
+<pre><code class="language-javascript">function App() {
+  return (
+    &lt;Card
+      title=&quot;Card Title&quot;
+      content=&quot;This is some card content.&quot;
+      footer={&lt;Button label=&quot;Click Me&quot; onClick={() =&gt; alert('Button clicked!')} /&gt;}
+    /&gt;
+  );
+}
+</code></pre>
+<p>Here, the <code>Card</code> component is reused with a <code>Button</code> component passed as part of its <code>footer</code> prop. This approach allows you to build flexible and reusable UIs that can be easily adapted to different scenarios.</p>
+<hr>
+</section><section><h2 id="best-practices-for-building-reusable-components">Best Practices for Building Reusable Components</h2>
+<p>To ensure your reusable components are robust, maintainable, and easy to use, follow these best practices:</p>
+<p><img src="../_assets/lesson-5-building-reusable-comp.PNG" alt="Frontend"></p>
+<h3 id="use-proptypes-for-type-checking">1. Use PropTypes for Type Checking</h3>
+<p>Type checking is essential for ensuring that your components receive the correct props. <strong>PropTypes</strong> is a built-in tool in React that allows you to define the types and requirements of props. This helps catch errors early and ensures that your components are used correctly.</p>
+<p>Example:</p>
+<pre><code class="language-javascript">import React from 'react';
+import PropTypes from 'prop-types';
+
+function Button({ label, onClick }) {
+  return &lt;button onClick={onClick}&gt;{label}&lt;/button&gt;;
+}
+
+Button.propTypes = {
+  label: PropTypes.string.isRequired,
+  onClick: PropTypes.func.isRequired,
+};
+
+export default Button;
+</code></pre>
+<h3 id="avoid-over-engineering">2. Avoid Over-Engineering</h3>
+<p>While flexibility is important, avoid <strong>over-engineering</strong> your components by adding too many props or features. Keep your components simple and focused on their primary purpose. Add complexity only when it’s truly needed.</p>
+<p>For example, instead of creating a single <code>Button</code> component that handles every possible button style, consider creating separate components for different button types:</p>
+<pre><code class="language-javascript">function PrimaryButton({ label, onClick }) {
+  return (
+    &lt;button className=&quot;primary&quot; onClick={onClick}&gt;
+      {label}
+    &lt;/button&gt;
+  );
+}
+
+function SecondaryButton({ label, onClick }) {
+  return (
+    &lt;button className=&quot;secondary&quot; onClick={onClick}&gt;
+      {label}
+    &lt;/button&gt;
+  );
+}
+</code></pre>
+<h3 id="use-default-props">3. Use Default Props</h3>
+<p>Default props allow you to define fallback values for props that aren’t provided. This makes your components more robust and reduces the likelihood of errors caused by missing props.</p>
+<p>Example:</p>
+<pre><code class="language-javascript">function Button({ label = 'Default Label', onClick }) {
+  return &lt;button onClick={onClick}&gt;{label}&lt;/button&gt;;
+}
+</code></pre>
+<p>Alternatively, you can define default props explicitly:</p>
+<pre><code class="language-javascript">Button.defaultProps = {
+  label: 'Default Label',
+};
+</code></pre>
+<h3 id="document-your-components">4. Document Your Components</h3>
+<p>Clear documentation is key to making your components reusable and easy to understand. Include details about:</p>
+<ul>
+<li>The purpose of the component.</li>
+<li>The props it accepts (including types and default values).</li>
+<li>Examples of how to use the component.</li>
+</ul>
+<p>Tools like <strong>Storybook</strong> or <strong>Docz</strong> can help you visualize and document your components interactively.</p>
+<p>Example Documentation for a <code>Button</code> Component:</p>
+<h3 id="button-component">Button Component</h3>
+<p>Renders a clickable button with customizable text and behavior.</p>
+<p><strong>Props:</strong></p>
+<ul>
+<li><code>label</code> (string): The text displayed on the button. Defaults to &quot;Default Label&quot;.</li>
+<li><code>onClick</code> (function): The function to execute when the button is clicked.</li>
+</ul>
+<p><strong>Usage</strong>:</p>
+<pre><code class="language-jsx">&lt;Button label=&quot;Submit&quot; onClick={() =&gt; alert('Form submitted!')} /&gt;
+</code></pre>
+<hr>
+</section><section><h2 id="implementing-and-building-flexible-and-independent-reusable-components">Implementing and Building Flexible and Independent Reusable Components</h2>
+<p>Implementing reusable components involves careful planning and adherence to the above principles and best practices.</p>
+<p><img src="../_assets/lesson-5-building-reusable-comp.PNG" alt="Frontend"></p>
+<p><strong>Step 1: Identify Common UI Patterns</strong></p>
+<ul>
+<li>Look for UI elements that appear repeatedly in your application (e.g., buttons, cards, modals, forms).</li>
+<li>These are good candidates for reusable components.</li>
+</ul>
+<p><strong>Step 2: Define the Component’s API</strong></p>
+<ul>
+<li>Decide what props the component will accept and how it will be used.</li>
+<li>Keep the API simple and intuitive.</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-javascript">// API for a reusable Modal component
+function Modal({ isOpen, onClose, children }) {
+  if (!isOpen) return null;
+
+  return (
+    &lt;div className=&quot;modal&quot;&gt;
+      &lt;button onClick={onClose}&gt;Close&lt;/button&gt;
+      &lt;div&gt;{children}&lt;/div&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<p><strong>Step 3: Make the Component Configurable</strong></p>
+<ul>
+<li>Use props to allow customization of the component’s appearance and behavior.</li>
+<li>Example: Allow users to pass custom styles, text, or event handlers.</li>
+</ul>
+<p><strong>Step 4: Test the Component</strong></p>
+<ul>
+<li>Test the component in different scenarios to ensure it works as expected.</li>
+<li>Check edge cases, such as missing props or unexpected inputs.</li>
+</ul>
+<p>Example Test:</p>
+<pre><code class="language-javascript">import { render, screen, fireEvent } from '@testing-library/react';
+import Button from './Button';
+
+test('renders button with label and handles click', () =&gt; {
+  const handleClick = jest.fn();
+  render(&lt;Button label=&quot;Click Me&quot; onClick={handleClick} /&gt;);
+
+  const buttonElement = screen.getByText(/Click Me/i);
+  expect(buttonElement).toBeInTheDocument();
+
+  fireEvent.click(buttonElement);
+  expect(handleClick).toHaveBeenCalledTimes(1);
+});
+</code></pre>
+<p><strong>Step 5: Document the Component</strong></p>
+<ul>
+<li>Provide clear documentation for how to use the component, including examples and prop descriptions.</li>
+<li>Tools like Storybook can help visualize and document components.</li>
+</ul>
+<p>Example Documentation:</p>
+<pre><code class="language-markdown">### Button Component
+
+Renders a clickable button with customizable text and behavior.
+
+#### Props:
+- `label` (string): The text displayed on the button. Defaults to &quot;Default Label&quot;.
+- `onClick` (function): The function to execute when the button is clicked.
+
+#### Usage:
+```jsx
+&lt;Button label=&quot;Submit&quot; onClick={() =&gt; alert('Form submitted!')} /&gt;
+</code></pre>
+<hr>
+</section><section><h2 id="accessibility-considerations">Accessibility Considerations</h2>
+<p>Accessibility is the practice of making your web applications usable by as many people as possible, including those with disabilities. Here are some key accessibility concepts to keep in mind when building reusable components:</p>
+<h3 id="semantic-html">1. Semantic HTML</h3>
+<p>Use semantic HTML elements wherever possible. For example:</p>
+<ul>
+<li>Use <code>&lt;button&gt;</code> for buttons instead of <code>&lt;div&gt;</code> or <code>&lt;span&gt;</code>.</li>
+<li>Use <code>&lt;header&gt;</code>, <code>&lt;main&gt;</code>, and <code>&lt;footer&gt;</code> for layout structure.</li>
+</ul>
+<h3 id="keyboard-navigation">2. Keyboard Navigation</h3>
+<p>Ensure that components are navigable using a keyboard. For example:</p>
+<ul>
+<li>Buttons should be focusable and trigger actions on <code>Enter</code> or <code>Space</code> key presses.</li>
+<li>Use the <code>tabindex</code> attribute to manage focus order.</li>
+</ul>
+<h3 id="aria-attributes">3. ARIA Attributes</h3>
+<p>Use ARIA attributes to enhance accessibility for dynamic content. For example:</p>
+<ul>
+<li>Add <code>role=&quot;alert&quot;</code> to error messages or notifications.</li>
+<li>Use <code>aria-label</code> or <code>aria-labelledby</code> to provide accessible names for interactive elements.</li>
+</ul>
+<h3 id="focus-management">4. Focus Management</h3>
+<p>Manage focus appropriately for components like modals or dropdowns. For example:</p>
+<ul>
+<li>When opening a modal, move focus to the modal container.</li>
+<li>When closing a modal, return focus to the triggering element.</li>
+</ul>
+<p><strong>Real-World Example: Building a Reusable Table Component</strong></p>
+<p>Let’s build a reusable <code>Table</code> component that displays tabular data.</p>
+<pre><code class="language-javascript">function Table({ headers, rows }) {
+  return (
+    &lt;table&gt;
+      &lt;thead&gt;
+        &lt;tr&gt;
+          {headers.map((header, index) =&gt; (
+            &lt;th key={index}&gt;{header}&lt;/th&gt;
+          ))}
+        &lt;/tr&gt;
+      &lt;/thead&gt;
+      &lt;tbody&gt;
+        {rows.map((row, rowIndex) =&gt; (
+          &lt;tr key={rowIndex}&gt;
+            {row.map((cell, cellIndex) =&gt; (
+              &lt;td key={cellIndex}&gt;{cell}&lt;/td&gt;
+            ))}
+          &lt;/tr&gt;
+        ))}
+      &lt;/tbody&gt;
+    &lt;/table&gt;
+  );
+}
+</code></pre>
+<p>Usage:</p>
+<pre><code class="language-javascript">const headers = ['Name', 'Age', 'Country'];
+const rows = [
+  ['John Doe', 28, 'USA'],
+  ['Jane Smith', 34, 'Canada'],
+];
+
+&lt;Table headers={headers} rows={rows} /&gt;;
+</code></pre>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>Reusable components are the cornerstone of efficient React development, enabling developers to build consistent, scalable, and maintainable user interfaces. By adhering to principles like SRP and props-driven design, and by following best practices such as type checking, simplicity, and documentation, you can create components that are both versatile and easy to integrate into any project. Additionally, keeping accessibility in mind ensures that your components are inclusive and provide a seamless experience for all users. With these tools and techniques, you are now equipped to design reusable components that meet functional requirements and align with modern development standards. As you refine your skills, remember that thoughtful planning, testing, and iteration are key to mastering the art of reusable components.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>

@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/style.css">
+<link rel="stylesheet" href="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.css">
+
+		
+		<title>Limitations Of Rnns</title>
+	  </head>
+	  <body>
+		<div class="container">
+			<header><img src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/logo.png"><h1 id="lesson-limitations-of-rnns-vanishing-gradient-problem">Lesson: Limitations of RNNs (Vanishing Gradient Problem)</h1></header>
+<section><h2 id="introduction">Introduction</h2>
+<p>Recurrent Neural Networks (RNNs) excel at processing sequential data by maintaining a memory of past inputs, making them valuable for tasks like language modeling. However, their performance falters when tasked with capturing dependencies spanning many time steps, which is critical for understanding long sentences or translating complex texts. This limitation stems from the vanishing gradient problem, which hampers RNN training over extended sequences.</p>
+<p>In this lesson, we examine why RNNs struggle with long-range dependencies and introduce advanced architectures, Long Short-Term Memory (LSTM) units and Gated Recurrent Units (GRUs), designed to overcome these challenges by enhancing memory retention and gradient stability.</p>
+<hr>
+</section><section><h2 id="learning-outcomes">Learning Outcomes</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ol>
+<li><strong>Explain</strong> the vanishing gradient problem and its impact on RNN training.</li>
+<li><strong>Analyze</strong> why RNNs struggle with long-range dependencies in sequential data.</li>
+<li><strong>Describe</strong> the architecture of LSTMs and GRUs and how they mitigate the vanishing gradient problem.</li>
+</ol>
+<hr>
+</section><section><h2 id="motivation-sequential-modeling-with-rnns">Motivation: Sequential Modeling with RNNs</h2>
+<p>Many real-world tasks require the model to process information not as isolated inputs, but as ordered sequences. Whether it's predicting the next word in a sentence, interpreting spoken language, or detecting patterns in time-series data, the temporal structure of the input matters. Unlike traditional feedforward neural networks, which treat each input independently, Recurrent Neural Networks (RNNs) were designed to handle sequences. The core idea is simple but powerful: maintain a hidden state that evolves over time, allowing the model to carry information forward from one time step to the next.</p>
+<p>At each time step <span class="math">\(t\)</span>, the RNN receives an input <span class="math">\(x_t\)</span> and updates its hidden state based <span class="math">\(h_t\)</span> on both the current input and the previous hidden state as follows:</p>
+<div class="math">
+\[
+h_t  = \sigma(W_{xh}x_t + W_{hh}h_{t−1} +b)
+\]</div>
+<p>This recurrence allows the network to theoretically &quot;remember&quot; relevant features of earlier inputs while processing the current one. In applications like language modeling, this mechanism enables the network to retain the topic of a sentence, remember subject-verb agreements, or hold context over several phrases.</p>
+<p>To better understand how RNNs work, it’s useful to think of the architecture as unrolled over time. While the same parameters are shared across all time steps, each input in the sequence is passed through a recurrent cell, which updates the hidden state:</p>
+<pre><code class="language-css">x₁ → [RNN Cell] → h₁  
+x₂ → [RNN Cell] → h₂  
+x₃ → [RNN Cell] → h₃  
+...
+</code></pre>
+<p>Or as an unrolled diagram:</p>
+<pre><code class="language-css">x₁ —→ h₁
+       ↓
+x₂ —→ h₂
+       ↓
+x₃ —→ h₃
+</code></pre>
+<p>This unrolling shows that each output depends on <strong>past inputs</strong>, enabling the network to model temporal dependencies.</p>
+<h3 id="capturing-context-over-sequences"><strong>Capturing Context Over Sequences</strong></h3>
+<p>Sequence models like RNNs are essential for tasks where current understanding depends on what came before. Consider the following examples:</p>
+<ul>
+<li>In text: <em>“She opened the window because it was...”</em> — predicting <em>“hot”</em> requires remembering <em>“opened the window.”</em></li>
+<li>In speech: Understanding an entire sentence requires integrating sounds over time.</li>
+<li>In time series: Detecting trends in stock prices or sensor readings requires memory of previous states.</li>
+</ul>
+<p>This makes the <strong>hidden state</strong> a crucial part of learning temporal patterns: it acts as the network’s memory, adapting and updating as new inputs arrive.</p>
+<p>While RNNs are designed to carry information across time steps, they face a serious challenge: as sequences get longer, the network struggles to retain important information from earlier inputs. This limitation arises from a fundamental issue in how gradients propagate through time, leading to one of the most well-known problems in deep learning: the <strong>vanishing gradient</strong>.</p>
+<p>In the next section, we’ll examine this issue in detail and understand why it significantly constrains the learning capacity of vanilla RNNs.</p>
+<hr>
+</section><section><h2 id="vanishing-gradient-problem">Vanishing Gradient Problem</h2>
+<p>While Recurrent Neural Networks (RNNs) were designed to process sequences by maintaining a hidden state over time, they face a serious and well-documented limitation: the vanishing gradient problem. This issue occurs during training and prevents the network from learning long-range dependencies, even when such dependencies are clearly present in the data.</p>
+<h3 id="how-gradients-flow-in-rnns">How Gradients Flow in RNNs</h3>
+<p>To train an RNN, we use backpropagation through time (BPTT). This involves unrolling the network across time steps and computing gradients of the loss function with respect to shared weights. One of the most critical gradients flows through the recurrent connections, those responsible for carrying information from one time step to the next. During training, the gradient of the loss <span class="math">\(\mathcal{L}\)</span> with respect to the hidden state at an earlier time step <span class="math">\(h_t\)</span> is computed recursively from the final time step <span class="math">\(T\)</span>:</p>
+<div class="math">
+\[
+\frac{\partial \mathcal{L}}{\partial h_t} = \frac{\partial \mathcal{L}}{\partial h_T} \cdot \prod_{k=t+1}^{T} \frac{\partial h_k}{\partial h_{k-1}}
+\]</div>
+<p>Each term <span class="math">\(\frac{\partial h_k}{\partial h_{k-1}}\)</span> depends on the recurrent weight matrix and the derivative of the activation function (typically tanh or sigmoid). Because the derivatives of these activation functions are bounded by values less than 1, repeated multiplication through time steps causes the gradient to shrink exponentially. This is the essence of the vanishing gradient problem: earlier time steps receive increasingly smaller updates, making it difficult, or even impossible, for the model to learn from distant information.</p>
+<h3 id="implications-for-learning-long-term-dependencies"><strong>Implications for Learning Long-Term Dependencies</strong></h3>
+<p>When gradients vanish, the network loses its ability to <strong>learn from earlier time steps</strong>. It becomes biased toward recent inputs and effectively <strong>forgets</strong> long-term information, regardless of how important that information is.</p>
+<p>For example, consider this sentence:</p>
+<blockquote>
+<p><em>“The book that John gave me last week was surprisingly good.”</em></p>
+</blockquote>
+<p>The subject <em>“book”</em> is far from the predicate <em>“was”</em>. An RNN trained with BPTT may fail to associate them if gradients decay before reaching the necessary hidden states.</p>
+<p>A helpful way to understand this is through an unrolled RNN diagram, with hidden states connected across time:</p>
+<pre><code class="language-css">x₁ —→ h₁ →  
+           ↓  
+x₂ —→ h₂ →  
+           ↓  
+x₃ —→ h₃ →  
+     …     ↓  
+xₜ —→ hₜ
+</code></pre>
+<p>During backpropagation, the gradient must flow from all the way back to . But with each step, the signal shrinks. The farther back you go, the <strong>weaker the signal</strong>, until there is effectively <strong>no gradient</strong> left to update the earlier weights.</p>
+<blockquote>
+<p>Imagine trying to pass a message through a long chain of people. If each person whispers, the message becomes less and less clear, until it's lost completely. That’s what happens to gradients in a standard RNN.</p>
+</blockquote>
+<hr>
+<h3 id="vanishing-vs.exploding-gradients">Vanishing vs. Exploding Gradients</h3>
+<p>Although exploding gradients (where gradients grow exponentially) can also occur in RNNs, they are generally easier to mitigate through techniques like gradient clipping. In contrast, vanishing gradients are more dangerous—they prevent the model from ever learning long-term patterns, regardless of the data quality or amount of training.</p>
+<h3 id="empirical-symptoms">Empirical Symptoms</h3>
+<p>Some of the symptoms of vanishing gradients include:</p>
+<ul>
+<li>Training loss plateaus and fails to decrease over time.</li>
+<li>The model only learns <strong>short-term dependencies</strong>.</li>
+<li>Validation performance remains poor, even with extended training.</li>
+</ul>
+<p>This problem isn’t just about optimization, it’s a structural constraint embedded in the very design of the RNN. That’s why the solution wasn’t simply better hyperparameters, it required a new kind of architecture. To address this bottleneck, researchers introduced networks with internal gating mechanisms that allow gradients, and memory to persist over long sequences. In the next section, we’ll explore two such architectures: Long Short-Term Memory (LSTM) and Gated Recurrent Units (GRU). These models were not incremental tweaks; they were fundamental innovations that allowed sequence models to go deeper, hold context longer, and perform far better in tasks like translation, speech recognition, and text generation.</p>
+<hr>
+<h3 id="consequences-for-language-and-sequence-tasks">Consequences for Language and Sequence Tasks</h3>
+<p>The vanishing gradient problem is not just a mathematical curiosity—it has real and significant consequences in practical sequence modeling tasks. When gradients fail to propagate across time steps, RNNs lose the ability to retain and use long-term context, which undermines performance on a wide range of natural language processing (NLP) problems.</p>
+<h3 id="failure-to-learn-long-term-dependencies">Failure to Learn Long-Term Dependencies</h3>
+<p>Many tasks require remembering information introduced much earlier in a sequence. Without the ability to carry relevant gradients back across time, RNNs become biased toward <strong>recent inputs</strong>, often ignoring critical tokens that appeared further in the past.</p>
+<p>Consider the following sentence: <em>“The book that John gave me last week was surprisingly good.”</em> To predict or classify the final word <em>“good,”</em> the model needs to understand that the subject is <em>“book”</em>, introduced at the very beginning. A standard RNN may fail to capture this dependency, especially if the sentence is longer or more complex. This leads to errors in tasks that require long-range coherence.</p>
+<h3 id="impact-on-core-nlp-applications">Impact on Core NLP Applications</h3>
+<ul>
+<li><strong>Language Modeling</strong>: RNNs that forget earlier context cannot accurately model sequences beyond a few time steps. This limits their ability to predict the next word in long-form text or maintain grammatical agreement.</li>
+<li><strong>Machine Translation</strong>: Successful translation often requires understanding a complete sentence before generating its target-language equivalent. An RNN that forgets earlier clauses produces <strong>incomplete or disjointed translations</strong>, especially in languages with long-range syntactic dependencies (e.g., German, Japanese).</li>
+<li><strong>Text Classification</strong>: For tasks like sentiment analysis, the key signal may appear early in the sentence (e.g., <em>“Although the film started strong, it ultimately failed to deliver.”</em>). A model that pays attention only to recent tokens may misinterpret the overall tone.</li>
+<li><strong>Dialogue and Question Answering</strong>: In multi-turn conversations or long documents, tracking subject references or implied context becomes impossible without stable long-term memory.</li>
+</ul>
+<h3 id="broader-limitation">Broader Limitation</h3>
+<p>Importantly, this problem is not solved by more data or deeper training. The architecture itself resists learning long-term dependencies due to the unstable gradient flow. As a result, vanilla RNNs tend to perform well only on short-range patterns and fail gracefully on longer sequences.</p>
+<p>Recognizing these persistent limitations, researchers developed new recurrent architectures specifically designed to preserve information over longer spans. These models, Long Short-Term Memory (LSTM) and Gated Recurrent Units (GRUs), use internal gating mechanisms to regulate the flow of information and gradients, enabling them to model long-term dependencies effectively. In the next section, we’ll examine the design and intuition behind LSTM and GRU, and see how they overcome the core flaws of the vanilla RNN.</p>
+<hr>
+</section><section><h2 id="enter-lstms-and-grus-a-structural-fix">Enter LSTMs and GRUs: A Structural Fix</h2>
+<p>The vanishing gradient problem in standard RNNs is not merely a training inconvenience, it is a fundamental architectural limitation. To address this, researchers introduced a new class of recurrent architectures with a singular goal: to enable the model to retain information over long sequences without suffering from vanishing or exploding gradients. Two of the most successful innovations in this space are the Long Short-Term Memory (LSTM) network and the Gated Recurrent Unit (GRU). These architectures modify the standard RNN cell by introducing gating mechanisms that control how information is stored, updated, and forgotten over time. These gates are learned functions that help regulate which parts of the hidden state should be preserved or discarded, depending on the input and the model’s internal memory.</p>
+</section><section><h2 id="introduction-to-long-short-term-memory-lstms">Introduction to Long Short-Term Memory (LSTMs)</h2>
+<p>Introduced by Hochreiter and Schmidhuber in 1997, LSTMs enhance RNNs by introducing a <strong>cell state</strong> and three <strong>gates</strong> that control information flow, enabling the network to remember or forget data selectively over long periods.</p>
+<h3 id="lstm-architecture">LSTM Architecture</h3>
+<p>A <strong>cell state</strong> <span class="math">\(C_t\)</span> that acts as long-term memory. These gates that control information flow:</p>
+<p><strong>Forget gate</strong>:</p>
+<div class="math">
+\[
+f_t = \sigma(W_f x_t + U_f h_{t-1} + b_f)
+\]</div>
+<p><strong>Input gate</strong>:</p>
+<div class="math">
+\[
+i_t = \sigma(W_i x_t + U_i h_{t-1} + b_i)
+\]</div>
+<p><strong>Candidate state</strong>:</p>
+<div class="math">
+\[
+ĉ_t = \tanh(W_c x_t + U_c h_{t-1} + b_c)
+\]</div>
+<p><strong>Cell state update</strong>:</p>
+<div class="math">
+\[
+c_t = f_t \odot c_{t-1} + i_t \odot \tilde{c}_t
+\]</div>
+<p><strong>Output gate</strong>:</p>
+<div class="math">
+\[
+o_t = \sigma(W_o x_t + U_o h_{t-1} + b_o)
+\]</div>
+<p><strong>Hidden state</strong>:</p>
+<div class="math">
+\[
+h_t = o_t \odot \tanh(c_t)
+\]</div>
+<p><img src="../_assets/lstm.png" alt=""></p>
+<blockquote>
+<p><em>Diagram of an LSTM unit showing gates and cell flow.</em></p>
+</blockquote>
+<p><strong>Mitigation of Vanishing Gradients</strong></p>
+<p>One of the most important design features of the LSTM is its ability to preserve gradients over long time steps. This is achieved through the additive update to the cell state:</p>
+<div class="math">
+\[
+c_t = f_t \cdot c_{t-1} + i_t \cdot \tilde{c}_t
+\]</div>
+<p>When the <strong>forget gate</strong> <span class="math">\(f_t \approx 1\)</span> and the <strong>input gate</strong> <span class="math">\(i_t \approx 0\)</span>, the update simplifies to:</p>
+<div class="math">
+\[
+c_t \approx c_{t-1}
+\]</div>
+<p>In this case, the memory cell essentially holds its previous value, and gradients with respect to <span class="math">\(c_t\)</span> are allowed to flow backward through time with minimal attenuation. This bypasses the repeated multiplications that cause vanishing gradients in traditional RNNs.</p>
+<blockquote>
+<p>“Gates allow gradients to avoid vanishing and exploding.”</p>
+</blockquote>
+<p>Because these gates are learned and differentiable, the model can control when to retain, discard, or modify information. This design enables the LSTM to learn long-term dependencies without the instability that plagues vanilla recurrent networks.</p>
+<hr>
+</section><section><h2 id="introduction-to-gated-recurrent-units-grus">Introduction to Gated Recurrent Units (GRUs)</h2>
+<p>GRUs are a streamlined variant of LSTMs that merge the cell and hidden state and use two gates:</p>
+<p><strong>Update gate</strong>:</p>
+<div class="math">
+\[
+z_t = \sigma(W_z [h_{t-1}, x_t] + b_z)
+\]</div>
+<p><strong>Reset gate</strong>:</p>
+<div class="math">
+\[
+r_t = \sigma(W_r [h_{t-1}, x_t] + b_r)
+\]</div>
+<p><strong>Candidate activation</strong>:</p>
+<div class="math">
+\[
+\tilde{h}_t = \text{tanh}(W_h\cdot[r_th_{t-1}, x_t])
+\]</div>
+<p><strong>Hidden state update</strong>:</p>
+<div class="math">
+\[
+h_t = (1 - z_t) \odot h_{t-1} + z_t \odot \tilde{h}_t
+\]</div>
+<p>The <strong>update gate</strong> $z_t$​ acts like a combination of LSTM’s input and forget gates. GRUs are computationally lighter and have shown comparable performance to LSTMs on many tasks, especially where training data is limited.</p>
+<p><img src="../_assets/lstmgru.png" alt=""></p>
+<blockquote>
+<p><em>GRU unit diagram showing update and reset gates.</em></p>
+</blockquote>
+<p>GRUs often match LSTM performance with fewer parameters, making them a strong choice in resource‑constrained settings.</p>
+<hr>
+</section><section><h2 id="comparative-summary-rnn-vs-lstm-vs-gru">Comparative Summary: RNN vs LSTM vs GRU</h2>
+<p>With a foundational understanding of how standard RNNs work, and why they struggle with long-term dependencies, we can now compare them with the two most widely used gated alternatives: Long Short-Term Memory (LSTM) and Gated Recurrent Unit (GRU). These architectures were introduced to mitigate vanishing gradients and enable better learning over long sequences. The following table summarizes the core differences in functionality, structure, and practical trade-offs.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th><strong>RNN</strong></th>
+<th><strong>LSTM</strong></th>
+<th><strong>GRU</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Gradient Flow</strong></td>
+<td>Unstable (vanishing/exploding)</td>
+<td>Stable (additive cell state)</td>
+<td>Stable (gating mechanism)</td>
+</tr>
+<tr>
+<td><strong>Handles Long-Term Dependencies</strong></td>
+<td>Poor</td>
+<td>Strong</td>
+<td>Moderate–Strong</td>
+</tr>
+<tr>
+<td><strong>Memory Unit</strong></td>
+<td>Hidden state only</td>
+<td>Hidden state + cell state</td>
+<td>Single merged state</td>
+</tr>
+<tr>
+<td><strong>Gating Mechanism</strong></td>
+<td>None</td>
+<td>Input, Forget, Output gates</td>
+<td>Update and Reset gates</td>
+</tr>
+<tr>
+<td><strong>Training Stability</strong></td>
+<td>Often unstable</td>
+<td>Highly stable</td>
+<td>More stable than RNN</td>
+</tr>
+<tr>
+<td><strong>Parameter Count</strong></td>
+<td>Low</td>
+<td>High (due to multiple gates and cell state)</td>
+<td>Moderate</td>
+</tr>
+<tr>
+<td><strong>Computational Cost</strong></td>
+<td>Low</td>
+<td>High</td>
+<td>Lower than LSTM</td>
+</tr>
+<tr>
+<td><strong>Interpretability</strong></td>
+<td>Low</td>
+<td>Moderate</td>
+<td>Moderate</td>
+</tr>
+<tr>
+<td><strong>Best Use Case</strong></td>
+<td>Short sequences, simple tasks</td>
+<td>Tasks requiring precise long-term memory</td>
+<td>Fast training with reasonable memory</td>
+</tr>
+</tbody>
+</table>
+<h3 id="practical-implications">Practical Implications</h3>
+<ul>
+<li><strong>RNNs</strong> are lightweight but limited—they may suffice for short sequences or toy problems, but they degrade quickly with longer contexts.</li>
+<li>LSTMs are powerful and robust, particularly in tasks like machine translation, speech recognition, and text generation, where distant dependencies matter.</li>
+<li><strong>GRUs</strong> offer a good balance between complexity and performance, making them suitable for production environments where speed and simplicity are critical.</li>
+</ul>
+<p>This comparative understanding sets the stage for practical experimentation. In the next activity, we’ll explore a simple case where a vanilla RNN fails to track sequence information, and observe how an LSTM (or GRU) corrects the behavior by learning to maintain memory over time.</p>
+<hr>
+</section><section><h2 id="example-when-the-rnn-forgets"><strong>Example: When the RNN Forgets</strong></h2>
+<p>Compare how a vanilla RNN and an LSTM perform on a simple sequence classification task that requires remembering early inputs. This will give students direct, visual confirmation of vanishing gradients in action, and how gated models overcome it. We’ll train two models on a synthetic task: determine whether the first token in a sequence is a <code>1</code> or a <code>0</code>, regardless of what follows. All other values in the sequence are noise.</p>
+<p><strong>Example sequence</strong>:</p>
+<p><code>[1, 0, 0, 1, 0, 1, 0, 0]</code> → Output: <code>1</code></p>
+<p><code>[0, 1, 1, 0, 1, 0, 0, 1]</code> → Output: <code>0</code></p>
+<p>To succeed, the model must remember the first token through a long sequence,  exactly the kind of situation vanilla RNNs struggle with.</p>
+<h3 id="implementation-steps">Implementation Steps</h3>
+<p><strong>Step 1: Data Generation</strong></p>
+<pre><code class="language-python">import numpy as np
+
+def generate_data(num_samples=10000, seq_len=10):
+    X = np.random.randint(0, 2, size=(num_samples, seq_len))
+    y = X[:, 0]  # target is the first token
+    return X, y
+</code></pre>
+<p><strong>Step 2: Model Definitions (RNN vs LSTM)</strong></p>
+<p>Use PyTorch, TensorFlow, or Keras. Here's a simplified Keras example:</p>
+<pre><code class="language-python">from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import SimpleRNN, LSTM, Dense, Embedding
+
+def build_model(model_type='RNN', input_length=10):
+    model = Sequential()
+    model.add(Embedding(input_dim=2, output_dim=8, input_length=input_length))
+    if model_type == 'RNN':
+        model.add(SimpleRNN(16))
+    elif model_type == 'LSTM':
+        model.add(LSTM(16))
+    model.add(Dense(1, activation='sigmoid'))
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    return model
+</code></pre>
+<p><strong>Step 3: Train and Compare</strong></p>
+<pre><code class="language-python">X, y = generate_data()
+model_rnn = build_model('RNN')
+model_lstm = build_model('LSTM')
+
+model_rnn.fit(X, y, epochs=5, verbose=1)
+model_lstm.fit(X, y, epochs=5, verbose=1)
+</code></pre>
+<p><strong>Expected Outcome</strong></p>
+<ul>
+<li>The RNN will perform poorly, as it forgets the first input by the time it reaches the end.</li>
+<li>The LSTM will succeed, maintaining memory of the first token and achieving high accuracy.</li>
+</ul>
+<p><strong>Reflection Prompt</strong></p>
+<ul>
+<li>Why did the vanilla RNN fail on this task?</li>
+<li>What architectural mechanism allowed the LSTM to retain the needed information?</li>
+<li>Could GRU achieve similar results? Try modifying the code to test it.</li>
+</ul>
+<hr>
+</section><section><h2 id="conclusion">Conclusion</h2>
+<p>In this lesson, we addressed the <strong>vanishing gradient problem</strong>, which limits vanilla RNNs in modeling long-range dependencies. We saw how <strong>LSTMs</strong> use a cell state and three gates to manage memory, while GRUs simplify this with two gates, both ensuring stable gradients and improved context retention. These advancements enhance RNNs’ applicability to complex sequence tasks, equipping you with an understanding of their strengths and solutions to their inherent challenges.</p>
+
+		</section></div>
+        <script src="https://atlasschool.blackboard.com/bbcswebdav/institution/curriculum_styles/prism.js"></script>
+
+	  </body>
+</html>
