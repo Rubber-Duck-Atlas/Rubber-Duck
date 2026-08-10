@@ -21,6 +21,7 @@ if (!fs.existsSync(notesDir)) {
 
 type RubberDuckResult = {
   query: string;
+  answer?: string;
   results: Array<{
     path: string;
     score: number;
@@ -28,26 +29,40 @@ type RubberDuckResult = {
   }>;
 };
 
-function parseRubberDuckOutput(output: string): RubberDuckResult {
-  const queryMatch = output.match(/Top \d+ match\(es\) for '([^']+)':/);
-  const query = queryMatch ? queryMatch[1] : "";
+type RawRubberDuckResultItem = {
+  path?: string;
+  score?: number;
+  snippet?: string;
+  Snippet?: string;
+};
 
-  const lines = output.split('\n');
-  const resultLineRegex = /^\d+\.\s+(.+)\s+\(score:\s+([\d.]+)\)\s*$/;
+type RawRubberDuckPayload = {
+  query?: string;
+  answer?: string;
+  results?: RawRubberDuckResultItem[];
+};
 
-  const results: RubberDuckResult["results"] = [];
-  for (let i = 0; i < lines.length; i++) {
-    const match = lines[i].match(resultLineRegex);
-    if (!match) continue;
-
-    results.push({
-      path: match[1].trim(),
-      score: parseFloat(match[2]),
-      snippet: (lines[i + 1] ?? "").trim(),
-    });
+function parseRubberDuckJsonOutput(output: string): RubberDuckResult {
+  let payload: RawRubberDuckPayload;
+  try {
+    payload = JSON.parse(output.trim()) as RawRubberDuckPayload;
+  } catch {
+    throw new Error('rubber_duck.py final output was not valid JSON.');
   }
 
-  return { query, results };
+  const results = Array.isArray(payload.results)
+    ? payload.results.map((result) => ({
+      path: result.path ?? '',
+      score: typeof result.score === 'number' ? result.score : 0,
+      snippet: result.snippet ?? result.Snippet ?? '',
+    }))
+    : [];
+
+  return {
+    query: payload.query ?? '',
+    answer: payload.answer,
+    results,
+  };
 }
 
 function findRubberDuckScriptPath() {
@@ -67,22 +82,37 @@ function findRubberDuckScriptPath() {
   throw new Error('Could not find rubber_duck.py');
 }
 
-function runRubberDuckQuery(query: string, searchNotes: boolean): Promise<RubberDuckResult> {
+function runRubberDuckQuery(query: string): Promise<RubberDuckResult> {
   return new Promise((resolve, reject) => {
     const script = findRubberDuckScriptPath();
     const python = spawn('python', [
       script,
       '--data-dir',
-      path.join(homedir(), 'rubberduck', searchNotes ? 'notes' : 'documents'),
+      path.join(homedir(), 'rubberduck'),
       '--query',
       query,
+      '--ask'
     ]);
 
     let stdout = '';
+    let capturedJsonOutput = '';
+    let isCapturingJson = false;
     let stderr = '';
 
     python.stdout.on('data', (data: Buffer) => {
-      stdout += data.toString();
+      const chunk = data.toString();
+      stdout += chunk;
+
+      if (isCapturingJson) {
+        capturedJsonOutput += chunk;
+        return;
+      }
+
+      const jsonStartInChunk = chunk.indexOf('{');
+      if (jsonStartInChunk !== -1) {
+        isCapturingJson = true;
+        capturedJsonOutput = chunk.slice(jsonStartInChunk);
+      }
     });
 
     python.stderr.on('data', (data: Buffer) => {
@@ -99,7 +129,11 @@ function runRubberDuckQuery(query: string, searchNotes: boolean): Promise<Rubber
         return;
       }
 
-      resolve(parseRubberDuckOutput(stdout));
+      try {
+        resolve(parseRubberDuckJsonOutput(capturedJsonOutput));
+      } catch {
+        reject(new Error(`Could not parse final rubber_duck.py output as JSON. Full output:\n${stdout}`));
+      }
     });
   });
 }
@@ -144,8 +178,8 @@ const createWindow = () => {
 app.on('ready', () => {
   Menu.setApplicationMenu(null);
 
-  ipcMain.handle('rubber-duck-query', async (_, query: string, searchNotes: boolean) => {
-    return runRubberDuckQuery(query, searchNotes);
+  ipcMain.handle('rubber-duck-query', async (_, query: string) => {
+    return runRubberDuckQuery(query);
   });
 
   // Handler for reading directory

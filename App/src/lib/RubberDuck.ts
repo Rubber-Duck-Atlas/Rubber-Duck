@@ -1,3 +1,3 @@
-export default function RubberDuck(query: string, searchNotes: boolean) {
-    return window.api.runRubberDuckQuery(query, searchNotes);
+export default function RubberDuck(query: string) {
+    return window.api.runRubberDuckQuery(query);
 }

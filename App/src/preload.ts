@@ -4,7 +4,7 @@
 // Context Bridge for reading directory
 import { contextBridge, ipcRenderer } from "electron";
 contextBridge.exposeInMainWorld("api", {
-  runRubberDuckQuery: (query: string, searchNotes: boolean) => ipcRenderer.invoke("rubber-duck-query", query, searchNotes),
+  runRubberDuckQuery: (query: string) => ipcRenderer.invoke("rubber-duck-query", query),
   listFiles: (dir: string) => ipcRenderer.invoke("list-files", dir),
   getDocuments: () => ipcRenderer.invoke("get-documents"),
   getNotes: () => ipcRenderer.invoke("get-notes"),

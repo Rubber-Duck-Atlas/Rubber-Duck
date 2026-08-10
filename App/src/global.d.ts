@@ -3,6 +3,7 @@ export {};
 declare global {
   type RubberDuckResult = {
     query: string;
+    answer?: string;
     results: Array<{
       path: string;
       score: number;
@@ -12,7 +13,7 @@ declare global {
 
   interface Window {
     api: {
-      runRubberDuckQuery(query: string, searchNotes: boolean): Promise<RubberDuckResult>;
+      runRubberDuckQuery(query: string): Promise<RubberDuckResult>;
       listFiles(dir: string): Promise<string[]>;
       getDocuments(): Promise<string[]>;
       getNotes(): Promise<string[]>;

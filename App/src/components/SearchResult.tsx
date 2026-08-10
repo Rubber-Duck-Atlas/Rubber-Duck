@@ -4,14 +4,14 @@ import FilePreview from "./FilePreview";
 
 type SearchResultProps = {
   path: string;
-  score: number;
+  rank: number;
   snippet: string;
-  isNote: boolean;
 };
 
-export default function SearchResult({ path, score, snippet, isNote }: SearchResultProps) {
+export default function SearchResult({ path, rank, snippet }: SearchResultProps) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const fileName = path.split(/[\\/]/).pop() ?? path;
+  const isNote = /[\\/]notes[\\/]/i.test(path);
   const displayName = fileName
     .replace(/\.[^/.]+$/, "")
     .replaceAll("-", " ")
@@ -23,7 +23,7 @@ export default function SearchResult({ path, score, snippet, isNote }: SearchRes
         <div className="flex justify-between items-center gap-2">
           <h2 className="font-bold truncate">{displayName}</h2>
           <span className="shrink-0 p-0.5 px-2 bg-lilac rounded-2xl text-xs text-ink font-bold">
-            {score.toFixed(3)}
+            [{rank}]
           </span>
         </div>
         <h3 className="text-xs">
