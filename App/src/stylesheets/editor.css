@@ -1,0 +1,52 @@
+@reference "../index.css";
+
+/* CodeMirror editor theming */
+.cm-editor-host .cm-editor {
+  @apply h-full text-[15px] bg-ink text-peri;
+}
+
+.cm-editor-host .cm-scroller {
+  @apply overflow-auto leading-7;
+}
+
+.cm-editor-host .cm-content {
+  @apply py-6 px-2 caret-lilac;
+}
+
+.cm-editor-host .cm-focused {
+  @apply outline-none;
+}
+
+.cm-editor-host .cm-line {
+  @apply p-0;
+}
+
+.cm-editor-host .cm-cursor {
+  @apply border-l-2 border-lilac;
+}
+
+.cm-editor-host .cm-selectionBackground,
+.cm-editor-host .cm-editor ::selection {
+  background-color: rgba(125, 91, 166, 0.35) !important;
+}
+
+.cm-editor-host .cm-gutters {
+  @apply bg-ink text-peri/25 border-r border-peri/[0.08];
+}
+
+.cm-editor-host .cm-activeLineGutter,
+.cm-editor-host .cm-activeLine {
+  background-color: rgba(125, 91, 166, 0.08);
+}
+
+.cm-editor-host .cm-foldPlaceholder {
+  @apply bg-lilac/30 border-0 text-peri;
+}
+
+.cm-editor-host .cm-tooltip {
+  @apply bg-ink text-peri border border-lilac/40;
+}
+
+.cm-editor-host .cm-tooltip-autocomplete ul li[aria-selected] {
+  @apply bg-lilac/40;
+}
