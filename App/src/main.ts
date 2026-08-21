@@ -43,10 +43,19 @@ type RawRubberDuckPayload = {
 };
 
 function parseRubberDuckJsonOutput(output: string): RubberDuckResult {
-  let payload: RawRubberDuckPayload;
-  try {
-    payload = JSON.parse(output.trim()) as RawRubberDuckPayload;
-  } catch {
+  let payload: RawRubberDuckPayload | undefined;
+  const trimmedOutput = output.trim();
+
+  for (let start = trimmedOutput.lastIndexOf('{'); start >= 0; start = trimmedOutput.lastIndexOf('{', start - 1)) {
+    try {
+      payload = JSON.parse(trimmedOutput.slice(start)) as RawRubberDuckPayload;
+      break;
+    } catch {
+      // Try the next earlier object boundary; logs and snippets may contain braces.
+    }
+  }
+
+  if (!payload) {
     throw new Error('rubber_duck.py final output was not valid JSON.');
   }
 
@@ -95,24 +104,10 @@ function runRubberDuckQuery(query: string): Promise<RubberDuckResult> {
     ]);
 
     let stdout = '';
-    let capturedJsonOutput = '';
-    let isCapturingJson = false;
     let stderr = '';
 
     python.stdout.on('data', (data: Buffer) => {
-      const chunk = data.toString();
-      stdout += chunk;
-
-      if (isCapturingJson) {
-        capturedJsonOutput += chunk;
-        return;
-      }
-
-      const jsonStartInChunk = chunk.indexOf('{');
-      if (jsonStartInChunk !== -1) {
-        isCapturingJson = true;
-        capturedJsonOutput = chunk.slice(jsonStartInChunk);
-      }
+      stdout += data.toString();
     });
 
     python.stderr.on('data', (data: Buffer) => {
@@ -130,7 +125,7 @@ function runRubberDuckQuery(query: string): Promise<RubberDuckResult> {
       }
 
       try {
-        resolve(parseRubberDuckJsonOutput(capturedJsonOutput));
+        resolve(parseRubberDuckJsonOutput(stdout));
       } catch {
         reject(new Error(`Could not parse final rubber_duck.py output as JSON. Full output:\n${stdout}`));
       }
